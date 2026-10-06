@@ -29,13 +29,16 @@ root
 │       ├── _components/          *all one-time and reusable components, e.g.
 │       │                          AuthButton.jsx, WebsitePicker.jsx,
 │       │                          CredentialRevealModal.jsx, ImageLinkFields.jsx,
-│       │                          ConfirmDialog.jsx, SignInForm.jsx
+│       │                          ConfirmDialog.jsx, SignInForm.jsx,
+│       │                          MessageDialog.jsx, CreateAccountForm.jsx,
+│       │                          AccountList.jsx
 │       ├── _context/
 │       │   └── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
 │       ├── _hooks/               *all hooks used
 │       ├── _layout/              *Navbar.jsx (holds AuthButton) and Footer.jsx
 │       ├── _lib/
-│       │   └── apiFetch.js       *the only place fetch is called
+│       │   ├── apiFetch.js       *the only place fetch is called
+│       │   └── validation.js     *frontend copy of the docs/api.md validation rules
 │       ├── _styling/             *all module.css files
 │       ├── sign-in/
 │       │   └── page.js
@@ -67,7 +70,7 @@ root
 
 The app is built in this order across both repos. Each step is built, tested and committed before the next starts. Check which repo a step touches — the other repo's side may need to exist first.
 
-Each step is its own task: branch from an up-to-date `main`, write a fresh plan, get Rich's approval, build, verify, then commit and push and open a PR. Rich merges the PR on GitHub. When a step needs both repos, finish with a cross-repo handoff (see Cross-Repo Handoff). After a step is merged, Rich runs `/clear`, so the next step starts with only this file and `docs/` — anything worth keeping must be written here.
+Each step is its own task: branch from an up-to-date `main`, write a fresh plan in plan mode (EnterPlanMode / ExitPlanMode), never as a chat message, get Rich's approval, build, verify, then commit and push and open a PR. Rich merges the PR on GitHub. When a step needs both repos, finish with a cross-repo handoff (see Cross-Repo Handoff). After a step is merged, Rich runs `/clear`, so the next step starts with only this file and `docs/` — anything worth keeping must be written here.
 
 1. **Seed the administrator** — backend only.
 2. **Login** — both. Frontend: `apiFetch`, AuthContext, sign-in page, Navbar/AuthButton, `/admin` and `/dashboard` layouts with placeholder pages, `proxy.js`, dev rewrite. Test by signing in as the admin and landing on `/admin`.
@@ -124,7 +127,7 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `usePost(id)` \*site owner: a single post; also exposes `update` and `setStatus`
 - `usePosts()` \*site owner: creation only (`create`)
 
-Every data-fetching hook returns the same shape, plus whichever mutations are relevant to that resource: `{ data, loading, error }`. Without a library enforcing this automatically, consistency has to come from discipline — if one hook returns `{ posts, isLoading }` and another returns `{ data, error }`, every component consuming them needs to remember which shape it's dealing with. One shape, everywhere. Mutations return the API's `data` on success and throw the API error on failure. After a successful mutation, refetch the list it affects.
+Every data-fetching hook returns the same shape, plus whichever mutations are relevant to that resource: `{ data, loading, error }`. Without a library enforcing this automatically, consistency has to come from discipline — if one hook returns `{ posts, isLoading }` and another returns `{ data, error }`, every component consuming them needs to remember which shape it's dealing with. One shape, everywhere. Mutations return the API's `data` on success and throw the API error on failure. After a successful mutation, refetch the list it affects: list hooks also expose `refetch()` for this, and keep their current `data` while refetching so the list doesn't flash back to "Loading…".
 
 **Role-gating happens once, at the layout level, not per page:**
 `/dashboard/layout.js` and `/admin/layout.js` each call `GET /api/auth/me` on load, put the user in AuthContext, and redirect if the role doesn't match — a site owner on `/admin` goes to `/dashboard`, an admin on `/dashboard` goes to `/admin`. This is UX only; the backend enforces access on every request.
@@ -173,7 +176,7 @@ Formatting via `.prettierrc`, run before commit.
 
 - Branch from an up-to-date `main`
 - Check relevant spec
-- Create a plan
+- Create a plan in plan mode (EnterPlanMode / ExitPlanMode), never as a chat message
 - On approved, build
 - Checks after building:
   - Every request goes through `apiFetch` (credentials and CSRF header handled there)

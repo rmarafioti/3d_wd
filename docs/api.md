@@ -94,7 +94,7 @@ Notes:
 - `name` (account): required, max 100.
 - `email`: required, valid email format, stored lowercase.
 - `websiteName`: required, max 100.
-- `websiteUrl`, link `url`, image `src`: valid URL starting with `https://`. Website URLs are normalized by the backend (lowercase host, no trailing slash) before the uniqueness check and before saving.
+- `websiteUrl`, link `url`, image `src`: valid URL starting with `https://`. Website URLs are normalized by the backend (lowercase host, no trailing slash) before the uniqueness check and before saving. The uniqueness check treats `www.example.com` and `example.com` as the same website; the URL is stored as entered (it is also the revalidation target).
 - `postName`: required, max 100. `body`: required, max 5000. `header`: optional, max 150. `subHeader`: optional, max 200.
 - `postDate`: optional, valid date `YYYY-MM-DD`.
 - `images`: max 5 per post. Each image: `src`, `width`, `height`, `altText` all required; `width`/`height` whole numbers 1–10000; `altText` max 200.
