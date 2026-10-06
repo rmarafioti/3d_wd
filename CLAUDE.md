@@ -29,7 +29,7 @@ root
 │       ├── _components/          *all one-time and reusable components, e.g.
 │       │                          AuthButton.jsx, WebsitePicker.jsx,
 │       │                          CredentialRevealModal.jsx, ImageLinkFields.jsx,
-│       │                          ConfirmDialog.jsx
+│       │                          ConfirmDialog.jsx, SignInForm.jsx
 │       ├── _context/
 │       │   └── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
 │       ├── _hooks/               *all hooks used
@@ -112,6 +112,7 @@ No CSS frameworks, no component libraries, no color/font/spacing choices. Stylin
 **Data fetching goes through a per-resource custom hook in `_hooks/`, never inline fetch calls in components:**
 
 - `useAuth()` \*reads AuthContext: `{ user, setUser }`
+- `useRoleGate(role)` \*dashboard layouts: calls `/me`, fills AuthContext, redirects on role mismatch
 - `useAccounts()` \*admin: all site owner accounts with their websites; also exposes `createAccount` and `linkWebsite`
 - `useAllWebsites()` \*admin: every active website (powers the WebsitePicker)
 - `useWebsites()` \*site owner: their own websites, each with post summaries

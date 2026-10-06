@@ -1,6 +1,10 @@
-// Sign-in page: Google sign-in button (inside GoogleOAuthProvider), "Signing in…" dialog,
-// login error dialog, and the session-expired message when ?expired=1.
+// Sign-in page (Server Component): reads ?expired=1 on the server and renders SignInForm,
+// which holds the Google button and the sign-in dialog.
 
-export default function SignInPage() {
-  return <h1>This is the sign-in page</h1>;
+import SignInForm from "../_components/SignInForm";
+
+export default async function SignInPage({ searchParams }) {
+  const params = await searchParams;
+
+  return <SignInForm expired={params.expired === "1"} />;
 }
