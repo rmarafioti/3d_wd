@@ -67,6 +67,8 @@ root
 
 The app is built in this order across both repos. Each step is built, tested and committed before the next starts. Check which repo a step touches — the other repo's side may need to exist first.
 
+Each step is its own task: branch from an up-to-date `main`, write a fresh plan, get Rich's approval, build, verify, then commit and push and open a PR. Rich merges the PR on GitHub. When a step needs both repos, finish with a cross-repo handoff (see Cross-Repo Handoff). After a step is merged, Rich runs `/clear`, so the next step starts with only this file and `docs/` — anything worth keeping must be written here.
+
 1. **Seed the administrator** — backend only.
 2. **Login** — both. Frontend: `apiFetch`, AuthContext, sign-in page, Navbar/AuthButton, `/admin` and `/dashboard` layouts with placeholder pages, `proxy.js`, dev rewrite. Test by signing in as the admin and landing on `/admin`.
 3. **Create an Account** — both. Admin account list, website picker, Create an Account form, one-time reveal. Test by creating the test site owner and the Stevie The Dog website (`https://www.steviethedog.com`) through the UI.
@@ -108,6 +110,9 @@ Local useState first — Context is for things like auth/role that genuinely spa
 No CSS frameworks, no component libraries, no color/font/spacing choices. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction.
 
 ## Patterns and Preferences
+
+**Saving notes:**
+When Rich asks to save or remember something, write it into the most fitting project md file (`CLAUDE.md`, a file in `docs/`, or `README.md`), not only into private memory, so it survives a context clear and is visible to everyone working on the repo. In plan mode, where only the plan file can be edited, put the doc edit in the plan.
 
 **Data fetching goes through a per-resource custom hook in `_hooks/`, never inline fetch calls in components:**
 
@@ -166,6 +171,7 @@ Formatting via `.prettierrc`, run before commit.
 
 ## Workflow Checklist
 
+- Branch from an up-to-date `main`
 - Check relevant spec
 - Create a plan
 - On approved, build
@@ -178,6 +184,22 @@ Formatting via `.prettierrc`, run before commit.
   - No aesthetic styling added
   - Test: verified in the browser, not just Postman
 - Only commit once code is reviewed, approved and all validation and tests are green
+- Commit, push and open a PR; Rich merges it on GitHub
+- If the step touches both repos, write a cross-repo handoff (see below)
+
+## Cross-Repo Handoff
+
+Whenever a piece of work needs the frontend and backend to work in tandem (any Build Order step marked "both", or any change to `docs/api.md`), finish by writing a handoff message for Claude in the other repo. Rich pastes it into that repo's session, so it must be readable cold, with no context from this conversation.
+
+Include:
+
+- **What was completed here:** the step, the branch or PR, and whether it is tested and merged.
+- **What this side now provides or expects:** the endpoints, request and response shapes, headers, cookies and env vars the other side relies on, and whether the API contract changed. If it did, `docs/api.md` must be updated in both repos.
+- **Local dev wiring:** ports, proxy or rewrite setup, CORS, and any shared values (for example the Google Client ID).
+- **Behaviour notes:** anything the other side must handle that isn't obvious from the contract.
+- **What's next for them:** the next Build Order step or the remaining half of this one, and a "Done when" list of checks that prove it works end to end.
+
+Remind the other side to follow its own workflow: read its docs, plan for Rich's approval, then build.
 
 ## Plan Authoring
 
