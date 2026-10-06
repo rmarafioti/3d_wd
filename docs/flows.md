@@ -82,7 +82,7 @@ Fetches every active website (`id`, `websiteName`, `url`). Because this request 
 Because a website can have more than one site owner (for example, two people managing one business's site), an account may be linked to a website that already exists. The picker handles both cases:
 
 - A dropdown **above** the Website Name field. The first option, selected by default, is **"Add new website"**; below it every existing website from `useAllWebsites()`, by name.
-- **"Add new website" selected:** Website Name and Website URL are empty, editable and required.
+- **"Add new website" selected:** Website Name and Website URL are empty, editable and required. The Website URL field has the placeholder "https://www.yourwebsite.com" (an example format, not a real site).
 - **An existing website selected:** Website Name and Website URL fill in with that website's values and become **locked** (read-only). Selecting a different website swaps the values. Selecting "Add new website" again clears and unlocks both fields.
 - The picker reports either `{ websiteId }` (existing) or `{ websiteName, websiteUrl }` (new) to the form that uses it.
 
@@ -107,7 +107,7 @@ The Submit button stays disabled until every required field is filled and valid.
 The payload is `{ name, email, websiteId }` for an existing website, or `{ name, email, websiteName, websiteUrl }` for a new one → `POST /api/admin/accounts`.
 
 - **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "Website not found."
-- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, each with a Copy button, plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. Then clear the form and refetch the account list and website list.
+- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. Then clear the form and refetch the account list and website list.
 - **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." On close, clear the form and refetch the account list.
 
 ### Link a Website
