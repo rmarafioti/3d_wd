@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Headless CMS — Frontend
 
-## Getting Started
+## About the Project
 
-First, run the development server:
+Headless CMS project. Two repos for frontend and backend.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The frontend serves a public, static landing page and sign-in for two separate authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each with their own dashboard view, auth and API routes. The Administrator uses the frontend to see a summary of site owner accounts and their websites, create new site owner accounts and link websites to them. The Site Owner uses the frontend to view, create, edit, archive and reactivate posts.
+
+The backend also serves published post content to each site owner's live website via their API key, and triggers on-demand revalidation on that site by calling its webhook endpoint whenever a post changes.
+
+- Production frontend: `https://3dwebdev.com` (Vercel)
+- Production API: `https://api.3dwebdev.com` (Railway)
+
+## Install List
+
+```
+git clone <ssh_key>
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Installs:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- Next.js (current stable)
+- React
+- @react-oauth/google
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+cp .env.example .env
+```
 
-## Learn More
+Set:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable                          | Local value                                                   | Production value           |
+| --------------------------------- | ------------------------------------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id                                    | same                       |
+| `NEXT_PUBLIC_API_BASE_URL`        | leave empty (calls go to `/api` through the dev proxy)        | `https://api.3dwebdev.com` |
+| `API_PROXY_TARGET`                | `http://localhost:4000` (where the dev proxy forwards `/api`) | not set                    |
+| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email                                     | same                       |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+npm run dev     # starts the app on http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The backend must be running locally (see the backend README) for sign-in and the dashboards to work.
