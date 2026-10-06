@@ -56,7 +56,7 @@ root
 │   └── api.md                    *API contract (copy of backend docs/endpoints.md)
 ├── .env.example
 ├── .prettierrc
-├── next.config.js                *dev-only rewrite of /api/* to the local backend
+├── next.config.mjs               *dev-only rewrite of /api/* to the local backend
 ├── CLAUDE.md                     *project context, loaded automatically every session
 └── README.md                     *human-facing overview and local setup
 ```

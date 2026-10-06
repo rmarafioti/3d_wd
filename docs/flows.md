@@ -30,7 +30,7 @@ On the landing page and sign-in page the context is always empty (signed-in user
 
 **Local development setup (done once during Build Order step 2):**
 
-- Add a `rewrites()` entry in `next.config.js` that proxies `/api/:path*` to `${API_PROXY_TARGET}/api/:path*`, only when `API_PROXY_TARGET` is set. This makes frontend and backend appear same-origin during development, so the cookie runs as `SameSite=Lax` with no `Secure` flag over plain HTTP — the same `Lax` setting production uses.
+- Add a `rewrites()` entry in `next.config.mjs` that proxies `/api/:path*` to `${API_PROXY_TARGET}/api/:path*`, only when `API_PROXY_TARGET` is set. This makes frontend and backend appear same-origin during development, so the cookie runs as `SameSite=Lax` with no `Secure` flag over plain HTTP — the same `Lax` setting production uses.
 - Locally `NEXT_PUBLIC_API_BASE_URL` is empty, so `apiFetch` calls relative `/api/...` paths and the rewrite forwards them. In production it is `https://api.3dwebdev.com`.
 - Add `http://localhost:3000` and `https://3dwebdev.com` as authorized JavaScript origins on the Google OAuth client.
 
