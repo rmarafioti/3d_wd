@@ -170,9 +170,41 @@ Keep all code readable and explicit. Comments should be used to inform other dev
 - UI to deactivate/reactivate accounts or websites.
 - Drag-to-reorder images or links.
 
-## Style Guidelines
+## Code Style
 
-Formatting via `.prettierrc`, run before commit.
+Formatting is Prettier with default settings (`.prettierrc`), run before every commit (`npm run format`), plus `npm run lint` clean. Prettier settles formatting; the rules below settle what Prettier can't.
+
+- **File shape, top to bottom:** header comment (what the file is for) → `"use client"` if needed → imports (React, then Next, then local) → module constants (`UPPER_SNAKE`) → exported helpers → the main export. Inside a component: hooks and state → derived values → handlers → JSX.
+- **Exports:** components and pages use `export default function Name`. Hooks, lib functions and component-adjacent helpers (`toWebsitePayload`, `postToFormValues`) are named exports.
+- **Functions:** use function declarations for components, handlers and helpers. Use arrows only inline (callbacks, `.map`, `useCallback` bodies).
+- **Naming:** functions that respond to a component-level event (submit, a dialog closing, a select change) are `handleX` (`handleSubmit`, `handleRevealClose`); a function named for the action it performs (`copyAll`, `deleteImage`, `changeStatus`) may be a plain verb. Callback props are `onX`. Booleans read as questions (`loading`, `copied`, `isBlank`). Use the vocabulary of `docs/flows.md` and `docs/api.md` (post, website, account, credentials), not synonyms.
+- **Text input:** always `(value ?? "").trim()` before checking emptiness or length. Use the helpers in `_lib/validation.js` instead of re-writing the check inline.
+- **Control flow:** early returns over nested `if`/`else`. No nested ternaries in JSX.
+- **User-facing strings:** copy them word for word from `docs/flows.md` / `docs/api.md`. Never paraphrase a message the spec states.
+
+## Code Review
+
+A review is read-only. It produces findings; it never edits code. Fixes are their own task: plan in plan mode, Rich approves, build, verify in the browser, PR. Every fix must preserve behaviour unless the finding is a bug.
+
+### Checklist
+
+1. **Style is consistent.** The code matches Code Style above. If two files do the same thing two ways, pick the documented way. If no way is documented, raise it so the rule gets written down before anything is changed.
+2. **No dead code.** Unused imports, variables, props, exports, files, unreachable branches, commented-out code, and hook return values no caller reads. For each one, decide: delete it, or find out why it isn't used. Unused code is sometimes a sign of a missing wire-up, not junk. The best code is code that was never written.
+3. **Explicit, then DRY.** Readability wins over cleverness. But when the same logic appears a **third** time, or twice with a real risk of the copies drifting (validation rules, dialog behaviour, fetch handling), extract it into `_lib/`, `_hooks/` or `_components/`. Don't abstract for a case that doesn't exist yet. A shared piece must be simpler to read than the copies it replaces.
+4. **Reads top to bottom as a story.** Each block builds on what came before it: no forward references to helpers defined far below without reason, and no state declared far from where it's used. A reader new to the file should be able to follow it in one pass. Names carry the meaning, so comments don't have to.
+5. **Comments are necessary and true.** A misleading comment costs more than a missing one: it sends the next developer, or agent, chasing behaviour that isn't there. For every comment: is it still true of the code next to it? Does it explain _why_ rather than restate _what_? Delete it if not. Every file keeps its header comment, and the header must match what the file does now.
+6. **Docs match code.** CLAUDE.md (architecture tree, hook list, Progress line), `docs/flows.md` and `README.md` describe what is actually in the repo. Fix whichever side is wrong; if the spec is right and the code differs, that's a bug finding.
+7. **Architecture rules still hold.** Re-run the Anti-Patterns list and the Workflow Checklist "Checks after building" against the code: `apiFetch` only, the `{ data, loading, error }` hook shape, dialogs, no persisted credentials, the static landing page, client-side dashboards, no aesthetic styling.
+8. **Every data view handles every state.** Loading, error (the API's `error.message`), empty ("No posts yet." etc.), and a backend rejection of a form that passed frontend validation.
+9. **Tooling is clean.** `npm run lint`, `npm run format` (no diff) and `npm run build` all pass.
+
+### Output
+
+Return the findings as a list, most important first. Each finding has: the file and line, which checklist item it breaks, what's wrong, the proposed fix, and its type: **bug** (behaviour is wrong), **cleanup** (behaviour-neutral), or **doc** (docs or comments only). When a finding needs Rich to make a style or spec decision, mark it **decision** and don't propose a fix until he does.
+
+### Scope
+
+A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md, `docs/` and `README.md`. A per-step review (the self-review in Workflow Checklist) covers only that step's diff, plus anything the diff duplicates or makes dead elsewhere.
 
 ## Workflow Checklist
 
@@ -188,6 +220,7 @@ Formatting via `.prettierrc`, run before commit.
   - Every pop-up is a `<dialog>` with a Close button and no outside-click close
   - No aesthetic styling added
   - Test: verified in the browser, not just Postman
+  - Self-review the diff against Code Review → Checklist
 - Only commit once code is reviewed, approved and all validation and tests are green
 - Commit, push and open a PR; Rich merges it on GitHub
 - If the step touches both repos, write a cross-repo handoff (see below)
