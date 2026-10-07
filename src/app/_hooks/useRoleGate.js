@@ -8,9 +8,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "../_lib/apiFetch";
+import { HOME_BY_ROLE } from "../_lib/roles";
 import { useAuth } from "./useAuth";
-
-const HOME_BY_ROLE = { admin: "/admin", site_owner: "/dashboard" };
 
 export function useRoleGate(requiredRole) {
   const router = useRouter();

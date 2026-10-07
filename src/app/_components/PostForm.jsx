@@ -12,7 +12,8 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useModalDialog } from "../_hooks/useModalDialog";
 import ImageLinkFields from "./ImageLinkFields";
 import {
   isBlank,
@@ -20,6 +21,16 @@ import {
   validateLink,
   validatePost,
 } from "../_lib/validation";
+
+const EMPTY_POST = {
+  postName: "",
+  postDate: "",
+  header: "",
+  subHeader: "",
+  body: "",
+  images: [],
+  links: [],
+};
 
 // Form values for a Post loaded by usePost: nulls become "" and numbers become strings, so
 // every input is controlled. Existing images/links keep their id (and use it as their key).
@@ -46,16 +57,6 @@ export function postToFormValues(post) {
     })),
   };
 }
-
-const EMPTY_POST = {
-  postName: "",
-  postDate: "",
-  header: "",
-  subHeader: "",
-  body: "",
-  images: [],
-  links: [],
-};
 
 // Optional text: trimmed, or null when blank.
 function optional(value) {
@@ -96,7 +97,7 @@ export default function PostForm({
   onClose,
 }) {
   const isCreate = mode === "create";
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog();
 
   const [websiteId, setWebsiteId] = useState(
     websites.length === 1 ? websites[0].id : "",
@@ -114,11 +115,6 @@ export default function PostForm({
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog.open) dialog.showModal();
-  }, []);
 
   const errors = validatePost(
     { websiteId, postName, postDate, header, subHeader, body },
@@ -155,7 +151,8 @@ export default function PostForm({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    // Validate again on click, in case anything changed since the last render.
+    // The button is disabled while invalid or submitting; this also catches a second submit
+    // that lands before the re-render.
     if (!isValid || submitting) return;
 
     const payload = toPayload({

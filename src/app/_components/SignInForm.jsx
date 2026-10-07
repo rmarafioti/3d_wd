@@ -8,8 +8,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { apiFetch } from "../_lib/apiFetch";
-
-const HOME_BY_ROLE = { admin: "/admin", site_owner: "/dashboard" };
+import { HOME_BY_ROLE } from "../_lib/roles";
 
 export default function SignInForm({ expired }) {
   const router = useRouter();

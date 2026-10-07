@@ -7,23 +7,48 @@
 // was when the URL was typed. Each item has a client-only `key` for React lists (stripped before
 // sending); items loaded for Edit also keep their real `id` so the backend can reconcile them.
 //
-// A new item starts as a draft held here; it joins the array only when its "Add" button
-// validates it. fieldErrors is the API's error.fields, keyed by full path ("images.0.src").
+// Images and links are the same list editor (ItemList) with different fields; images add one
+// extra step, auto-fill. A new item starts as a draft held in ItemList; it joins the array only
+// when its "Add" button validates it. fieldErrors is the API's error.fields, keyed by full path
+// ("images.0.src").
 
 "use client";
 
-import { useId, useState } from "react";
+import { Fragment, useId, useState } from "react";
 import { isHttpsUrl, validateImage, validateLink } from "../_lib/validation";
 
 const MAX_IMAGES = 5;
 const MAX_LINKS = 10;
 
-export const EMPTY_IMAGE = { src: "", width: "", height: "", altText: "" };
-export const EMPTY_LINK = { name: "", url: "" };
+const EMPTY_IMAGE = { src: "", width: "", height: "", altText: "" };
+const EMPTY_LINK = { name: "", url: "" };
 
-export function newItemKey() {
-  return crypto.randomUUID();
-}
+// The inputs for each kind of item, in display order. Every entry other than name and label is
+// passed straight to the <input>.
+const IMAGE_FIELDS = [
+  { name: "src", label: "Image URL", type: "url" },
+  {
+    name: "width",
+    label: "Width",
+    type: "number",
+    min: 1,
+    max: 10000,
+    step: 1,
+  },
+  {
+    name: "height",
+    label: "Height",
+    type: "number",
+    min: 1,
+    max: 10000,
+    step: 1,
+  },
+  { name: "altText", label: "Alt Text", type: "text", maxLength: 200 },
+];
+const LINK_FIELDS = [
+  { name: "name", label: "Link Name", type: "text", maxLength: 100 },
+  { name: "url", label: "URL", type: "url" },
+];
 
 // Loads the image in the background and reports its natural size. If it fails to load,
 // nothing is reported and Width / Height stay as they are for manual entry.
@@ -34,89 +59,23 @@ function loadDimensions(src, onLoad) {
   image.src = src.trim();
 }
 
-// The inputs for one image (a saved item or the draft). Messages show for a field once it has
-// been left, or for every field when showAllErrors is set; otherwise the server's message shows.
-function ImageFields({ value, onPatch, serverErrors, showAllErrors }) {
-  const id = useId();
-  const [touched, setTouched] = useState({});
-  const errors = validateImage(value);
-
-  function messageFor(field) {
-    if ((showAllErrors || touched[field]) && errors[field])
-      return errors[field];
-    return serverErrors[field];
-  }
-
-  function field(name, label, type = "text") {
-    const message = messageFor(name);
-    return (
-      <>
-        <label htmlFor={`${id}-${name}`}>{label}</label>
-        <input
-          id={`${id}-${name}`}
-          type={type}
-          value={value[name]}
-          onChange={(e) => onPatch({ [name]: e.target.value })}
-          onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
-          {...(type === "number" ? { min: 1, max: 10000, step: 1 } : {})}
-          {...(name === "altText" ? { maxLength: 200 } : {})}
-        />
-        {message && <p>{message}</p>}
-      </>
-    );
-  }
-
-  return (
-    <>
-      {field("src", "Image URL", "url")}
-      {field("width", "Width", "number")}
-      {field("height", "Height", "number")}
-      {field("altText", "Alt Text")}
-    </>
-  );
-}
-
-// The inputs for one link (a saved item or the draft). Same message rules as ImageFields.
-function LinkFields({ value, onPatch, serverErrors, showAllErrors }) {
-  const id = useId();
-  const [touched, setTouched] = useState({});
-  const errors = validateLink(value);
-
-  function messageFor(field) {
-    if ((showAllErrors || touched[field]) && errors[field])
-      return errors[field];
-    return serverErrors[field];
-  }
-
-  function field(name, label, type, maxLength) {
-    const message = messageFor(name);
-    return (
-      <>
-        <label htmlFor={`${id}-${name}`}>{label}</label>
-        <input
-          id={`${id}-${name}`}
-          type={type}
-          maxLength={maxLength}
-          value={value[name]}
-          onChange={(e) => onPatch({ [name]: e.target.value })}
-          onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
-        />
-        {message && <p>{message}</p>}
-      </>
-    );
-  }
-
-  return (
-    <>
-      {field("name", "Link Name", "text", 100)}
-      {field("url", "URL", "url")}
-    </>
+// Image auto-fill, ItemList's image-only extra step. `apply` updates this same item (saved or
+// draft) with a functional update, so the size is only filled in if the URL is still the one
+// that was loaded.
+function autoFillDimensions(patch, apply) {
+  if (patch.src === undefined) return;
+  loadDimensions(patch.src, (width, height) =>
+    apply((image) =>
+      image.src === patch.src
+        ? { ...image, width: String(width), height: String(height) }
+        : image,
+    ),
   );
 }
 
 // Picks this item's server messages out of error.fields: "images.2.src" → { src: "..." }.
-function serverErrorsFor(fieldErrors, list, index) {
-  const prefix = `${list}.${index}.`;
+function serverErrorsFor(fieldErrors, listName, index) {
+  const prefix = `${listName}.${index}.`;
   const errors = {};
   for (const [path, message] of Object.entries(fieldErrors)) {
     if (path.startsWith(prefix)) errors[path.slice(prefix.length)] = message;
@@ -124,192 +83,187 @@ function serverErrorsFor(fieldErrors, list, index) {
   return errors;
 }
 
+// The inputs for one item (a saved item or the draft). Messages show for a field once it has
+// been left, or for every field when showAllErrors is set; otherwise the server's message shows.
+function ItemFields({
+  fields,
+  validate,
+  value,
+  onPatch,
+  serverErrors,
+  showAllErrors,
+}) {
+  const id = useId();
+  const [touched, setTouched] = useState({});
+  const errors = validate(value);
+
+  function messageFor(name) {
+    if ((showAllErrors || touched[name]) && errors[name]) return errors[name];
+    return serverErrors[name];
+  }
+
+  return fields.map(({ name, label, ...inputProps }) => {
+    const message = messageFor(name);
+    return (
+      <Fragment key={name}>
+        <label htmlFor={`${id}-${name}`}>{label}</label>
+        <input
+          id={`${id}-${name}`}
+          {...inputProps}
+          value={value[name]}
+          onChange={(e) => onPatch({ [name]: e.target.value })}
+          onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
+        />
+        {message && <p>{message}</p>}
+      </Fragment>
+    );
+  });
+}
+
+// One list (images or links): the saved items with Delete, then either the draft with Add /
+// Cancel or the button that starts a draft (disabled at the limit). onPatch, when given, runs
+// after every change to an item (images pass autoFillDimensions).
+function ItemList({
+  legend,
+  listName,
+  noun,
+  max,
+  emptyItem,
+  fields,
+  validate,
+  items,
+  setItems,
+  fieldErrors,
+  onReindex,
+  onPatch,
+}) {
+  // The unsaved new item, or null when its fields are hidden.
+  const [draft, setDraft] = useState(null);
+  // Set once "Add" is pressed on an invalid draft, so all its messages show.
+  const [draftTried, setDraftTried] = useState(false);
+
+  // Each returns a function that applies a functional update to one item.
+  function applyToItem(key) {
+    return (update) =>
+      setItems((list) =>
+        list.map((item) => (item.key === key ? update(item) : item)),
+      );
+  }
+  function applyToDraft(update) {
+    setDraft((current) => (current ? update(current) : current));
+  }
+
+  function patch(apply, changes) {
+    apply((item) => ({ ...item, ...changes }));
+    onPatch?.(changes, apply);
+  }
+
+  function startDraft() {
+    setDraft({ ...emptyItem, key: crypto.randomUUID() });
+    setDraftTried(false);
+  }
+
+  function addDraft() {
+    if (Object.keys(validate(draft)).length > 0) {
+      setDraftTried(true);
+      return;
+    }
+    setItems((list) => [...list, draft]);
+    setDraft(null);
+    onReindex();
+  }
+
+  function deleteItem(key) {
+    setItems((list) => list.filter((item) => item.key !== key));
+    onReindex();
+  }
+
+  const full = items.length >= max;
+
+  return (
+    <fieldset>
+      <legend>{legend}</legend>
+      {fieldErrors[listName] && <p>{fieldErrors[listName]}</p>}
+
+      {items.map((item, index) => (
+        <div key={item.key}>
+          <ItemFields
+            fields={fields}
+            validate={validate}
+            value={item}
+            onPatch={(changes) => patch(applyToItem(item.key), changes)}
+            serverErrors={serverErrorsFor(fieldErrors, listName, index)}
+            showAllErrors
+          />
+          <button type="button" onClick={() => deleteItem(item.key)}>
+            Delete
+          </button>
+        </div>
+      ))}
+
+      {draft ? (
+        <div>
+          <ItemFields
+            fields={fields}
+            validate={validate}
+            value={draft}
+            onPatch={(changes) => patch(applyToDraft, changes)}
+            serverErrors={{}}
+            showAllErrors={draftTried}
+          />
+          <button type="button" onClick={addDraft}>
+            Add
+          </button>
+          <button type="button" onClick={() => setDraft(null)}>
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button type="button" disabled={full} onClick={startDraft}>
+          {full ? `Maximum of ${max} ${noun}s` : `Add ${noun}`}
+        </button>
+      )}
+    </fieldset>
+  );
+}
+
 export default function ImageLinkFields({
   images,
   links,
   setImages,
   setLinks,
-  fieldErrors = {},
+  fieldErrors,
   onReindex,
 }) {
-  // The unsaved new item for each list, or null when its fields are hidden.
-  const [draftImage, setDraftImage] = useState(null);
-  const [draftLink, setDraftLink] = useState(null);
-  // Set once "Add" is pressed on an invalid draft, so all its messages show.
-  const [draftImageTried, setDraftImageTried] = useState(false);
-  const [draftLinkTried, setDraftLinkTried] = useState(false);
-
-  // --- Images ---
-
-  function patchImage(key, patch) {
-    setImages((list) =>
-      list.map((image) => (image.key === key ? { ...image, ...patch } : image)),
-    );
-    if (patch.src !== undefined) {
-      loadDimensions(patch.src, (width, height) =>
-        // Only fill in if the URL is still the one that was loaded.
-        setImages((list) =>
-          list.map((image) =>
-            image.key === key && image.src === patch.src
-              ? { ...image, width: String(width), height: String(height) }
-              : image,
-          ),
-        ),
-      );
-    }
-  }
-
-  function patchDraftImage(patch) {
-    setDraftImage((draft) => ({ ...draft, ...patch }));
-    if (patch.src !== undefined) {
-      loadDimensions(patch.src, (width, height) =>
-        setDraftImage((draft) =>
-          draft && draft.src === patch.src
-            ? { ...draft, width: String(width), height: String(height) }
-            : draft,
-        ),
-      );
-    }
-  }
-
-  function addDraftImage() {
-    if (Object.keys(validateImage(draftImage)).length > 0) {
-      setDraftImageTried(true);
-      return;
-    }
-    setImages((list) => [...list, draftImage]);
-    setDraftImage(null);
-    onReindex?.();
-  }
-
-  function deleteImage(key) {
-    setImages((list) => list.filter((image) => image.key !== key));
-    onReindex?.();
-  }
-
-  // --- Links ---
-
-  function patchLink(key, patch) {
-    setLinks((list) =>
-      list.map((link) => (link.key === key ? { ...link, ...patch } : link)),
-    );
-  }
-
-  function addDraftLink() {
-    if (Object.keys(validateLink(draftLink)).length > 0) {
-      setDraftLinkTried(true);
-      return;
-    }
-    setLinks((list) => [...list, draftLink]);
-    setDraftLink(null);
-    onReindex?.();
-  }
-
-  function deleteLink(key) {
-    setLinks((list) => list.filter((link) => link.key !== key));
-    onReindex?.();
-  }
-
-  const imagesFull = images.length >= MAX_IMAGES;
-  const linksFull = links.length >= MAX_LINKS;
-
   return (
     <>
-      <fieldset>
-        <legend>Images</legend>
-        {fieldErrors.images && <p>{fieldErrors.images}</p>}
-
-        {images.map((image, index) => (
-          <div key={image.key}>
-            <ImageFields
-              value={image}
-              onPatch={(patch) => patchImage(image.key, patch)}
-              serverErrors={serverErrorsFor(fieldErrors, "images", index)}
-              showAllErrors
-            />
-            <button type="button" onClick={() => deleteImage(image.key)}>
-              Delete
-            </button>
-          </div>
-        ))}
-
-        {draftImage ? (
-          <div>
-            <ImageFields
-              value={draftImage}
-              onPatch={patchDraftImage}
-              serverErrors={{}}
-              showAllErrors={draftImageTried}
-            />
-            <button type="button" onClick={addDraftImage}>
-              Add
-            </button>
-            <button type="button" onClick={() => setDraftImage(null)}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            disabled={imagesFull}
-            onClick={() => {
-              setDraftImage({ ...EMPTY_IMAGE, key: newItemKey() });
-              setDraftImageTried(false);
-            }}
-          >
-            {imagesFull ? `Maximum of ${MAX_IMAGES} images` : "Add image"}
-          </button>
-        )}
-      </fieldset>
-
-      <fieldset>
-        <legend>Links</legend>
-        {fieldErrors.links && <p>{fieldErrors.links}</p>}
-
-        {links.map((link, index) => (
-          <div key={link.key}>
-            <LinkFields
-              value={link}
-              onPatch={(patch) => patchLink(link.key, patch)}
-              serverErrors={serverErrorsFor(fieldErrors, "links", index)}
-              showAllErrors
-            />
-            <button type="button" onClick={() => deleteLink(link.key)}>
-              Delete
-            </button>
-          </div>
-        ))}
-
-        {draftLink ? (
-          <div>
-            <LinkFields
-              value={draftLink}
-              onPatch={(patch) =>
-                setDraftLink((draft) => ({ ...draft, ...patch }))
-              }
-              serverErrors={{}}
-              showAllErrors={draftLinkTried}
-            />
-            <button type="button" onClick={addDraftLink}>
-              Add
-            </button>
-            <button type="button" onClick={() => setDraftLink(null)}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            disabled={linksFull}
-            onClick={() => {
-              setDraftLink({ ...EMPTY_LINK, key: newItemKey() });
-              setDraftLinkTried(false);
-            }}
-          >
-            {linksFull ? `Maximum of ${MAX_LINKS} links` : "Add link"}
-          </button>
-        )}
-      </fieldset>
+      <ItemList
+        legend="Images"
+        listName="images"
+        noun="image"
+        max={MAX_IMAGES}
+        emptyItem={EMPTY_IMAGE}
+        fields={IMAGE_FIELDS}
+        validate={validateImage}
+        items={images}
+        setItems={setImages}
+        fieldErrors={fieldErrors}
+        onReindex={onReindex}
+        onPatch={autoFillDimensions}
+      />
+      <ItemList
+        legend="Links"
+        listName="links"
+        noun="link"
+        max={MAX_LINKS}
+        emptyItem={EMPTY_LINK}
+        fields={LINK_FIELDS}
+        validate={validateLink}
+        items={links}
+        setItems={setLinks}
+        fieldErrors={fieldErrors}
+        onReindex={onReindex}
+      />
     </>
   );
 }

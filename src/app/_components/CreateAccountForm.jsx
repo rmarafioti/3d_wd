@@ -12,6 +12,7 @@ import WebsitePicker, {
 } from "./WebsitePicker";
 import CredentialRevealModal from "./CredentialRevealModal";
 import MessageDialog from "./MessageDialog";
+import SubmitErrors from "./SubmitErrors";
 import { isBlank, isValidEmail, validateWebsite } from "../_lib/validation";
 
 // Frontend checks, in display order. UX only — the backend re-validates everything.
@@ -50,7 +51,8 @@ export default function CreateAccountForm({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    // Validate again on click, in case anything changed since the last render.
+    // The button is disabled while invalid or submitting; this also catches a second submit
+    // that lands before the re-render.
     if (!isValid || submitting) return;
 
     setSubmitting(true);
@@ -64,7 +66,7 @@ export default function CreateAccountForm({
       setResult(response);
     } catch (err) {
       // Everything typed stays in the form.
-      setServerError(err);
+      setServerError({ message: err.message, fields: err.fields });
     } finally {
       setSubmitting(false);
     }
@@ -124,14 +126,11 @@ export default function CreateAccountForm({
           Submit
         </button>
 
-        {Object.entries(errors)
-          .filter(([field]) => touched[field])
-          .map(([field, message]) => (
-            <p key={field}>{message}</p>
-          ))}
-        {serverError && <p>{serverError.message}</p>}
-        {/* There is no websiteId input, so this field message goes with the general error. */}
-        {fieldErrors.websiteId && <p>{fieldErrors.websiteId}</p>}
+        <SubmitErrors
+          errors={errors}
+          touched={touched}
+          serverError={serverError}
+        />
       </form>
 
       {result?.credentials && (

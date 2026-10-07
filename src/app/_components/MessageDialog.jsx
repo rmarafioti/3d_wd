@@ -4,15 +4,10 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useModalDialog } from "../_hooks/useModalDialog";
 
 export default function MessageDialog({ message, onClose }) {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog.open) dialog.showModal();
-  }, []);
+  const dialogRef = useModalDialog();
 
   return (
     // The close event fires for both the Close button and Esc.
