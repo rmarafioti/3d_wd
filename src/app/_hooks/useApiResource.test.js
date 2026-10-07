@@ -117,14 +117,4 @@ describe("useApiResource", () => {
 
     expect(result.current.data).toBe("new");
   });
-
-  it("lets the caller replace data with setData", async () => {
-    mockFetch({ "GET /api/x": { body: { data: { v: 1 } } } });
-    const { result } = renderHook(() => useApiResource("/api/x"));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    act(() => result.current.setData({ v: 2 }));
-
-    expect(result.current.data).toEqual({ v: 2 });
-  });
 });

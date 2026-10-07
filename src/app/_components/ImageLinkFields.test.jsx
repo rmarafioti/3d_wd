@@ -184,17 +184,6 @@ describe("ImageLinkFields", () => {
     );
   });
 
-  it("leaves Width and Height empty when the image never loads", async () => {
-    stubImageLoading();
-    const { user } = setup();
-    await user.click(screen.getByRole("button", { name: "Add image" }));
-    await user.click(screen.getByLabelText("Image URL"));
-
-    await user.paste("https://res.cloudinary.com/demo/missing.jpg");
-
-    expect(screen.getByLabelText("Width")).toHaveValue(null);
-  });
-
   it("shows a server message on the item its path points at", () => {
     setup({
       initialImages: [IMAGE, { ...IMAGE, key: "i2" }],

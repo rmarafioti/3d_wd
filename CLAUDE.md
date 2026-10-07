@@ -225,9 +225,10 @@ Write a test when the code carries a rule that someone could break without notic
 
 - **A spec or contract rule:** anything `docs/api.md` or `docs/flows.md` states — validation limits and messages, request shapes, the CSRF header, the 401 redirect, payload building (blank → `null`, numbers as numbers, `id` only on existing items).
 - **Branching logic:** a function or component that behaves differently by input or state (new vs existing website, active vs archived post, at vs under the image limit).
-- **Shared code:** anything in `_lib/`, `_hooks/`, or a reusable component in `_components/` — one bug there breaks every caller.
+- **Shared code:** anything in `_lib/`, `_hooks/`, or a reusable component in `_components/` gets coverage, directly or through a flow test — one bug there breaks every caller.
 - **A security or one-time rule:** credentials never kept in hook state, the reveal modal blocking Esc, credentials still revealed if a dialog closes mid-request.
 - **A bug that was fixed:** write the failing test first, then fix the code, so it can't come back.
+- **One layer is enough:** if a flow test already proves a behaviour through the real code (a page or form test running the real hook), don't repeat it in a unit test of the piece. Test the piece directly only for what the flow can't reach (edge states, stale responses, security rules).
 
 Don't write a test for: static markup with no logic, styling, a constant (`roles.js`), a one-line pass-through (`useAuth`), or Next.js/React behaviour itself. A page made only of tested pieces needs a test only for the wiring it adds (e.g. the archive confirm → status request → route to `/dashboard` flow).
 

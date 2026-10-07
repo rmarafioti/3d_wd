@@ -1,15 +1,13 @@
 // Tests for WebsitePicker (docs/flows.md → WebsitePicker): "Add new website" by default, picking
 // an existing website fills and locks the fields, switching back clears and unlocks them, and
-// toWebsitePayload reports { websiteId } or the trimmed new-website details.
+// backend field messages show next to their fields. toWebsitePayload is covered through the
+// CreateAccountForm payload tests.
 
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import WebsitePicker, {
-  EMPTY_WEBSITE,
-  toWebsitePayload,
-} from "./WebsitePicker";
+import WebsitePicker, { EMPTY_WEBSITE } from "./WebsitePicker";
 
 const WEBSITES = [
   {
@@ -113,27 +111,5 @@ describe("WebsitePicker", () => {
     expect(
       screen.getByLabelText("Website URL").nextElementSibling,
     ).toHaveTextContent("Must be a valid URL starting with https://");
-  });
-});
-
-describe("toWebsitePayload", () => {
-  it("reports only the id for an existing website", () => {
-    expect(
-      toWebsitePayload({
-        websiteId: "w1",
-        websiteName: "Stevie The Dog",
-        websiteUrl: "https://x.com",
-      }),
-    ).toEqual({ websiteId: "w1" });
-  });
-
-  it("reports the trimmed name and URL for a new website", () => {
-    expect(
-      toWebsitePayload({
-        websiteId: "",
-        websiteName: "  Stevie  ",
-        websiteUrl: " https://x.com ",
-      }),
-    ).toEqual({ websiteName: "Stevie", websiteUrl: "https://x.com" });
   });
 });

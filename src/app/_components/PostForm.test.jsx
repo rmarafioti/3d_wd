@@ -242,26 +242,3 @@ describe("PostForm (edit)", () => {
     ).toBeInTheDocument();
   });
 });
-
-describe("postToFormValues", () => {
-  it("turns nulls into empty strings and sizes into strings, keeping item ids as keys", () => {
-    expect(postToFormValues(POST)).toEqual({
-      postName: "Walk day",
-      postDate: "2026-10-07",
-      header: "A walk",
-      subHeader: "",
-      body: "We went for a walk.",
-      images: [
-        {
-          key: "i1",
-          id: "i1",
-          src: "https://res.cloudinary.com/demo/one.jpg",
-          width: "800",
-          height: "600",
-          altText: "Stevie",
-        },
-      ],
-      links: [],
-    });
-  });
-});

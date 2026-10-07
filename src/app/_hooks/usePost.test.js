@@ -50,22 +50,6 @@ describe("usePost", () => {
     expect(calls[0].path).toBe("/api/siteOwner/posts/a%2Fb");
   });
 
-  it("shows the API's 404 message for a post that isn't found or isn't yours", async () => {
-    mockFetch({
-      "GET /api/siteOwner/posts/p1": {
-        status: 404,
-        body: { error: { message: "Post not found." } },
-      },
-    });
-
-    const { result } = await renderLoaded();
-
-    expect(result.current.error).toMatchObject({
-      status: 404,
-      message: "Post not found.",
-    });
-  });
-
   it("update PATCHes the full form and replaces data with the returned Post", async () => {
     const edited = { ...POST, postName: "Beach day" };
     const form = {

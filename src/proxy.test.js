@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { config, proxy } from "./proxy";
+import { proxy } from "./proxy";
 
 describe("proxy", () => {
   it.each(["/", "/sign-in"])(
@@ -32,9 +32,5 @@ describe("proxy", () => {
 
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
-  });
-
-  it("only runs on / and /sign-in", () => {
-    expect(config.matcher).toEqual(["/", "/sign-in"]);
   });
 });

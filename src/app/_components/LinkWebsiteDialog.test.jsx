@@ -1,5 +1,6 @@
 // Tests for LinkWebsiteDialog (docs/flows.md → Link a Website), run through the real
-// useAccounts hook: the title, the request path and body, and that an error keeps the picker.
+// useAccounts hook: the request path and body, that an error keeps the picker, and Close.
+// The title is covered by the admin page tests.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -42,17 +43,6 @@ function setup(postRoute) {
 }
 
 describe("LinkWebsiteDialog", () => {
-  it("opens titled with the account's name", () => {
-    setup({ body: { data: {} } });
-
-    expect(screen.getByRole("dialog")).toHaveAttribute("open");
-    expect(
-      screen.getByRole("heading", {
-        name: "Link a website to Richard Marafioti",
-      }),
-    ).toBeInTheDocument();
-  });
-
   it("POSTs { websiteId } to the account's websites path and hands the response to onSuccess", async () => {
     const response = { website: STEVIE };
     const { user, calls, onSuccess } = setup({

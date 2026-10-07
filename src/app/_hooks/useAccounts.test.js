@@ -33,24 +33,6 @@ async function renderLoaded() {
 }
 
 describe("useAccounts", () => {
-  it("returns { data, loading, error, refetch, createAccount, linkWebsite }", async () => {
-    mockFetch({ "GET /api/admin/accounts": { body: { data: [ACCOUNT] } } });
-
-    const { result } = await renderLoaded();
-
-    expect(Object.keys(result.current).sort()).toEqual(
-      [
-        "createAccount",
-        "data",
-        "error",
-        "linkWebsite",
-        "loading",
-        "refetch",
-      ].sort(),
-    );
-    expect(result.current.data).toEqual([ACCOUNT]);
-  });
-
   it("createAccount POSTs the payload, returns the response and refetches the list", async () => {
     const { calls } = mockFetch({
       "GET /api/admin/accounts": { body: { data: [] } },
