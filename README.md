@@ -39,6 +39,7 @@ Set:
 
 ```
 npm run dev     # starts the app on http://localhost:3000
+npm test        # runs the unit test suite once (npm run test:watch to re-run on save)
 ```
 
 The backend must be running locally (see the backend README) for sign-in and the dashboards to work.

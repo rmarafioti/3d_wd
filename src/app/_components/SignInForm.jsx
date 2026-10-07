@@ -27,6 +27,8 @@ export default function SignInForm({ expired }) {
       router.replace(HOME_BY_ROLE[role]);
     } catch (err) {
       setError(err);
+      // Esc may have closed "Signing in…" while waiting; reopen it so the error is seen.
+      if (!dialogRef.current.open) dialogRef.current.showModal();
     }
   }
 

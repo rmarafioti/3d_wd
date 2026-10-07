@@ -18,6 +18,7 @@ Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on R
 - Auth - Google Identity Services via `@react-oauth/google`
 - Fetch - custom hooks (useEffect / useState) on top of one shared `apiFetch()`
 - State Handling - React Context (auth only)
+- Testing - Vitest + React Testing Library (jsdom)
 
 ## Project Architecture
 
@@ -25,6 +26,9 @@ Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on R
 root
 ├── src/
 │   ├── proxy.js                  *redirects signed-in users away from / and /sign-in
+│   ├── test/
+│   │   ├── setup.js              *jest-dom matchers, cleanup, <dialog> polyfill for jsdom
+│   │   └── helpers.js            *mockFetch (the only fake network) and other browser-edge helpers
 │   └── app/
 │       ├── _components/          *all one-time and reusable components, e.g.
 │       │                          AuthButton.jsx, WebsitePicker.jsx,
@@ -62,11 +66,12 @@ root
 ├── .env.example
 ├── .prettierrc
 ├── next.config.mjs               *dev-only rewrite of /api/* to the local backend
+├── vitest.config.mjs             *test config (jsdom, setup file, mocks reset per test)
 ├── CLAUDE.md                     *project context, loaded automatically every session
 └── README.md                     *human-facing overview and local setup
 ```
 
-\*underscore all folders that are excluded from routing
+\*underscore all folders that are excluded from routing. Every tested file has its `*.test.js(x)` next to it (see Unit Tests).
 
 ## Build Order
 
@@ -81,7 +86,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
 
 ## Role Ownership Check Rule
 
@@ -200,7 +205,7 @@ A review is read-only. It produces findings; it never edits code. Fixes are thei
 6. **Docs match code.** CLAUDE.md (architecture tree, hook list, Progress line), `docs/flows.md` and `README.md` describe what is actually in the repo. Fix whichever side is wrong; if the spec is right and the code differs, that's a bug finding.
 7. **Architecture rules still hold.** Re-run the Anti-Patterns list and the Workflow Checklist "Checks after building" against the code: `apiFetch` only, the `{ data, loading, error }` hook shape, dialogs, no persisted credentials, the static landing page, client-side dashboards, no aesthetic styling.
 8. **Every data view handles every state.** Loading, error (the API's `error.message`), empty ("No posts yet." etc.), and a backend rejection of a form that passed frontend validation.
-9. **Tooling is clean.** `npm run lint`, `npm run format` (no diff) and `npm run build` all pass.
+9. **Tooling is clean.** `npm test`, `npm run lint`, `npm run format` (no diff) and `npm run build` all pass.
 
 ### Output
 
@@ -209,6 +214,38 @@ Return the findings as a list, most important first. Each finding has: the file 
 ### Scope
 
 A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md, `docs/` and `README.md`. A per-step review (the self-review in Workflow Checklist) covers only that step's diff, plus anything the diff duplicates or makes dead elsewhere.
+
+## Unit Tests
+
+Vitest + React Testing Library (jsdom). `npm test` runs the suite once; `npm run test:watch` while working. Tests are a gate, not decoration: a failing test blocks a commit the same as a failing build.
+
+### When a test is justified
+
+Write a test when the code carries a rule that someone could break without noticing:
+
+- **A spec or contract rule:** anything `docs/api.md` or `docs/flows.md` states — validation limits and messages, request shapes, the CSRF header, the 401 redirect, payload building (blank → `null`, numbers as numbers, `id` only on existing items).
+- **Branching logic:** a function or component that behaves differently by input or state (new vs existing website, active vs archived post, at vs under the image limit).
+- **Shared code:** anything in `_lib/`, `_hooks/`, or a reusable component in `_components/` — one bug there breaks every caller.
+- **A security or one-time rule:** credentials never kept in hook state, the reveal modal blocking Esc, credentials still revealed if a dialog closes mid-request.
+- **A bug that was fixed:** write the failing test first, then fix the code, so it can't come back.
+
+Don't write a test for: static markup with no logic, styling, a constant (`roles.js`), a one-line pass-through (`useAuth`), or Next.js/React behaviour itself. A page made only of tested pieces needs a test only for the wiring it adds (e.g. the archive confirm → status request → route to `/dashboard` flow).
+
+### The pattern every test follows
+
+- **Location and naming:** the test sits next to the file it tests, `Name.test.jsx` / `name.test.js` (`page.test.jsx` next to a `page.js` is not a route). One `describe` per unit; each `it` reads as a behaviour sentence: `it("disables Submit until every required field is valid")`.
+- **Arrange → Act → Assert,** separated by a blank line. One behaviour per test.
+- **Test behaviour, not implementation:** render, interact the way a user would (`@testing-library/user-event`), and assert on what the user sees or what was sent to the API. Never assert on internal state or component internals.
+- **Query by accessibility:** `getByRole`, `getByLabelText`, `getByText`, in that order of preference; scope with `within(...)` when a label appears twice. No `data-testid` and no CSS selectors.
+- **Mock only the edges:**
+  - The network, through `mockFetch` in `src/test/helpers.js`, so the real `apiFetch` runs. Forms are tested through their real hook where one exists (e.g. `CreateAccountForm` with `useAccounts`).
+  - `next/navigation` (router spies, `useParams`) and third-party UI (`@react-oauth/google`'s button).
+  - Browser APIs jsdom lacks or can't fake: `window.location` (`stubLocation`), image loading (a stubbed `Image`), Esc on a dialog (`pressEscape`). `<dialog>` itself is polyfilled in `src/test/setup.js`.
+  - A component's own callback props may be `vi.fn()` spies — they are its interface. Nothing else in our own code is mocked.
+- **Responses come from the contract:** mock bodies use the shapes and messages in `docs/api.md`, copied word for word, so a test fails if the code drifts from the contract.
+- **Independent:** no shared mutable state between tests; mocks and stubbed globals reset after each test (`vitest.config.mjs`). Tests pass in any order and alone.
+- **No snapshots.** They pass by default and nobody reads the diff.
+- **Same rules as the rest of the code:** Code Style and Code Review apply to test files too — header comment, no dead tests, true test names.
 
 ## Workflow Checklist
 
@@ -225,6 +262,7 @@ A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md,
   - No aesthetic styling added
   - Test: verified in the browser, not just Postman
   - Self-review the diff against Code Review → Checklist
+  - `npm test` green; new or changed logic has tests per Unit Tests
 - Only commit once code is reviewed, approved and all validation and tests are green
 - Commit, push and open a PR; Rich merges it on GitHub
 - If the step touches both repos, write a cross-repo handoff (see below)
