@@ -7,21 +7,17 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useModalDialog } from "../_hooks/useModalDialog";
 
 export default function CredentialRevealModal({
   website,
   credentials,
   onClose,
 }) {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog();
   // Confirms on the button that the copy worked.
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog.open) dialog.showModal();
-  }, []);
 
   function handleClose() {
     dialogRef.current.close();

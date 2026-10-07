@@ -4,9 +4,14 @@
 
 // Deliberately loose (something@something.something); the backend has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HTTPS_MESSAGE = "Must be a valid URL starting with https://";
 
 export function isBlank(value) {
   return (value ?? "").trim() === "";
+}
+
+export function isTooLong(value, max) {
+  return (value ?? "").trim().length > max;
 }
 
 export function isValidEmail(value) {
@@ -19,17 +24,6 @@ export function isHttpsUrl(value) {
   } catch {
     return false;
   }
-}
-
-// Validates a WebsitePicker value. A picked existing website needs nothing more; a new
-// website needs a name and an https:// URL. Returns { fieldName: message } for each failure.
-export function validateWebsite({ websiteId, websiteName, websiteUrl }) {
-  const errors = {};
-  if (websiteId) return errors;
-  if (isBlank(websiteName)) errors.websiteName = "A website name is required";
-  if (!isHttpsUrl(websiteUrl))
-    errors.websiteUrl = "A valid URL starting with https:// is required";
-  return errors;
 }
 
 // A real calendar date in YYYY-MM-DD form. The round trip through Date rejects dates that
@@ -52,7 +46,17 @@ export function isWholeNumberInRange(value, min, max) {
   return number >= min && number <= max;
 }
 
-const HTTPS_MESSAGE = "Must be a valid URL starting with https://";
+// Validates a WebsitePicker value. A picked existing website needs nothing more; a new
+// website needs a name and an https:// URL. Returns { fieldName: message } for each failure.
+// These messages are the ones docs/flows.md lists for Create an Account.
+export function validateWebsite({ websiteId, websiteName, websiteUrl }) {
+  const errors = {};
+  if (websiteId) return errors;
+  if (isBlank(websiteName)) errors.websiteName = "A website name is required";
+  if (!isHttpsUrl(websiteUrl))
+    errors.websiteUrl = "A valid URL starting with https:// is required";
+  return errors;
+}
 
 // Messages below match the backend's field messages word for word.
 
@@ -66,7 +70,7 @@ export function validateImage({ src, width, height, altText }) {
   if (!isWholeNumberInRange(height, 1, 10000))
     errors.height = "Height must be a whole number between 1 and 10000.";
   if (isBlank(altText)) errors.altText = "Alt text is required.";
-  else if (altText.trim().length > 200)
+  else if (isTooLong(altText, 200))
     errors.altText = "Alt text must be 200 characters or fewer.";
   return errors;
 }
@@ -75,7 +79,7 @@ export function validateImage({ src, width, height, altText }) {
 export function validateLink({ name, url }) {
   const errors = {};
   if (isBlank(name)) errors.name = "Link name is required.";
-  else if (name.trim().length > 100)
+  else if (isTooLong(name, 100))
     errors.name = "Link name must be 100 characters or fewer.";
   if (isBlank(url)) errors.url = "Link URL is required.";
   else if (!isHttpsUrl(url)) errors.url = HTTPS_MESSAGE;
@@ -92,16 +96,16 @@ export function validatePost(
   if (requireWebsite && isBlank(websiteId))
     errors.websiteId = "Website is required.";
   if (isBlank(postName)) errors.postName = "Post name is required.";
-  else if (postName.trim().length > 100)
+  else if (isTooLong(postName, 100))
     errors.postName = "Post name must be 100 characters or fewer.";
   if (!isBlank(postDate) && !isValidDate(postDate))
     errors.postDate = "Enter a valid date (YYYY-MM-DD).";
-  if ((header ?? "").trim().length > 150)
+  if (isTooLong(header, 150))
     errors.header = "Header must be 150 characters or fewer.";
-  if ((subHeader ?? "").trim().length > 200)
+  if (isTooLong(subHeader, 200))
     errors.subHeader = "Sub header must be 200 characters or fewer.";
   if (isBlank(body)) errors.body = "Body is required.";
-  else if (body.trim().length > 5000)
+  else if (isTooLong(body, 5000))
     errors.body = "Body must be 5000 characters or fewer.";
   return errors;
 }

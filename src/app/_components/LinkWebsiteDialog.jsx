@@ -9,11 +9,13 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useModalDialog } from "../_hooks/useModalDialog";
 import WebsitePicker, {
   EMPTY_WEBSITE,
   toWebsitePayload,
 } from "./WebsitePicker";
+import SubmitErrors from "./SubmitErrors";
 import { validateWebsite } from "../_lib/validation";
 
 export default function LinkWebsiteDialog({
@@ -23,17 +25,12 @@ export default function LinkWebsiteDialog({
   onSuccess,
   onClose,
 }) {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog();
   const [website, setWebsite] = useState(EMPTY_WEBSITE);
   // Fields the admin has left at least once; only their messages are shown.
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog.open) dialog.showModal();
-  }, []);
 
   const errors = validateWebsite(website);
   const isValid = Object.keys(errors).length === 0;
@@ -45,7 +42,8 @@ export default function LinkWebsiteDialog({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    // Validate again on click, in case anything changed since the last render.
+    // The button is disabled while invalid or submitting; this also catches a second submit
+    // that lands before the re-render.
     if (!isValid || submitting) return;
 
     setSubmitting(true);
@@ -78,14 +76,11 @@ export default function LinkWebsiteDialog({
           Submit
         </button>
 
-        {Object.entries(errors)
-          .filter(([field]) => touched[field])
-          .map(([field, message]) => (
-            <p key={field}>{message}</p>
-          ))}
-        {serverError && <p>{serverError.message}</p>}
-        {/* There is no websiteId input, so this field message goes with the general error. */}
-        {fieldErrors.websiteId && <p>{fieldErrors.websiteId}</p>}
+        <SubmitErrors
+          errors={errors}
+          touched={touched}
+          serverError={serverError}
+        />
       </form>
 
       <button type="button" onClick={() => dialogRef.current.close()}>

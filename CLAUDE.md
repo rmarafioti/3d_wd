@@ -31,13 +31,15 @@ root
 │       │                          CredentialRevealModal.jsx, ImageLinkFields.jsx,
 │       │                          ConfirmDialog.jsx, SignInForm.jsx,
 │       │                          MessageDialog.jsx, CreateAccountForm.jsx,
-│       │                          AccountList.jsx
+│       │                          AccountList.jsx, LinkWebsiteDialog.jsx,
+│       │                          SubmitErrors.jsx, PostForm.jsx, PostList.jsx
 │       ├── _context/
 │       │   └── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
 │       ├── _hooks/               *all hooks used
 │       ├── _layout/              *Navbar.jsx (holds AuthButton) and Footer.jsx
 │       ├── _lib/
 │       │   ├── apiFetch.js       *the only place fetch is called
+│       │   ├── roles.js          *HOME_BY_ROLE: each role's dashboard route
 │       │   └── validation.js     *frontend copy of the docs/api.md validation rules
 │       ├── _styling/             *all module.css files
 │       ├── sign-in/
@@ -79,7 +81,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done (frontend step 3 in PR #3, step 5 in PR #5; step 6, Link a Website, on `feat/step-6-link-website`), so the MVP Build Order is complete. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
 
 ## Role Ownership Check Rule
 
@@ -128,6 +130,8 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `useWebsites()` \*site owner: their own websites, each with post summaries
 - `usePost(id)` \*site owner: a single post; also exposes `update` and `setStatus`
 - `usePosts()` \*site owner: creation only (`create`)
+- `useApiResource(path)` \*internal: the shared GET / ignore-stale / 401 / `refetch` logic behind `useAccounts`, `useAllWebsites`, `useWebsites` and `usePost`; never called by components directly
+- `useModalDialog()` \*not a data hook: returns the ref for a `<dialog>` that opens with `showModal()` on mount
 
 Every data-fetching hook returns the same shape, plus whichever mutations are relevant to that resource: `{ data, loading, error }`. Without a library enforcing this automatically, consistency has to come from discipline — if one hook returns `{ posts, isLoading }` and another returns `{ data, error }`, every component consuming them needs to remember which shape it's dealing with. One shape, everywhere. Mutations return the API's `data` on success and throw the API error on failure. After a successful mutation, refetch the list it affects: list hooks also expose `refetch()` for this, and keep their current `data` while refetching so the list doesn't flash back to "Loading…".
 

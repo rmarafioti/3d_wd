@@ -3,41 +3,14 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { apiFetch } from "../_lib/apiFetch";
+import { useApiResource } from "./useApiResource";
 
 export function useAccounts() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // Bumping this key re-runs the fetch effect; current data stays visible meanwhile.
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    // Ignore a response that arrives after this effect was cleaned up
-    // (React Strict Mode runs effects twice in development).
-    let ignore = false;
-
-    apiFetch("/api/admin/accounts")
-      .then((accounts) => {
-        if (ignore) return;
-        setData(accounts);
-        setError(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        // On a 401, apiFetch is already redirecting to /sign-in; keep showing loading.
-        if (ignore || err.status === 401) return;
-        setError(err);
-        setLoading(false);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [reloadKey]);
-
-  const refetch = useCallback(() => setReloadKey((key) => key + 1), []);
+  const { data, loading, error, refetch } = useApiResource(
+    "/api/admin/accounts",
+  );
 
   // payload: { name, email, websiteId } or { name, email, websiteName, websiteUrl }.
   // Returns { account, website, credentials? } without keeping it: the one-time credentials

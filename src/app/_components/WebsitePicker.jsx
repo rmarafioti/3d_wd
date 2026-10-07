@@ -22,7 +22,7 @@ export default function WebsitePicker({
   value,
   onChange,
   onBlur,
-  fieldErrors = {},
+  fieldErrors,
 }) {
   const id = useId();
   const isExisting = value.websiteId !== "";
@@ -66,7 +66,7 @@ export default function WebsitePicker({
         readOnly={isExisting}
         value={value.websiteName}
         onChange={(e) => onChange({ ...value, websiteName: e.target.value })}
-        onBlur={() => onBlur?.("websiteName")}
+        onBlur={() => onBlur("websiteName")}
       />
       {fieldErrors.websiteName && <p>{fieldErrors.websiteName}</p>}
 
@@ -78,7 +78,7 @@ export default function WebsitePicker({
         readOnly={isExisting}
         value={value.websiteUrl}
         onChange={(e) => onChange({ ...value, websiteUrl: e.target.value })}
-        onBlur={() => onBlur?.("websiteUrl")}
+        onBlur={() => onBlur("websiteUrl")}
       />
       {fieldErrors.websiteUrl && <p>{fieldErrors.websiteUrl}</p>}
     </fieldset>

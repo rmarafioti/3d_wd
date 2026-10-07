@@ -4,63 +4,36 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { apiFetch } from "../_lib/apiFetch";
+import { useApiResource } from "./useApiResource";
 
 export function usePost(id) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // Ignore a response that arrives after this effect was cleaned up
-    // (React Strict Mode runs effects twice in development).
-    let ignore = false;
-
-    apiFetch(`/api/siteOwner/posts/${encodeURIComponent(id)}`)
-      .then((post) => {
-        if (ignore) return;
-        setData(post);
-        setError(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        // On a 401, apiFetch is already redirecting to /sign-in; keep showing loading.
-        if (ignore || err.status === 401) return;
-        setError(err);
-        setLoading(false);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [id]);
+  const path = `/api/siteOwner/posts/${encodeURIComponent(id)}`;
+  const { data, loading, error, setData } = useApiResource(path);
 
   // payload: the full edit form { postName, body, header, subHeader, postDate, images, links }.
   // Returns the updated Post. Throws the ApiError on failure.
   const update = useCallback(
     async (payload) => {
-      const post = await apiFetch(
-        `/api/siteOwner/posts/${encodeURIComponent(id)}`,
-        { method: "PATCH", body: payload },
-      );
+      const post = await apiFetch(path, { method: "PATCH", body: payload });
       setData(post);
       return post;
     },
-    [id],
+    [path, setData],
   );
 
   // active: true (Make Post Active) or false (Archive Post). Returns the updated Post.
   const setStatus = useCallback(
     async (active) => {
-      const post = await apiFetch(
-        `/api/siteOwner/posts/${encodeURIComponent(id)}/status`,
-        { method: "PATCH", body: { active } },
-      );
+      const post = await apiFetch(`${path}/status`, {
+        method: "PATCH",
+        body: { active },
+      });
       setData(post);
       return post;
     },
-    [id],
+    [path, setData],
   );
 
   return { data, loading, error, update, setStatus };
