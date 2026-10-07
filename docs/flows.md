@@ -188,7 +188,7 @@ Images and links use `ImageLinkFields`: items can be edited in place, deleted, o
 
 On submit → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, body, header, subHeader, postDate, images, links }` — existing images/links carry their `id`, new ones don't, removed ones are simply absent. The backend updates the post's fields and reconciles images and links (update existing, insert new, delete missing) in one transaction; if any part fails nothing is edited.
 
-- **Success:** close the form dialog; a dialog reads "Post {postName} has been updated"; on close, route to `/dashboard`.
+- **Success:** close the form dialog; a dialog reads "Post {postName} has been updated"; on close, stay on `/dashboard/post/{id}`, which already shows the updated post so the site owner can check the edit landed.
 - **Failure:** the backend's `error.message` renders inside the form dialog; entered data stays intact.
 
 ### Archive / Make Active

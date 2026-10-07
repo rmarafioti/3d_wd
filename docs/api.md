@@ -12,7 +12,7 @@ The single agreement between the frontend and backend repos. The backend copy (`
 - All request and response fields are camelCase. snake_case exists only inside the database (Prisma `@map`).
 - Dates and times are ISO 8601 strings. `postDate` is a date only: `YYYY-MM-DD`.
 - Success response: `{ "data": ... }`
-- Error response: `{ "error": { "message": "...", "fields": { "fieldName": "message" } } }` — `fields` is only present on validation errors (400) so the form can show a message next to each field.
+- Error response: `{ "error": { "message": "...", "fields": { "fieldName": "message" } } }` — `fields` is only present on validation errors (400) so the form can show a message next to each field. Each key is the full path to the input, joined with dots: top-level fields use their own name (`email`, `postName`), items in a list use their index (`images.0.src`, `links.2.url`), and a list-level error such as too many items uses the list name (`images`, `links`).
 - Every `POST`, `PATCH` and `DELETE` must carry the header `X-CSRF-Protection: 1`, or the backend returns `403`. `GET` requests do not need it.
 - Every request from the app frontend is sent with `credentials: 'include'` (the session cookie). This is handled once, in the frontend's `apiFetch()`.
 - `api_key_hash` and `webhook_secret_encrypted` never appear in any response.

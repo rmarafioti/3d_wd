@@ -79,7 +79,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–4 are done and merged (frontend step 3 in PR #3). The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Next up: step 5, Post CRUD. Its frontend half waits for the backend's handoff. Update this line as each step merges.
+**Progress:** steps 1–5 are done (frontend step 3 in PR #3; step 5, Post CRUD, on `feat/step-5-post-crud`). The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Next up: step 6, Link a Website. Update this line as each step merges.
 
 ## Role Ownership Check Rule
 
