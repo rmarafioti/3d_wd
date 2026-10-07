@@ -2,6 +2,7 @@
 
 @docs/flows.md
 @docs/api.md
+@docs/scaling.md
 
 ## Project Overview
 
@@ -62,7 +63,8 @@ root
 │       └── page.js               *main landing page (static)
 ├── docs/                         *reference docs, imported from CLAUDE.md
 │   ├── flows.md                  *behavioral spec for every flow
-│   └── api.md                    *API contract (copy of backend docs/endpoints.md)
+│   ├── api.md                    *API contract (copy of backend docs/endpoints.md)
+│   └── scaling.md                *rules for changing the app after the MVP (frontend side)
 ├── .env.example
 ├── .prettierrc
 ├── next.config.mjs               *dev-only rewrite of /api/* to the local backend
@@ -86,7 +88,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (branch `docs/scaling-rules`). The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges.
 
 ## Role Ownership Check Rule
 
@@ -251,7 +253,7 @@ Don't write a test for: static markup with no logic, styling, a constant (`roles
 ## Workflow Checklist
 
 - Branch from an up-to-date `main`
-- Check relevant spec
+- Check relevant spec (`docs/flows.md`, `docs/api.md`, and `docs/scaling.md` for any change after the MVP)
 - Create a plan in plan mode (EnterPlanMode / ExitPlanMode), never as a chat message
 - On approved, build
 - Checks after building:
