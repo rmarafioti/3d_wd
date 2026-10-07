@@ -1,6 +1,5 @@
 // useAccounts (admin): all site owner accounts with their websites.
-// Returns { data, loading, error, refetch } plus createAccount. (linkWebsite arrives with
-// Build Order step 6.)
+// Returns { data, loading, error, refetch } plus createAccount and linkWebsite.
 
 "use client";
 
@@ -55,5 +54,20 @@ export function useAccounts() {
     [refetch],
   );
 
-  return { data, loading, error, refetch, createAccount };
+  // accountId is the account's own id (not one of its websites). payload: { websiteId } or
+  // { websiteName, websiteUrl }. Returns { website, credentials? } without keeping it, for the
+  // same one-time reason as createAccount. Throws the ApiError on failure.
+  const linkWebsite = useCallback(
+    async (accountId, payload) => {
+      const result = await apiFetch(
+        `/api/admin/accounts/${accountId}/websites`,
+        { method: "POST", body: payload },
+      );
+      refetch();
+      return result;
+    },
+    [refetch],
+  );
+
+  return { data, loading, error, refetch, createAccount, linkWebsite };
 }

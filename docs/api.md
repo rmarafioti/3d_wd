@@ -74,19 +74,20 @@ Notes:
 
 ### Error messages the frontend displays
 
-| Situation                                                               | Code | `error.message`                                                       |
-| ----------------------------------------------------------------------- | ---- | --------------------------------------------------------------------- |
-| Login: no account, inactive account, unverified or invalid Google token | 401  | You are not authorized to log in.                                     |
-| Any session route with no / expired / invalid cookie                    | 401  | Your session expired, please sign in again.                           |
-| Wrong role                                                              | 403  | You do not have access to this page.                                  |
-| Missing CSRF header                                                     | 403  | Request blocked.                                                      |
-| Validation failed                                                       | 400  | Please fix the highlighted fields. (+ `fields`)                       |
-| Create account: email already exists                                    | 409  | An account with this email already exists.                            |
-| New website: URL already exists                                         | 409  | A website with this URL already exists — select it from the dropdown. |
-| Link: account already linked to that website                            | 409  | This account is already linked to [Website Name].                     |
-| Website / account / post not found or not yours                         | 404  | [Website / Account / Post] not found.                                 |
-| Edit: an image or link id that isn't on this post                       | 400  | Invalid image or link.                                                |
-| Public: missing / unknown key, or inactive website                      | 401  | Invalid API key.                                                      |
+| Situation                                                               | Code | `error.message`                                                                                                    |
+| ----------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
+| Login: no account, inactive account, unverified or invalid Google token | 401  | You are not authorized to log in.                                                                                  |
+| Any session route with no / expired / invalid cookie                    | 401  | Your session expired, please sign in again.                                                                        |
+| Wrong role                                                              | 403  | You do not have access to this page.                                                                               |
+| Missing CSRF header                                                     | 403  | Request blocked.                                                                                                   |
+| Validation failed                                                       | 400  | Please fix the highlighted fields. (+ `fields`)                                                                    |
+| Create account: email already exists                                    | 409  | An account with this email already exists.                                                                         |
+| New website: URL already exists                                         | 409  | A website with this URL already exists — select it from the dropdown.                                              |
+| New website: URL belongs to an inactive website                         | 409  | A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again. |
+| Link: account already linked to that website                            | 409  | This account is already linked to [Website Name].                                                                  |
+| Website / account / post not found or not yours                         | 404  | [Website / Account / Post] not found.                                                                              |
+| Edit: an image or link id that isn't on this post                       | 400  | Invalid image or link.                                                                                             |
+| Public: missing / unknown key, or inactive website                      | 401  | Invalid API key.                                                                                                   |
 
 ### Validation rules (identical on frontend and backend)
 

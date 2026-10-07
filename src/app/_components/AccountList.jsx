@@ -1,7 +1,8 @@
 // AccountList (admin): every site owner account (active and inactive, sorted by name as the
-// API returns them) with the websites linked to each. Never shows post content.
+// API returns them) with the websites linked to each. Never shows post content. Each account has
+// a "Link a Website" button; the page owns the dialog it opens (onLink receives the account).
 
-export default function AccountList({ accounts, loading, error }) {
+export default function AccountList({ accounts, loading, error, onLink }) {
   if (error) return <p>{error.message}</p>;
   if (loading && !accounts) return <p>Loading…</p>;
   if (accounts.length === 0) return <p>No site owner accounts yet.</p>;
@@ -14,6 +15,9 @@ export default function AccountList({ accounts, loading, error }) {
             {account.name} — {account.email} —{" "}
             {account.active ? "active" : "inactive"}
           </p>
+          <button type="button" onClick={() => onLink(account)}>
+            Link a Website
+          </button>
 
           {account.websites.length === 0 ? (
             <p>No websites linked.</p>
