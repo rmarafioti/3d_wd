@@ -83,7 +83,7 @@ Notes:
 | Validation failed                                                       | 400  | Please fix the highlighted fields. (+ `fields`)                                                                    |
 | Create account: email already exists                                    | 409  | An account with this email already exists.                                                                         |
 | New website: URL already exists                                         | 409  | A website with this URL already exists — select it from the dropdown.                                              |
-| New website: URL belongs to an inactive website                         | 409  | A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate it, then try again. |
+| New website: URL belongs to an inactive website                         | 409  | A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again. |
 | Link: account already linked to that website                            | 409  | This account is already linked to [Website Name].                                                                  |
 | Website / account / post not found or not yours                         | 404  | [Website / Account / Post] not found.                                                                              |
 | Edit: an image or link id that isn't on this post                       | 400  | Invalid image or link.                                                                                             |

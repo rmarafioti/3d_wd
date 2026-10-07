@@ -106,7 +106,7 @@ The Submit button stays disabled until every required field is filled and valid.
 
 The payload is `{ name, email, websiteId }` for an existing website, or `{ name, email, websiteName, websiteUrl }` for a new one → `POST /api/admin/accounts`.
 
-- **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate it, then try again." / "Website not found."
+- **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found."
 - **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. Then clear the form and refetch the account list and website list.
 - **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." On close, clear the form and refetch the account list.
 
@@ -118,7 +118,7 @@ Gives an existing site owner another website. Clicking "Link a Website" on an ac
 
 Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/accounts/:id/websites`.
 
-- **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate it, then try again." / "Website not found." / "Account not found."
+- **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found." / "Account not found."
 - **Success, new website** (`credentials` present): close the form dialog and open `CredentialRevealModal` exactly as in Create an Account. Refetch accounts and websites.
 - **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." On close, refetch accounts.
 
