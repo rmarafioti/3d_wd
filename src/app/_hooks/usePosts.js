@@ -7,7 +7,7 @@ import { useCallback } from "react";
 import { apiFetch } from "../_lib/apiFetch";
 
 export function usePosts() {
-  // payload: { websiteId, postName, body, header, subHeader, postDate, active, images, links }.
+  // payload: { websiteId, postName, header, subHeader, postDate, active, body, links }.
   // Returns the created Post. Throws the ApiError on failure.
   const create = useCallback(
     (payload) =>

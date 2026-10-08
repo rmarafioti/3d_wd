@@ -60,7 +60,7 @@ export function validateWebsite({ websiteId, websiteName, websiteUrl }) {
 
 // Messages below match the backend's field messages word for word.
 
-// Validates one image in ImageLinkFields. Returns { fieldName: message } for each failure.
+// Validates one image element in PostBodyFields. Returns { fieldName: message } for each failure.
 export function validateImage({ src, width, height, altText }) {
   const errors = {};
   if (isBlank(src)) errors.src = "Image URL is required.";
@@ -75,7 +75,27 @@ export function validateImage({ src, width, height, altText }) {
   return errors;
 }
 
-// Validates one link in ImageLinkFields. Returns { fieldName: message } for each failure.
+// Validates one paragraph element in PostBodyFields. Only the ends are trimmed when sent, so
+// line breaks inside the text count toward the length.
+export function validateParagraph({ text }) {
+  const errors = {};
+  if (isBlank(text)) errors.text = "Paragraph is required.";
+  else if (isTooLong(text, 10000))
+    errors.text = "Paragraph must be 10000 characters or fewer.";
+  return errors;
+}
+
+// Validates the post body as a whole: it needs at least one paragraph. The 5-paragraph and
+// 5-image limits are enforced by PostBodyFields disabling its Add buttons. This message is the
+// form's own (docs/flows.md); the backend's is "Add at least one paragraph."
+export function validateBody(elements) {
+  const errors = {};
+  if (!elements.some((element) => element.type === "paragraph"))
+    errors.body = "One paragraph is required to submit a post.";
+  return errors;
+}
+
+// Validates one link in LinkFields. Returns { fieldName: message } for each failure.
 export function validateLink({ name, url }) {
   const errors = {};
   if (isBlank(name)) errors.name = "Link name is required.";
@@ -86,10 +106,11 @@ export function validateLink({ name, url }) {
   return errors;
 }
 
-// Validates the top-level fields of the Create / Edit a Post form. websiteId is only
-// checked when requireWebsite is set (Create); Edit has no Website field.
+// Validates the top-level fields of the Create / Edit a Post form (the body is checked by
+// validateBody and per element). websiteId is only checked when requireWebsite is set
+// (Create); Edit has no Website field.
 export function validatePost(
-  { websiteId, postName, postDate, header, subHeader, body },
+  { websiteId, postName, postDate, header, subHeader },
   { requireWebsite = false } = {},
 ) {
   const errors = {};
@@ -104,8 +125,5 @@ export function validatePost(
     errors.header = "Header must be 150 characters or fewer.";
   if (isTooLong(subHeader, 200))
     errors.subHeader = "Sub header must be 200 characters or fewer.";
-  if (isBlank(body)) errors.body = "Body is required.";
-  else if (isTooLong(body, 5000))
-    errors.body = "Body must be 5000 characters or fewer.";
   return errors;
 }

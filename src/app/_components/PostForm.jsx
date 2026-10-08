@@ -6,49 +6,63 @@
 // toggle, → PATCH /api/siteOwner/posts/:id with the full form.
 //
 // Opens when mounted; the parent unmounts it in onClose (Close button or Esc) or after
-// onSuccess. Frontend messages render next to their field once it has been left; backend
-// error.fields render next to their field and error.message below Submit. Nothing typed is
-// cleared on failure.
+// onSuccess. The body is edited by PostBodyFields and the links by LinkFields. Frontend messages
+// render next to their field once it has been left; backend error.fields render next to their
+// field and error.message below Submit. Nothing typed is cleared on failure.
 
 "use client";
 
 import { useState } from "react";
 import { useModalDialog } from "../_hooks/useModalDialog";
-import ImageLinkFields from "./ImageLinkFields";
+import PostBodyFields, { EMPTY_PARAGRAPH } from "./PostBodyFields";
+import LinkFields from "./LinkFields";
 import {
   isBlank,
+  validateBody,
   validateImage,
   validateLink,
+  validateParagraph,
   validatePost,
 } from "../_lib/validation";
 
+// A new post starts with one empty paragraph, since every body needs at least one.
 const EMPTY_POST = {
   postName: "",
   postDate: "",
   header: "",
   subHeader: "",
-  body: "",
-  images: [],
+  body: [{ ...EMPTY_PARAGRAPH, key: "first-paragraph" }],
   links: [],
 };
 
 // Form values for a Post loaded by usePost: nulls become "" and numbers become strings, so
-// every input is controlled. Existing images/links keep their id (and use it as their key).
+// every input is controlled. Body elements are flattened for PostBodyFields; paragraphs have
+// no id, so they get a fresh key. Existing images/links keep their id (and use it as their key).
 export function postToFormValues(post) {
   return {
     postName: post.postName,
     postDate: post.postDate ?? "",
     header: post.header ?? "",
     subHeader: post.subHeader ?? "",
-    body: post.body,
-    images: post.images.map((image) => ({
-      key: image.id,
-      id: image.id,
-      src: image.src,
-      width: String(image.width),
-      height: String(image.height),
-      altText: image.altText,
-    })),
+    body: post.body.map((element) => {
+      if (element.type === "paragraph") {
+        return {
+          key: crypto.randomUUID(),
+          type: "paragraph",
+          text: element.text,
+        };
+      }
+      const { image } = element;
+      return {
+        key: image.id,
+        type: "image",
+        id: image.id,
+        src: image.src,
+        width: String(image.width),
+        height: String(image.height),
+        altText: image.altText,
+      };
+    }),
     links: post.links.map((link) => ({
       key: link.id,
       id: link.id,
@@ -63,22 +77,34 @@ function optional(value) {
   return isBlank(value) ? null : value.trim();
 }
 
-// Builds the request body. Width/height become JSON numbers (the backend rejects strings),
-// the client-only key is dropped, and id is only sent for items that already exist.
-function toPayload(values) {
+// One body element in the contract's shape. A paragraph is trimmed only at its ends, so the
+// line breaks inside it are kept.
+function toElementPayload(element) {
+  if (element.type === "paragraph") {
+    return { type: "paragraph", text: element.text.trim() };
+  }
+  const { id, src, width, height, altText } = element;
   return {
-    postName: values.postName.trim(),
-    body: values.body.trim(),
-    header: optional(values.header),
-    subHeader: optional(values.subHeader),
-    postDate: optional(values.postDate),
-    images: values.images.map(({ id, src, width, height, altText }) => ({
+    type: "image",
+    image: {
       ...(id ? { id } : {}),
       src: src.trim(),
       width: Number(width),
       height: Number(height),
       altText: altText.trim(),
-    })),
+    },
+  };
+}
+
+// Builds the request body. Width/height become JSON numbers (the backend rejects strings),
+// the client-only key is dropped, and id is only sent for images and links that already exist.
+function toPayload(values) {
+  return {
+    postName: values.postName.trim(),
+    header: optional(values.header),
+    subHeader: optional(values.subHeader),
+    postDate: optional(values.postDate),
+    body: values.body.map(toElementPayload),
     links: values.links.map(({ id, name, url }) => ({
       ...(id ? { id } : {}),
       name: name.trim(),
@@ -107,7 +133,6 @@ export default function PostForm({
   const [header, setHeader] = useState(initialValues.header);
   const [subHeader, setSubHeader] = useState(initialValues.subHeader);
   const [body, setBody] = useState(initialValues.body);
-  const [images, setImages] = useState(initialValues.images);
   const [links, setLinks] = useState(initialValues.links);
   const [active, setActive] = useState(true);
 
@@ -117,12 +142,20 @@ export default function PostForm({
   const [serverError, setServerError] = useState(null);
 
   const errors = validatePost(
-    { websiteId, postName, postDate, header, subHeader, body },
+    { websiteId, postName, postDate, header, subHeader },
     { requireWebsite: isCreate },
   );
+  // A body element's own messages only show once its fields are left, so a blank element added
+  // and never filled in gets a note by Submit explaining why Submit is disabled.
+  const bodyIncomplete = body.some((element) => {
+    const validate =
+      element.type === "paragraph" ? validateParagraph : validateImage;
+    return Object.keys(validate(element)).length > 0;
+  });
   const isValid =
     Object.keys(errors).length === 0 &&
-    images.every((image) => Object.keys(validateImage(image)).length === 0) &&
+    Object.keys(validateBody(body)).length === 0 &&
+    !bodyIncomplete &&
     links.every((link) => Object.keys(validateLink(link)).length === 0);
   const fieldErrors = serverError?.fields ?? {};
 
@@ -135,14 +168,16 @@ export default function PostForm({
     return fieldErrors[field];
   }
 
-  // Adding or deleting an image/link shifts the indices the server's "images.N.field" messages
-  // point at, so those messages are dropped rather than shown on the wrong item.
+  // Adding, moving or deleting a body element or link shifts the indices the server's
+  // "body.N.…" / "links.N.…" messages point at, so those messages are dropped rather than shown
+  // on the wrong item. The list's own message ("body", "links") is dropped too: it was about
+  // the list as it was, which has now changed.
   function clearItemErrors() {
     setServerError((current) => {
       if (!current?.fields) return current;
       const fields = Object.fromEntries(
         Object.entries(current.fields).filter(
-          ([path]) => !/^(images|links)\.\d+\./.test(path),
+          ([path]) => !/^(body|links)(\.\d+\.|$)/.test(path),
         ),
       );
       return { ...current, fields };
@@ -161,7 +196,6 @@ export default function PostForm({
       header,
       subHeader,
       body,
-      images,
       links,
     });
 
@@ -254,20 +288,15 @@ export default function PostForm({
         />
         {messageFor("subHeader") && <p>{messageFor("subHeader")}</p>}
 
-        <label htmlFor="post-body">Body</label>
-        <textarea
-          id="post-body"
-          maxLength={5000}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onBlur={() => touch("body")}
+        <PostBodyFields
+          body={body}
+          setBody={setBody}
+          fieldErrors={fieldErrors}
+          onReindex={clearItemErrors}
         />
-        {messageFor("body") && <p>{messageFor("body")}</p>}
 
-        <ImageLinkFields
-          images={images}
+        <LinkFields
           links={links}
-          setImages={setImages}
           setLinks={setLinks}
           fieldErrors={fieldErrors}
           onReindex={clearItemErrors}
@@ -285,6 +314,11 @@ export default function PostForm({
           </>
         )}
 
+        {bodyIncomplete && (
+          <p>
+            Complete or delete each paragraph and image in the body to submit.
+          </p>
+        )}
         <button type="submit" disabled={!isValid || submitting}>
           Submit
         </button>

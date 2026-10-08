@@ -12,7 +12,7 @@ export function usePost(id) {
   const path = `/api/siteOwner/posts/${encodeURIComponent(id)}`;
   const { data, loading, error, setData } = useApiResource(path);
 
-  // payload: the full edit form { postName, body, header, subHeader, postDate, images, links }.
+  // payload: the full edit form { postName, header, subHeader, postDate, body, links }.
   // Returns the updated Post. Throws the ApiError on failure.
   const update = useCallback(
     async (payload) => {

@@ -13,12 +13,11 @@ const POST = {
   postName: "Walk day",
   header: null,
   subHeader: null,
-  body: "We went for a walk.",
   postDate: null,
   active: true,
   createdAt: "2026-10-01T00:00:00.000Z",
   updatedAt: "2026-10-01T00:00:00.000Z",
-  images: [],
+  body: [{ type: "paragraph", text: "We went for a walk." }],
   links: [],
 };
 
@@ -54,11 +53,10 @@ describe("usePost", () => {
     const edited = { ...POST, postName: "Beach day" };
     const form = {
       postName: "Beach day",
-      body: POST.body,
       header: null,
       subHeader: null,
       postDate: null,
-      images: [],
+      body: POST.body,
       links: [],
     };
     const { calls } = mockFetch({

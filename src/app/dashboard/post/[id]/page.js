@@ -99,24 +99,29 @@ export default function PostPage() {
         <dd>{post.header ?? "—"}</dd>
         <dt>Sub Header</dt>
         <dd>{post.subHeader ?? "—"}</dd>
-        <dt>Body</dt>
-        <dd>{post.body}</dd>
       </dl>
 
-      <h2>Images</h2>
-      {post.images.length === 0 ? (
-        <p>No images.</p>
-      ) : (
-        <ul>
-          {post.images.map((image) => (
-            <li key={image.id}>
-              <a href={image.src} target="_blank" rel="noopener noreferrer">
-                {image.src}
-              </a>{" "}
-              — {image.altText} — {image.width} × {image.height}
-            </li>
-          ))}
-        </ul>
+      <h2>Body</h2>
+      {/* Elements have no id and this list is read-only, so the index is a stable key. */}
+      {post.body.map((element, index) =>
+        element.type === "paragraph" ? (
+          // pre-line keeps the line breaks the site owner typed (docs/api.md → Shapes).
+          <p key={index} style={{ whiteSpace: "pre-line" }}>
+            {element.text}
+          </p>
+        ) : (
+          <p key={index}>
+            <a
+              href={element.image.src}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {element.image.src}
+            </a>{" "}
+            — {element.image.altText} — {element.image.width} ×{" "}
+            {element.image.height}
+          </p>
+        ),
       )}
 
       <h2>Links</h2>

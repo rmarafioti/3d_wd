@@ -145,48 +145,61 @@ The "Create a Post" button on `/dashboard` opens a dialog with a form:
 - **Post Date** — optional date input. Help text: "Shown on your website so visitors know how recent the post is."
 - **Header** — optional, max 150. The headline shown on the website.
 - **Sub Header** — optional, max 200.
-- **Body** — required, max 5000.
-- **Images and Links** — `ImageLinkFields` (see below).
+- **Body** — `PostBodyFields` (see below): an ordered list of paragraphs and images. Starts with one empty paragraph.
+- **Links** — `LinkFields` (see below).
 - **Active** — a toggle, on by default. Off saves the post as inactive so it can be made active later.
 
 All fields go through the same frontend validation used everywhere else — UX only, never the actual gate. Field messages render next to their field; the Submit button stays disabled until the form is valid.
 
-On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, body, header, subHeader, postDate, active, images, links }` (empty optional fields sent as `null`, empty lists as `[]`). The backend independently re-validates every field, confirms the website belongs to the session's account, and creates the post with its images and links in one transaction.
+On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, header, subHeader, postDate, active, body, links }` (empty optional fields sent as `null`, an empty link list as `[]`; `body` is the elements in order, `{ type: 'paragraph', text }` or `{ type: 'image', image: { src, width, height, altText } }`). The backend independently re-validates every field, confirms the website belongs to the session's account, and creates the post with its body and links in one transaction.
 
 - **Success:** close the form dialog; a dialog reads "Post {postName} has been created"; on close, refetch `useWebsites()` so the new post appears on `/dashboard`.
 - **Failure:** the backend's `error.message` renders inside the form dialog (and `error.fields` next to their fields). The form keeps everything entered — nothing needs to be retyped.
 
-### ImageLinkFields (shared by Create a Post and Edit a Post)
+### PostBodyFields (shared by Create a Post and Edit a Post)
 
-Images and links are each held in an array in the form.
+The post body is an ordered array of elements in the form, each a paragraph or an image, so the client website can interleave text and photos.
 
-- Each existing item shows its fields and a "Delete" button that removes it from the array.
-- An "Add image" / "Add link" button reveals blank fields for a new item; its "Add" button validates them and appends the item to the array.
+- Elements show in body order. Each has "Move up" (disabled on the first), "Move down" (disabled on the last) and "Delete" buttons. For screen readers each button is named by the element's type and its position among that type: "Move paragraph 2 up", "Move image 1 down", "Delete paragraph 1". There is no drag-to-reorder.
+- "Add paragraph" / "Add image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid. Because an element's messages only show once its fields are left, the note "Complete or delete each paragraph and image in the body to submit." shows above Submit while any element is incomplete.
+- **Paragraph:** a textarea (required, max 10000) with the help text "Line breaks you add will show on your website." Only the ends are trimmed when sent, so the line breaks inside are kept.
 - **Image fields:** Image URL (`src`, required, `https://`), Width and Height (required, whole numbers 1–10000), Alt Text (required, max 200). Images are hosted in the site owner's own Cloudinary account; the site owner pastes the Cloudinary URL.
 - **Auto-fill width/height:** when a valid `https://` URL is entered, load it in the background with `new Image()`; on load, fill Width and Height from `naturalWidth` / `naturalHeight`. The fields stay editable. If the image fails to load, leave them empty for manual entry (the site owner can read the dimensions in Cloudinary).
+- **One paragraph is required.** While the body has no paragraph, "Add image" is disabled, the text "One paragraph is required to submit a post." shows above the Add buttons, and Submit is disabled. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
+- Limits: maximum **5 paragraphs** and **5 images** per post. At the limit, the matching button is disabled with the text "Maximum of 5 paragraphs" / "Maximum of 5 images".
+- Backend field messages show next to their element: `body.N.text` under that paragraph, `body.N.image.<field>` under that image field, `body.N.type` under that element, and `body` (list-level) at the top. Adding, moving or deleting an element shifts the indexes, so the backend's `body.N.…` messages are dropped then rather than shown on the wrong element; the list-level `body` message is dropped too, since the list it described has changed.
+- In Edit, existing images keep their `image.id`; new images and every paragraph have no id.
+
+### LinkFields (shared by Create a Post and Edit a Post)
+
+Links are held in an array in the form.
+
+- Each existing link shows its fields and a "Delete" button that removes it from the array. For screen readers the button is named by position: "Delete link 2".
+- An "Add link" button reveals blank fields for a new link; its "Add" button validates them and appends the link to the array, and "Cancel" drops them.
 - **Link fields:** Link Name (required, max 100) and URL (required, `https://`).
-- Limits: maximum **5 images** and **10 links** per post. At the limit, the matching "Add" button is disabled with the text "Maximum of 5 images" / "Maximum of 10 links".
-- Items appear in the order they were added. There is no drag-to-reorder.
-- In Edit, existing items keep their `id` in the array; new items have no `id`.
+- Limit: maximum **10 links** per post. At the limit, the "Add link" button is disabled with the text "Maximum of 10 links".
+- Links appear in the order they were added. There is no drag-to-reorder.
+- In Edit, existing links keep their `id` in the array; new links have no `id`.
+- Backend field messages show next to their link (`links.N.name`, `links.N.url`), and a list-level `links` message above the list. Adding or deleting a link drops them, as in `PostBodyFields`.
 
 ### Get a Post by ID
 
 Hook used: `usePost(id)` → `GET /api/siteOwner/posts/:id`
 
-Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, body, every image (with its alt text and dimensions) and every link, plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and "Archive Post" / "Make Post Active". A 404 shows "Post not found." with a link back to `/dashboard`.
+Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line`, each image with its alt text and dimensions) and every link, plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and "Archive Post" / "Make Post Active". A 404 shows "Post not found." with a link back to `/dashboard`.
 
 ### Edit a Post
 
 Hook used: `usePost(id)` (`update`)
 
-On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its images and links), with two differences:
+On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body and links), with two differences:
 
 - **No Website field** — a post never moves to another website. The website name is shown as read-only text.
 - **No Active toggle** — status changes only through the Archive / Make Active button.
 
-Images and links use `ImageLinkFields`: items can be edited in place, deleted, or added, with the same validation and limits.
+The body uses `PostBodyFields` and links use `LinkFields`: elements and links can be edited in place, deleted, or added (and body elements moved), with the same validation and limits.
 
-On submit → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, body, header, subHeader, postDate, images, links }` — existing images/links carry their `id`, new ones don't, removed ones are simply absent. The backend updates the post's fields and reconciles images and links (update existing, insert new, delete missing) in one transaction; if any part fails nothing is edited.
+On submit → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, header, subHeader, postDate, body, links }` — `body` in its new order, existing images carry their `image.id` and existing links their `id`, new ones don't, removed ones are simply absent. The backend updates the post's fields, rewrites the body in the new order and reconciles images and links (update existing, insert new, delete missing) in one transaction; if any part fails nothing is edited.
 
 - **Success:** close the form dialog; a dialog reads "Post {postName} has been updated"; on close, stay on `/dashboard/post/{id}`, which already shows the updated post so the site owner can check the edit landed.
 - **Failure:** the backend's `error.message` renders inside the form dialog; entered data stays intact.
