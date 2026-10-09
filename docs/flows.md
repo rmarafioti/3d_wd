@@ -161,12 +161,18 @@ On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, header, s
 The post body is an ordered array of elements in the form, each a paragraph or an image, so the client website can interleave text and photos.
 
 - Elements show in body order. Each has "Move up" (disabled on the first), "Move down" (disabled on the last) and "Delete" buttons. For screen readers each button is named by the element's type and its position among that type: "Move paragraph 2 up", "Move image 1 down", "Delete paragraph 1". There is no drag-to-reorder.
-- "Add paragraph" / "Add image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid. Because an element's messages only show once its fields are left, the note "Complete or delete each paragraph and image in the body to submit." shows above Submit while any element is incomplete.
+- "Add paragraph" / "Add image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid.
+- **Complete it before adding another.** While a paragraph is blank, "Add paragraph" is disabled; while an image is incomplete, "Add image" is disabled. The buttons keep their labels.
 - **Paragraph:** a textarea (required, max 10000) with the help text "Line breaks you add will show on your website." Only the ends are trimmed when sent, so the line breaks inside are kept.
 - **Image fields:** Image URL (`src`, required, `https://`), Width and Height (required, whole numbers 1–10000), Alt Text (required, max 200). Images are hosted in the site owner's own Cloudinary account; the site owner pastes the Cloudinary URL.
 - **Auto-fill width/height:** when a valid `https://` URL is entered, load it in the background with `new Image()`; on load, fill Width and Height from `naturalWidth` / `naturalHeight`. The fields stay editable. If the image fails to load, leave them empty for manual entry (the site owner can read the dimensions in Cloudinary).
-- **One paragraph is required.** While the body has no paragraph, "Add image" is disabled, the text "One paragraph is required to submit a post." shows above the Add buttons, and Submit is disabled. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
-- Limits: maximum **5 paragraphs** and **5 images** per post. At the limit, the matching button is disabled with the text "Maximum of 5 paragraphs" / "Maximum of 5 images".
+- **One paragraph is required.** While no paragraph has text (the first one is still blank, or every paragraph was deleted), "Add image" and Submit are disabled. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
+- Limits: maximum **5 paragraphs** and **5 images** per post. At the limit the matching Add button is disabled; its label doesn't change.
+- **Notes after the last element**, above the Add buttons, explain whatever is disabled, one line each, in this order:
+  - "One paragraph is required to submit a post." while no paragraph has text.
+  - "Complete or delete paragraph to submit." while a paragraph is blank and another has text.
+  - "Complete or delete image to submit." while an image is incomplete.
+  - "Maximum of 5 paragraphs" / "Maximum of 5 images" at the limit.
 - Backend field messages show next to their element: `body.N.text` under that paragraph, `body.N.image.<field>` under that image field, `body.N.type` under that element, and `body` (list-level) at the top. Adding, moving or deleting an element shifts the indexes, so the backend's `body.N.…` messages are dropped then rather than shown on the wrong element; the list-level `body` message is dropped too, since the list it described has changed.
 - In Edit, existing images keep their `image.id`; new images and every paragraph have no id.
 
@@ -177,7 +183,7 @@ Links are held in an array in the form.
 - Each existing link shows its fields and a "Delete" button that removes it from the array. For screen readers the button is named by position: "Delete link 2".
 - An "Add link" button reveals blank fields for a new link; its "Add" button validates them and appends the link to the array, and "Cancel" drops them.
 - **Link fields:** Link Name (required, max 100) and URL (required, `https://`).
-- Limit: maximum **10 links** per post. At the limit, the "Add link" button is disabled with the text "Maximum of 10 links".
+- Limit: maximum **10 links** per post. At the limit the "Add link" button is disabled (its label doesn't change) and "Maximum of 10 links" shows after the last link.
 - Links appear in the order they were added. There is no drag-to-reorder.
 - In Edit, existing links keep their `id` in the array; new links have no `id`.
 - Backend field messages show next to their link (`links.N.name`, `links.N.url`), and a list-level `links` message above the list. Adding or deleting a link drops them, as in `PostBodyFields`.

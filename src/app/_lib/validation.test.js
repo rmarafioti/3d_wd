@@ -218,15 +218,23 @@ describe("validateParagraph", () => {
 });
 
 describe("validateBody", () => {
-  it("accepts a body with at least one paragraph", () => {
+  it("accepts a body with at least one paragraph that has text", () => {
     expect(
-      validateBody([{ type: "image" }, { type: "paragraph", text: "" }]),
+      validateBody([
+        { type: "image" },
+        { type: "paragraph", text: "" },
+        { type: "paragraph", text: "Hi" },
+      ]),
     ).toEqual({});
   });
 
   it.each([
     ["an empty body", []],
     ["an image-only body", [{ type: "image" }]],
+    [
+      "a body whose only paragraph is blank",
+      [{ type: "paragraph", text: " " }],
+    ],
   ])("rejects %s", (_, elements) => {
     expect(validateBody(elements)).toEqual({
       body: "One paragraph is required to submit a post.",

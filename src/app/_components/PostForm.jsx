@@ -14,14 +14,15 @@
 
 import { useState } from "react";
 import { useModalDialog } from "../_hooks/useModalDialog";
-import PostBodyFields, { EMPTY_PARAGRAPH } from "./PostBodyFields";
+import PostBodyFields, {
+  EMPTY_PARAGRAPH,
+  isIncompleteElement,
+} from "./PostBodyFields";
 import LinkFields from "./LinkFields";
 import {
   isBlank,
   validateBody,
-  validateImage,
   validateLink,
-  validateParagraph,
   validatePost,
 } from "../_lib/validation";
 
@@ -145,17 +146,10 @@ export default function PostForm({
     { websiteId, postName, postDate, header, subHeader },
     { requireWebsite: isCreate },
   );
-  // A body element's own messages only show once its fields are left, so a blank element added
-  // and never filled in gets a note by Submit explaining why Submit is disabled.
-  const bodyIncomplete = body.some((element) => {
-    const validate =
-      element.type === "paragraph" ? validateParagraph : validateImage;
-    return Object.keys(validate(element)).length > 0;
-  });
   const isValid =
     Object.keys(errors).length === 0 &&
     Object.keys(validateBody(body)).length === 0 &&
-    !bodyIncomplete &&
+    !body.some(isIncompleteElement) &&
     links.every((link) => Object.keys(validateLink(link)).length === 0);
   const fieldErrors = serverError?.fields ?? {};
 
@@ -314,11 +308,6 @@ export default function PostForm({
           </>
         )}
 
-        {bodyIncomplete && (
-          <p>
-            Complete or delete each paragraph and image in the body to submit.
-          </p>
-        )}
         <button type="submit" disabled={!isValid || submitting}>
           Submit
         </button>

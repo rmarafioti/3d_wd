@@ -1,6 +1,6 @@
 // Tests for PostBodyFields (docs/flows.md → PostBodyFields): adding paragraphs and images in
-// order, the one-paragraph rule, Move up / Move down / Delete, the 5-paragraph and 5-image
-// limits, width/height auto-fill (including a late load for an old URL), server messages on the
+// order, the one-paragraph rule, the "complete it before adding another" rule and its notes,
+// Move up / Move down / Delete, the 5-paragraph and 5-image limits shown as text, width/height auto-fill (including a late load for an old URL), server messages on the
 // right element, and onReindex on every add, move and delete.
 
 import { useState } from "react";
@@ -155,15 +155,61 @@ describe("PostBodyFields", () => {
     expect(onReindex).toHaveBeenCalledOnce();
   });
 
-  it("disables adding at 5 paragraphs and 5 images", () => {
-    setup({ initialBody: [...many(PARAGRAPH, 5), ...many(IMAGE, 5)] });
+  it("disables both Add buttons, with the required message, while the only paragraph is blank", () => {
+    setup({ initialBody: [{ ...PARAGRAPH, text: "" }] });
 
     expect(
-      screen.getByRole("button", { name: "Maximum of 5 paragraphs" }),
-    ).toBeDisabled();
+      screen.getByText("One paragraph is required to submit a post."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add image" })).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: "Maximum of 5 images" }),
+      screen.getByRole("button", { name: "Add paragraph" }),
     ).toBeDisabled();
+  });
+
+  it("enables both Add buttons once the paragraph has text", async () => {
+    const { user } = setup({ initialBody: [{ ...PARAGRAPH, text: "" }] });
+
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+
+    expect(
+      screen.queryByText("One paragraph is required to submit a post."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add image" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Add paragraph" })).toBeEnabled();
+  });
+
+  it("disables Add image, with a note, while an image is incomplete", () => {
+    setup({ initialBody: [PARAGRAPH, { ...IMAGE, altText: "" }] });
+
+    expect(
+      screen.getByText("Complete or delete image to submit."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add image" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add paragraph" })).toBeEnabled();
+  });
+
+  it("disables Add paragraph, with a note, while a second paragraph is blank", () => {
+    setup({ initialBody: [PARAGRAPH, { ...SECOND, text: "" }] });
+
+    expect(
+      screen.getByText("Complete or delete paragraph to submit."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add paragraph" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add image" })).toBeEnabled();
+  });
+
+  it("keeps the Add labels and shows the limits as text at 5 paragraphs and 5 images", () => {
+    setup({ initialBody: [...many(PARAGRAPH, 5), ...many(IMAGE, 5)] });
+
+    expect(screen.getByText("Maximum of 5 paragraphs")).toBeInTheDocument();
+    expect(screen.getByText("Maximum of 5 images")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add paragraph" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add image" })).toBeDisabled();
   });
 
   it("allows adding below the limits", () => {

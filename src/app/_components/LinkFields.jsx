@@ -4,7 +4,8 @@
 // Controlled by the parent form, which owns the links array and passes its React state setter
 // (setLinks) so every change is a functional update. Each link has a client-only `key` for React
 // lists (stripped before sending); links loaded for Edit also keep their real `id` so the backend
-// can reconcile them. A new link starts as a draft held here; it joins the array only when its
+// can reconcile them. At the limit "Add link" is disabled and "Maximum of 10 links" shows after
+// the last link. A new link starts as a draft held here; it joins the array only when its
 // "Add" button validates it. fieldErrors is the API's error.fields, keyed by full path
 // ("links.0.url").
 
@@ -108,9 +109,12 @@ export default function LinkFields({
           </button>
         </div>
       ) : (
-        <button type="button" disabled={full} onClick={startDraft}>
-          {full ? `Maximum of ${MAX_LINKS} links` : "Add link"}
-        </button>
+        <>
+          {full && <p>Maximum of {MAX_LINKS} links</p>}
+          <button type="button" disabled={full} onClick={startDraft}>
+            Add link
+          </button>
+        </>
       )}
     </fieldset>
   );

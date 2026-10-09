@@ -85,12 +85,17 @@ export function validateParagraph({ text }) {
   return errors;
 }
 
-// Validates the post body as a whole: it needs at least one paragraph. The 5-paragraph and
-// 5-image limits are enforced by PostBodyFields disabling its Add buttons. This message is the
-// form's own (docs/flows.md); the backend's is "Add at least one paragraph."
+// Validates the post body as a whole: it needs at least one paragraph with text. The
+// 5-paragraph and 5-image limits are enforced by PostBodyFields disabling its Add buttons. This
+// message is the form's own (docs/flows.md); the backend's is "Add at least one paragraph."
 export function validateBody(elements) {
   const errors = {};
-  if (!elements.some((element) => element.type === "paragraph"))
+  const hasParagraph = elements.some(
+    (element) =>
+      element.type === "paragraph" &&
+      Object.keys(validateParagraph(element)).length === 0,
+  );
+  if (!hasParagraph)
     errors.body = "One paragraph is required to submit a post.";
   return errors;
 }

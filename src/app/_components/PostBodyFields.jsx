@@ -1,7 +1,8 @@
 // PostBodyFields: the post body editor shared by Create and Edit a Post. The body is an ordered
 // list of elements, each a paragraph or an image; the site owner adds, moves, and deletes them.
-// Handles validation, the limits (5 paragraphs, 5 images), the one-paragraph rule and image
-// width/height auto-fill.
+// Handles validation, the limits (5 paragraphs, 5 images), the one-paragraph rule, the
+// "complete it before adding another" rule and image width/height auto-fill. The messages that
+// explain a disabled Add button (and a disabled Submit) show after the last element.
 //
 // Controlled by the parent form, which owns the body array and passes its React state setter
 // (setBody) so every change is a functional update. That matters for auto-fill: an image load
@@ -78,6 +79,13 @@ function autoFillDimensions(patch, apply) {
   );
 }
 
+// Whether an element fails its own validation (a blank paragraph, an unfinished image).
+export function isIncompleteElement(element) {
+  const validate =
+    element.type === "paragraph" ? validateParagraph : validateImage;
+  return Object.keys(validate(element)).length > 0;
+}
+
 // The textarea for one paragraph. Its message shows once it has been left; otherwise the
 // server's message shows.
 function ParagraphField({ value, onChange, serverError }) {
@@ -114,8 +122,26 @@ export default function PostBodyFields({
   const imageCount = body.length - paragraphCount;
   const paragraphsFull = paragraphCount >= MAX_PARAGRAPHS;
   const imagesFull = imageCount >= MAX_IMAGES;
-  // "One paragraph is required to submit a post." while the body has no paragraph.
-  const bodyMessage = validateBody(body).body;
+  // Set while no paragraph has text; images can't be added until one does.
+  const paragraphRequired = validateBody(body).body;
+  // A new element of a type can't be added while one of that type is still incomplete.
+  const paragraphIncomplete = body.some(
+    (element) => element.type === "paragraph" && isIncompleteElement(element),
+  );
+  const imageIncomplete = body.some(
+    (element) => element.type === "image" && isIncompleteElement(element),
+  );
+  // Shown after the last element. The paragraph note is left out while paragraphRequired
+  // already says the same thing.
+  const notes = [
+    paragraphRequired,
+    !paragraphRequired &&
+      paragraphIncomplete &&
+      "Complete or delete paragraph to submit.",
+    imageIncomplete && "Complete or delete image to submit.",
+    paragraphsFull && `Maximum of ${MAX_PARAGRAPHS} paragraphs`,
+    imagesFull && `Maximum of ${MAX_IMAGES} images`,
+  ].filter(Boolean);
 
   // Each element's name for screen readers, counted within its type ("paragraph 2", "image 1"),
   // so its Move up / Move down / Delete buttons can be told apart.
@@ -215,22 +241,22 @@ export default function PostBodyFields({
         </div>
       ))}
 
-      {bodyMessage && <p>{bodyMessage}</p>}
+      {notes.map((note) => (
+        <p key={note}>{note}</p>
+      ))}
       <button
         type="button"
-        disabled={paragraphsFull}
+        disabled={paragraphsFull || paragraphIncomplete}
         onClick={() => addElement(EMPTY_PARAGRAPH)}
       >
-        {paragraphsFull
-          ? `Maximum of ${MAX_PARAGRAPHS} paragraphs`
-          : "Add paragraph"}
+        Add paragraph
       </button>
       <button
         type="button"
-        disabled={imagesFull || Boolean(bodyMessage)}
+        disabled={imagesFull || Boolean(paragraphRequired) || imageIncomplete}
         onClick={() => addElement(EMPTY_IMAGE)}
       >
-        {imagesFull ? `Maximum of ${MAX_IMAGES} images` : "Add image"}
+        Add image
       </button>
     </fieldset>
   );

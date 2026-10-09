@@ -93,12 +93,11 @@ describe("LinkFields", () => {
     expect(onReindex).not.toHaveBeenCalled();
   });
 
-  it("disables adding at 10 links", () => {
+  it("keeps the Add link label and shows the limit as text at 10 links", () => {
     setup({ initialLinks: many(LINK, 10) });
 
-    expect(
-      screen.getByRole("button", { name: "Maximum of 10 links" }),
-    ).toBeDisabled();
+    expect(screen.getByText("Maximum of 10 links")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add link" })).toBeDisabled();
   });
 
   it("allows adding below the limit", () => {

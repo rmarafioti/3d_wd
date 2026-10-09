@@ -168,24 +168,6 @@ describe("PostForm (create)", () => {
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
-  it("notes by Submit when a body element is left blank, until it is deleted", async () => {
-    const { user } = renderCreate();
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
-
-    await user.click(screen.getByRole("button", { name: "Add image" }));
-
-    const note =
-      "Complete or delete each paragraph and image in the body to submit.";
-    expect(screen.getByText(note)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
-
-    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
-
-    expect(screen.queryByText(note)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
-  });
-
   it("shows a backend error below Submit, its field messages next to fields, and keeps the input", async () => {
     const onSubmit = vi.fn().mockRejectedValue({
       message: "Please fix the highlighted fields.",
