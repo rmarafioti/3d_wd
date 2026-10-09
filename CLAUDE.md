@@ -89,11 +89,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1, post body as ordered paragraph/image elements, is on branch `feat/post-elements` (backend branch of the same name): built, code-reviewed, review fixes applied, unit tests green, committed locally but **not pushed**. Remaining, in order:
-
-1. Rich runs the full browser UI test against the local backend on `feat/post-elements`. The backend side is uncommitted and not yet tested in Postman.
-2. With Rich's OK: push, open the PR, and change this line to the PR number.
-3. Write the cross-repo handoff to the backend: the frontend is done, `docs/api.md` is identical to the backend's API Contract section, and the backend should commit and open its PR.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1, post body as ordered paragraph/image elements, is complete on branch `feat/post-elements` (backend branch of the same name): built, code-reviewed, browser-tested by Rich, and pushed. It awaits its PR being merged alongside the backend's. Once merged, change this line to the PR number.
 
 ## Role Ownership Check Rule
 
