@@ -1,5 +1,5 @@
 // Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Archive / Make
-// Active, Edit a Post): the 404 view, archive behind ConfirmDialog then back to /dashboard, Make
+// Active, Edit a Post): the body in order with line breaks kept, the 404 view, archive behind ConfirmDialog then back to /dashboard, Make
 // Post Active with no confirmation, a failed status change, and staying put after an edit.
 
 import { describe, expect, it, vi } from "vitest";
@@ -21,12 +21,24 @@ const POST = {
   postName: "Walk day",
   header: null,
   subHeader: null,
-  body: "We went for a walk.",
   postDate: null,
   active: true,
   createdAt: "2026-10-07T00:00:00.000Z",
   updatedAt: "2026-10-07T00:00:00.000Z",
-  images: [],
+  body: [
+    { type: "paragraph", text: "We went\nfor a walk." },
+    {
+      type: "image",
+      image: {
+        id: "i1",
+        src: "https://res.cloudinary.com/demo/one.jpg",
+        width: 800,
+        height: 600,
+        altText: "Stevie",
+      },
+    },
+    { type: "paragraph", text: "The end." },
+  ],
   links: [],
 };
 
@@ -46,6 +58,23 @@ function statusCalls(calls) {
 }
 
 describe("Post page", () => {
+  it("renders the body in order, keeping a paragraph's line breaks", async () => {
+    await setup();
+
+    const paragraph = screen.getByText(/We went/);
+    const image = screen.getByRole("link", {
+      name: "https://res.cloudinary.com/demo/one.jpg",
+    });
+    const last = screen.getByText("The end.");
+    expect(paragraph.textContent).toBe("We went\nfor a walk.");
+    expect(paragraph.compareDocumentPosition(image)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(image.compareDocumentPosition(last)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it('shows "Post not found." with a link back to /dashboard on a 404', async () => {
     mockFetch({
       "GET /api/siteOwner/posts/p1": {

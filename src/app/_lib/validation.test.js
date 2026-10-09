@@ -1,6 +1,6 @@
 // Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with
 // messages checked word for word (docs/flows.md for Create an Account, the backend's field
-// messages for posts, images and links).
+// messages for posts, paragraphs, images and links).
 
 import { describe, expect, it } from "vitest";
 import {
@@ -10,8 +10,10 @@ import {
   isValidDate,
   isValidEmail,
   isWholeNumberInRange,
+  validateBody,
   validateImage,
   validateLink,
+  validateParagraph,
   validatePost,
   validateWebsite,
 } from "./validation";
@@ -22,7 +24,7 @@ const VALID_IMAGE = {
   height: "600",
   altText: "Stevie on the couch",
 };
-const VALID_POST = { postName: "Walk day", body: "We went for a walk." };
+const VALID_POST = { postName: "Walk day" };
 
 describe("isBlank", () => {
   it.each([undefined, null, "", "   ", "\n\t"])(
@@ -200,6 +202,46 @@ describe("validateLink", () => {
   });
 });
 
+describe("validateParagraph", () => {
+  it("requires text that isn't blank after trimming", () => {
+    expect(validateParagraph({ text: " \n " })).toEqual({
+      text: "Paragraph is required.",
+    });
+  });
+
+  it("allows 10000 characters and rejects 10001", () => {
+    expect(validateParagraph({ text: "a".repeat(10000) })).toEqual({});
+    expect(validateParagraph({ text: "a".repeat(10001) })).toEqual({
+      text: "Paragraph must be 10000 characters or fewer.",
+    });
+  });
+});
+
+describe("validateBody", () => {
+  it("accepts a body with at least one paragraph that has text", () => {
+    expect(
+      validateBody([
+        { type: "image" },
+        { type: "paragraph", text: "" },
+        { type: "paragraph", text: "Hi" },
+      ]),
+    ).toEqual({});
+  });
+
+  it.each([
+    ["an empty body", []],
+    ["an image-only body", [{ type: "image" }]],
+    [
+      "a body whose only paragraph is blank",
+      [{ type: "paragraph", text: " " }],
+    ],
+  ])("rejects %s", (_, elements) => {
+    expect(validateBody(elements)).toEqual({
+      body: "One paragraph is required to submit a post.",
+    });
+  });
+});
+
 describe("validatePost", () => {
   it("accepts the required fields alone", () => {
     expect(validatePost(VALID_POST)).toEqual({});
@@ -215,9 +257,8 @@ describe("validatePost", () => {
   });
 
   it("reports missing required fields with the backend's messages", () => {
-    expect(validatePost({ postName: " ", body: "" })).toEqual({
+    expect(validatePost({ postName: " " })).toEqual({
       postName: "Post name is required.",
-      body: "Body is required.",
     });
   });
 
@@ -225,13 +266,11 @@ describe("validatePost", () => {
     expect(
       validatePost({
         postName: "a".repeat(101),
-        body: "a".repeat(5001),
         header: "a".repeat(151),
         subHeader: "a".repeat(201),
       }),
     ).toEqual({
       postName: "Post name must be 100 characters or fewer.",
-      body: "Body must be 5000 characters or fewer.",
       header: "Header must be 150 characters or fewer.",
       subHeader: "Sub header must be 200 characters or fewer.",
     });
@@ -241,7 +280,6 @@ describe("validatePost", () => {
     expect(
       validatePost({
         postName: "a".repeat(100),
-        body: "a".repeat(5000),
         header: "a".repeat(150),
         subHeader: "a".repeat(200),
       }),

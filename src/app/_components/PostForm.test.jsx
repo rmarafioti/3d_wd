@@ -1,6 +1,7 @@
 // Tests for PostForm, the Create a Post and Edit a Post form (docs/flows.md): the Website
-// pre-select, the request payload (blank → null, numbers as numbers, ids only on existing items,
-// no client key), what Edit leaves out, and backend errors including dropped item messages.
+// pre-select, the request payload (body elements in order, blank → null, numbers as numbers,
+// image ids kept across a move, no client key), the one-paragraph rule, what Edit leaves out,
+// and backend errors including dropped element messages.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -23,14 +24,27 @@ const POST = {
   postName: "Walk day",
   header: "A walk",
   subHeader: null,
-  body: "We went for a walk.",
   postDate: "2026-10-07",
   active: true,
   createdAt: "2026-10-07T00:00:00.000Z",
   updatedAt: "2026-10-07T00:00:00.000Z",
-  images: [IMAGE],
+  body: [
+    { type: "paragraph", text: "We went for a walk." },
+    { type: "image", image: IMAGE },
+  ],
   links: [],
 };
+
+// Fills the blank image element that "Add image" appended.
+async function fillImage(user) {
+  await user.type(
+    screen.getByLabelText("Image URL"),
+    "https://res.cloudinary.com/demo/one.jpg",
+  );
+  await user.type(screen.getByLabelText("Width"), "800");
+  await user.type(screen.getByLabelText("Height"), "600");
+  await user.type(screen.getByLabelText("Alt Text"), "Stevie");
+}
 
 function renderCreate({ websites = [STEVIE], onSubmit = vi.fn() } = {}) {
   const onSuccess = vi.fn();
@@ -81,23 +95,19 @@ describe("PostForm (create)", () => {
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
-  it("sends blank optional fields as null, sizes as numbers, the Active toggle, and no client key", async () => {
-    const onSubmit = vi
-      .fn()
-      .mockResolvedValue({ ...POST, postName: "Walk day" });
+  it("sends the body in order, line breaks kept, blank optional fields as null, sizes as numbers, the Active toggle, and no client key", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
     await user.type(screen.getByLabelText("Post Name"), "  Walk day ");
     await user.type(screen.getByLabelText("Header"), "   ");
-    await user.type(screen.getByLabelText("Body"), "We went for a walk.");
-    await user.click(screen.getByRole("button", { name: "Add image" }));
     await user.type(
-      screen.getByLabelText("Image URL"),
-      "https://res.cloudinary.com/demo/one.jpg",
+      screen.getByLabelText("Paragraph"),
+      "  We went{Enter}for a walk. ",
     );
-    await user.type(screen.getByLabelText("Width"), "800");
-    await user.type(screen.getByLabelText("Height"), "600");
-    await user.type(screen.getByLabelText("Alt Text"), "Stevie");
-    await user.click(screen.getByRole("button", { name: "Add" }));
+    await user.click(screen.getByRole("button", { name: "Add image" }));
+    await fillImage(user);
+    await user.click(screen.getByRole("button", { name: "Add paragraph" }));
+    await user.type(screen.getAllByLabelText("Paragraph")[1], "The end.");
     await user.click(screen.getByLabelText("Active"));
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
@@ -106,36 +116,51 @@ describe("PostForm (create)", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       websiteId: "w1",
       postName: "Walk day",
-      body: "We went for a walk.",
       header: null,
       subHeader: null,
       postDate: null,
       active: false,
-      images: [
+      body: [
+        { type: "paragraph", text: "We went\nfor a walk." },
         {
-          src: "https://res.cloudinary.com/demo/one.jpg",
-          width: 800,
-          height: 600,
-          altText: "Stevie",
+          type: "image",
+          image: {
+            src: "https://res.cloudinary.com/demo/one.jpg",
+            width: 800,
+            height: 600,
+            altText: "Stevie",
+          },
         },
+        { type: "paragraph", text: "The end." },
       ],
       links: [],
     });
   });
 
-  it("keeps Submit disabled while a saved image is invalid", async () => {
+  it("keeps Submit disabled while the body has no paragraph", async () => {
     const { user } = renderCreate();
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Body"), "Hi");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
     await user.click(screen.getByRole("button", { name: "Add image" }));
-    await user.type(
-      screen.getByLabelText("Image URL"),
-      "https://res.cloudinary.com/demo/one.jpg",
+    await fillImage(user);
+    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+
+    await user.click(
+      screen.getByRole("button", { name: "Delete paragraph 1" }),
     );
-    await user.type(screen.getByLabelText("Width"), "800");
-    await user.type(screen.getByLabelText("Height"), "600");
-    await user.type(screen.getByLabelText("Alt Text"), "Stevie");
-    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
+    expect(
+      screen.getByText("One paragraph is required to submit a post."),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps Submit disabled while an image is invalid", async () => {
+    const { user } = renderCreate();
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+    await user.click(screen.getByRole("button", { name: "Add image" }));
+    await fillImage(user);
     expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
 
     await user.clear(screen.getByLabelText("Width"));
@@ -150,7 +175,7 @@ describe("PostForm (create)", () => {
     });
     const { user, onSuccess } = renderCreate({ onSubmit });
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Body"), "Hi");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
@@ -180,9 +205,10 @@ describe("PostForm (edit)", () => {
     expect(screen.getByLabelText("Width")).toHaveValue(800);
   });
 
-  it("sends the full form: existing items keep their id, new items have none, no websiteId or active", async () => {
+  it("sends the full form: a moved image keeps its id, new links have none, no websiteId or active", async () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
+    await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
     await user.click(screen.getByRole("button", { name: "Add link" }));
     await user.type(screen.getByLabelText("Link Name"), "Instagram");
     await user.type(
@@ -196,43 +222,67 @@ describe("PostForm (edit)", () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit.mock.calls[0][0]).toEqual({
       postName: "Walk day",
-      body: "We went for a walk.",
       header: "A walk",
       subHeader: null,
       postDate: "2026-10-07",
-      images: [
+      body: [
         {
-          id: "i1",
-          src: "https://res.cloudinary.com/demo/one.jpg",
-          width: 800,
-          height: 600,
-          altText: "Stevie",
+          type: "image",
+          image: {
+            id: "i1",
+            src: "https://res.cloudinary.com/demo/one.jpg",
+            width: 800,
+            height: 600,
+            altText: "Stevie",
+          },
         },
+        { type: "paragraph", text: "We went for a walk." },
       ],
       links: [{ name: "Instagram", url: "https://instagram.com/stevie" }],
     });
   });
 
-  it("drops item messages from the server once deleting an item shifts the indexes", async () => {
-    const post = {
-      ...POST,
-      images: [
-        IMAGE,
-        { ...IMAGE, id: "i2" },
-        { ...IMAGE, id: "i3", altText: "Third" },
-      ],
-    };
+  it("leaves a deleted image out of the body", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderEdit({ onSubmit });
+
+    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].body).toEqual([
+      { type: "paragraph", text: "We went for a walk." },
+    ]);
+  });
+
+  it("drops the body's list-level server message once the body changes", async () => {
+    const onSubmit = vi.fn().mockRejectedValue({
+      message: "Please fix the highlighted fields.",
+      fields: { body: "Add at least one paragraph." },
+    });
+    const { user } = renderEdit({ onSubmit });
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await screen.findByText("Add at least one paragraph.");
+
+    await user.click(screen.getByRole("button", { name: "Add paragraph" }));
+
+    expect(
+      screen.queryByText("Add at least one paragraph."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("drops element messages from the server once moving an element shifts the indexes", async () => {
     const onSubmit = vi.fn().mockRejectedValue({
       message: "Please fix the highlighted fields.",
       fields: {
-        "images.1.altText": "Alt text must be 200 characters or fewer.",
+        "body.1.image.altText": "Alt text must be 200 characters or fewer.",
       },
     });
-    const { user } = renderEdit({ post, onSubmit });
+    const { user } = renderEdit({ onSubmit });
     await user.click(screen.getByRole("button", { name: "Submit" }));
     await screen.findByText("Alt text must be 200 characters or fewer.");
 
-    await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
 
     expect(
       screen.queryByText("Alt text must be 200 characters or fewer."),
