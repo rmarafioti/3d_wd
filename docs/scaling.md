@@ -45,6 +45,7 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 
 Follow the backend's template (backend → 5). On the frontend side:
 
+- New work after the MVP is tracked as numbered features in `CLAUDE.md`, each one its own branch → plan → approval → build → verify → PR, the same rhythm as the Build Order (backend → 9).
 - Spec first: `docs/api.md`, and `docs/flows.md` for UI flows.
 - The backend deploys first (section 3).
 - Data goes through a new hook in `_hooks/` with the `{ data, loading, error }` shape.
@@ -53,9 +54,10 @@ Follow the backend's template (backend → 5). On the frontend side:
 
 ## 9. Environments
 
-- A staging environment (a Railway service and a Vercel preview with its own database) is planned before the first breaking change (backend → 8).
+- A staging environment (a Railway service and a Vercel preview with its own database) is planned before the first breaking change after the production launch (backend → 8).
 - A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
 
 ## 10. Keeping this file in step
 
 - A change to a backend rule this file depends on (deploy order, pagination shape, classification) updates this file in the same piece of work, with a handoff.
+- After a change to the contract, the schema or a flow, run the Documentation Sync audit (`CLAUDE.md`) once both repos have merged it (backend → 9; the audit is run from the backend repo, see `CLAUDE.md` → Documentation Sync).

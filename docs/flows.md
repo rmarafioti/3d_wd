@@ -23,10 +23,11 @@ On the landing page and sign-in page the context is always empty (signed-in user
 
 - While loading: render nothing but a minimal "Loading…" text.
 - 401: handled by `apiFetch` (redirect to `/sign-in?expired=1`).
+- Any other error: show the API's `error.message` instead of the page.
 - Role matches the section: store the user in AuthContext and render the page.
 - Role doesn't match: site owner on `/admin` → `/dashboard`; admin on `/dashboard` → `/admin`.
 
-**Session expiry:** any 401 from any call other than login → `apiFetch` clears AuthContext and routes to `/sign-in?expired=1`. The sign-in page, seeing `expired=1`, shows the text "Your session expired, please sign in again." above the Google button.
+**Session expiry:** any 401 from any call other than login → `apiFetch` does a full page load to `/sign-in?expired=1`, which resets all client state and so clears AuthContext. The sign-in page, seeing `expired=1`, shows the text "Your session expired, please sign in again." above the Google button.
 
 **Local development setup (done once during Build Order step 2):**
 
@@ -69,13 +70,13 @@ The admin dashboard has two sections on one page:
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name, URL, "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
+Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name, URL, "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
 
 ### Get All Websites (admin)
 
 Hook used: `useAllWebsites()` → `GET /api/admin/websites`
 
-Fetches every active website (`id`, `websiteName`, `url`). Because this request is database wide it is admin-only. It powers the `WebsitePicker` in Create an Account and Link a Website, so the administrator can attach an existing website instead of creating a duplicate. Refetch after a successful create/link that created a new website.
+Fetches every active website (`id`, `websiteName`, `url`, `active` — a `WebsiteSummary`). Because this request is database wide it is admin-only. It powers the `WebsitePicker` in Create an Account and Link a Website, so the administrator can attach an existing website instead of creating a duplicate. Refetch after a successful create/link that created a new website.
 
 ### WebsitePicker (shared by Create an Account and Link a Website)
 
@@ -107,8 +108,8 @@ The Submit button stays disabled until every required field is filled and valid.
 The payload is `{ name, email, websiteId }` for an existing website, or `{ name, email, websiteName, websiteUrl }` for a new one → `POST /api/admin/accounts`.
 
 - **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found."
-- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. Then clear the form and refetch the account list and website list.
-- **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." On close, clear the form and refetch the account list.
+- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. The account list refetches as soon as the request succeeds; on close, clear the form and refetch the website list.
+- **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." The account list refetches as soon as the request succeeds; on close, clear the form.
 
 ### Link a Website
 
@@ -119,8 +120,8 @@ Gives an existing site owner another website. Clicking "Link a Website" on an ac
 Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/accounts/:id/websites`.
 
 - **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found." / "Account not found."
-- **Success, new website** (`credentials` present): close the form dialog and open `CredentialRevealModal` exactly as in Create an Account. Refetch accounts and websites.
-- **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." On close, refetch accounts.
+- **Success, new website** (`credentials` present): close the form dialog and open `CredentialRevealModal` exactly as in Create an Account. The account list refetches as soon as the request succeeds; the website list refetches when the reveal closes.
+- **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." The account list refetches as soon as the request succeeds.
 
 ---
 
@@ -130,7 +131,7 @@ Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/ac
 
 Hook used: `useWebsites()` → `GET /api/siteOwner/websites`
 
-Fetches the site owner's active websites, each with summaries of its posts. Rendered as a list per website: the `websiteName` is the heading, and under it each post shows its `postName`, its `postDate` if set, and an indicator pill reading "active" or "inactive". Posts are ordered by `createdAt`, newest first (as returned). Each `postName` links to `/dashboard/post/{id}`. A website with no posts shows "No posts yet." A "Create a Post" button sits at the top of the page.
+Fetches the site owner's active websites, each with summaries of its posts. Rendered as a list per website: the `websiteName` is the heading, and under it each post shows its `postName`, its `postDate` if set, and an indicator pill reading "active" or "inactive". Posts are ordered by `createdAt`, newest first (as returned). Each `postName` links to `/dashboard/post/{id}`. A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
 
 The same data also fills the website dropdown in Create a Post.
 

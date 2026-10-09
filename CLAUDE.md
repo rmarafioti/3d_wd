@@ -68,8 +68,11 @@ root
 │   └── scaling.md                *rules for changing the app after the MVP (frontend side)
 ├── .env.example
 ├── .prettierrc
+├── eslint.config.mjs             *ESLint (Next.js config), run with npm run lint
+├── jsconfig.json                 *the `@/*` → `src/*` import alias
 ├── next.config.mjs               *dev-only rewrite of /api/* to the local backend
 ├── vitest.config.mjs             *test config (jsdom, setup file, mocks reset per test)
+├── AGENTS.md                     *Next.js agent notes, written and re-added by `next dev`
 ├── CLAUDE.md                     *project context, loaded automatically every session
 └── README.md                     *human-facing overview and local setup
 ```
@@ -89,7 +92,19 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1, post body as ordered paragraph/image elements, is complete on branch `feat/post-elements` (backend branch of the same name): built, code-reviewed, browser-tested by Rich, and pushed. It awaits its PR being merged alongside the backend's. Once merged, change this line to the PR number.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below.
+
+## Features
+
+New work after the MVP Build Order, numbered and named the same as in the backend's CLAUDE.md. Each one is its own branch → plan → approval → build → verify → PR (backend `docs/scaling.md` §9). Entries here describe the frontend's side.
+
+1. **Post body as elements** — both. Branch `feat/post-elements`.
+   - `PostBodyFields` edits the body as ordered paragraph and image elements: Move up / Move down, at most 5 paragraphs and 5 images, and at least one paragraph with text.
+   - `LinkFields` and the shared `ItemFields` replace `ImageLinkFields`.
+   - The post page renders the body in order, with line breaks kept.
+   - `docs/api.md` copied the new contract.
+
+   Merged in both repos (frontend PR #10, backend PR #13).
 
 ## Role Ownership Check Rule
 
@@ -122,7 +137,7 @@ A field containing just a space is still a truthy, non-empty string — it'll sl
 Local useState first — Context is for things like auth/role that genuinely span the app, not a default reach for anything async.
 
 **Never make aesthetic styling decisions:**
-No CSS frameworks, no component libraries, no color/font/spacing choices. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction.
+No CSS frameworks, no component libraries, no color/font/spacing choices. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction. The one approved exception is functional, not aesthetic: the inline `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it during his styling pass.
 
 ## Patterns and Preferences
 
@@ -147,7 +162,7 @@ Every data-fetching hook returns the same shape, plus whichever mutations are re
 `/dashboard/layout.js` and `/admin/layout.js` each call `GET /api/auth/me` on load, put the user in AuthContext, and redirect if the role doesn't match — a site owner on `/admin` goes to `/dashboard`, an admin on `/dashboard` goes to `/admin`. This is UX only; the backend enforces access on every request.
 
 **Session expiry (any 401):**
-`apiFetch` handles a 401 the same way everywhere: clear AuthContext and redirect to `/sign-in?expired=1`; the sign-in page shows "Your session expired, please sign in again." Unsaved form data is lost. Exception: the login call itself — its 401 is "You are not authorized to log in." and is shown in the sign-in dialog instead.
+`apiFetch` handles a 401 the same way everywhere: a full page load to `/sign-in?expired=1`, which resets all client state and so clears AuthContext; the sign-in page shows "Your session expired, please sign in again." Unsaved form data is lost. Exception: the login call itself — its 401 is "You are not authorized to log in." and is shown in the sign-in dialog instead.
 
 **Every pop-up is a native `<dialog>`:**
 For accessibility, every pop-up (signing in, errors, success messages, the Create/Edit Post forms, confirmations, the one-time reveal) uses a native `<dialog>` opened with `showModal()`. Every dialog has a visible Close button. Clicking outside a dialog never closes it. Esc closes ordinary dialogs (native behaviour); **only the one-time reveal blocks Esc** (handle the `cancel` event) so credentials can't be lost by an accidental keypress — it closes only with its Close button.
@@ -205,7 +220,7 @@ A review is read-only. It produces findings; it never edits code. Fixes are thei
 3. **Explicit, then DRY.** Readability wins over cleverness. But when the same logic appears a **third** time, or twice with a real risk of the copies drifting (validation rules, dialog behaviour, fetch handling), extract it into `_lib/`, `_hooks/` or `_components/`. Don't abstract for a case that doesn't exist yet. A shared piece must be simpler to read than the copies it replaces.
 4. **Reads top to bottom as a story.** Each block builds on what came before it: no forward references to helpers defined far below without reason, and no state declared far from where it's used. A reader new to the file should be able to follow it in one pass. Names carry the meaning, so comments don't have to.
 5. **Comments are necessary and true.** A misleading comment costs more than a missing one: it sends the next developer, or agent, chasing behaviour that isn't there. For every comment: is it still true of the code next to it? Does it explain _why_ rather than restate _what_? Delete it if not. Every file keeps its header comment, and the header must match what the file does now.
-6. **Docs match code.** CLAUDE.md (architecture tree, hook list, Progress line), `docs/flows.md` and `README.md` describe what is actually in the repo. Fix whichever side is wrong; if the spec is right and the code differs, that's a bug finding.
+6. **Docs match code.** CLAUDE.md (architecture tree, hook list, Progress line), `docs/flows.md` and `README.md` describe what is actually in the repo. `docs/api.md` is still identical to the API Contract section of the backend's `docs/endpoints.md`, and `docs/scaling.md` still matches the backend rules it cites. Fix whichever side is wrong; if the spec is right and the code differs, that's a bug finding.
 7. **Architecture rules still hold.** Re-run the Anti-Patterns list and the Workflow Checklist "Checks after building" against the code: `apiFetch` only, the `{ data, loading, error }` hook shape, dialogs, no persisted credentials, the static landing page, client-side dashboards, no aesthetic styling.
 8. **Every data view handles every state.** Loading, error (the API's `error.message`), empty ("No posts yet." etc.), and a backend rejection of a form that passed frontend validation.
 9. **Tooling is clean.** `npm test`, `npm run lint`, `npm run format` (no diff) and `npm run build` all pass.
@@ -217,6 +232,15 @@ Return the findings as a list, most important first. Each finding has: the file 
 ### Scope
 
 A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md, `docs/` and `README.md`. A per-step review (the self-review in Workflow Checklist) covers only that step's diff, plus anything the diff duplicates or makes dead elsewhere.
+
+## Documentation Sync
+
+The backend repo (`3d_wd_backend`) runs a sync audit of this repo's docs against its own. The rule lives in the backend's CLAUDE.md → Documentation Sync.
+
+- **The backend docs are the source of truth.**
+- The audit runs from the backend repo, which reads this repo's docs read-only. It never edits them.
+- This repo receives the findings (Rich pastes them in) and fixes its own docs on its own branch, through the usual plan → approval → PR.
+- A finding marked **decision** waits for Rich before anything changes.
 
 ## Unit Tests
 
@@ -265,6 +289,7 @@ Don't write a test for: static markup with no logic, styling, a constant (`roles
   - Every pop-up is a `<dialog>` with a Close button and no outside-click close
   - No aesthetic styling added
   - Test: verified in the browser, not just Postman
+  - List every record the browser test created (accounts, websites, posts) so Rich can have the backend session delete them
   - Self-review the diff against Code Review → Checklist
   - `npm test` green; new or changed logic has tests per Unit Tests
 - Only commit once code is reviewed, approved and all validation and tests are green

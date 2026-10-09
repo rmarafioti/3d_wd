@@ -23,6 +23,7 @@ Installs:
 - Next.js (current stable)
 - React
 - @react-oauth/google
+- Dev tools: Vitest, React Testing Library and jsdom (unit tests), ESLint, Prettier
 
 ```
 cp .env.example .env
@@ -40,6 +41,9 @@ Set:
 ```
 npm run dev     # starts the app on http://localhost:3000
 npm test        # runs the unit test suite once (npm run test:watch to re-run on save)
+npm run lint    # ESLint
+npm run format  # Prettier (run before every commit)
+npm run build   # production build
 ```
 
 The backend must be running locally (see the backend README) for sign-in and the dashboards to work.
