@@ -1,0 +1,42 @@
+.controlContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  width: 400px;
+}
+
+.home,
+.signButton {
+  padding: 1rem;
+  border-radius: 5px;
+  width: 140px;
+  text-align: center;
+  text-decoration: none;
+
+  background-color: antiquewhite;
+  transition: background-color 300ms ease-in-out;
+}
+
+.home:hover,
+.signButton:hover {
+  background-color: white;
+}
+
+@media (max-width: 667px) {
+  .controlContainer {
+    flex-direction: column;
+    width: 120px;
+    height: 100px;
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+  .home,
+  .signButton {
+    padding: 0.5rem;
+    width: 100px;
+  }
+  .home:hover,
+  .signButton:hover {
+    background-color: antiquewhite;
+  }
+}

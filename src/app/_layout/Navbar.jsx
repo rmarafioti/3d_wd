@@ -3,11 +3,18 @@
 import Link from "next/link";
 import AuthButton from "../_components/AuthButton";
 
+import stlyes from "../_styling/navbar.module.css";
+
 export default function Navbar() {
   return (
     <nav>
-      <Link href="/">Home</Link>
-      <AuthButton />
+      <header>3d Web Dev</header>
+      <div className={stlyes.controlContainer}>
+        <Link href="/" className={stlyes.home}>
+          Home
+        </Link>
+        <AuthButton />
+      </div>
     </nav>
   );
 }

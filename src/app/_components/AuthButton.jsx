@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "../_lib/apiFetch";
 import { useAuth } from "../_hooks/useAuth";
 
+import stlyes from "../_styling/navbar.module.css";
+
 export default function AuthButton() {
   const router = useRouter();
   const { user, setUser } = useAuth();
@@ -22,10 +24,15 @@ export default function AuthButton() {
     }
   }
 
-  if (!user) return <Link href="/sign-in">Sign in</Link>;
+  if (!user)
+    return (
+      <Link href="/sign-in" className={stlyes.signButton}>
+        Sign in
+      </Link>
+    );
 
   return (
-    <button type="button" onClick={handleSignOut}>
+    <button type="button" onClick={handleSignOut} className={stlyes.signButton}>
       Sign out
     </button>
   );
