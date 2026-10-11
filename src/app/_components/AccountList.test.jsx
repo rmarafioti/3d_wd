@@ -1,5 +1,6 @@
 // Tests for AccountList (docs/flows.md → Get All Accounts): loading, error and empty states,
-// each account with its websites and indicators, and "Link a Website" passing the account up.
+// each account with its status and its Websites disclosure (websites, indicators and
+// "Link a Website", which passes the account up).
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -45,7 +46,7 @@ describe("AccountList", () => {
     ).toBeInTheDocument();
   });
 
-  it("lists each account and its websites with active / inactive indicators", () => {
+  it("lists each account and its websites with active / inactive indicators", async () => {
     render(
       <AccountList
         accounts={[ACCOUNT]}
@@ -55,12 +56,12 @@ describe("AccountList", () => {
       />,
     );
 
-    expect(
-      screen.getByText("Site Owner: Richard Marafioti"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Email: steviethedogchi@gmail.com"),
-    ).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByText("Websites"));
+
+    expect(screen.getByText("Site Owner:")).toBeInTheDocument();
+    expect(screen.getByText("Richard Marafioti")).toBeInTheDocument();
+    expect(screen.getByText("Email:")).toBeInTheDocument();
+    expect(screen.getByText("steviethedogchi@gmail.com")).toBeInTheDocument();
     expect(screen.getByText("active")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Stevie The Dog" }),
@@ -109,9 +110,10 @@ describe("AccountList", () => {
       />,
     );
 
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Link a Website" }));
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Websites"));
+
+    await user.click(screen.getByRole("button", { name: "Link a Website" }));
 
     expect(onLink).toHaveBeenCalledWith(ACCOUNT);
   });

@@ -21,7 +21,7 @@
 }
 
 .accounts {
-    margin-right: 4rem;
+  margin-right: 4rem;
 }
 
 .accountInfo {
@@ -38,11 +38,11 @@
 }
 
 .key {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .value {
-    margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
 .pill {

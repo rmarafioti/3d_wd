@@ -15,7 +15,7 @@ import MessageDialog from "./MessageDialog";
 import SubmitErrors from "./SubmitErrors";
 import { isBlank, isValidEmail, validateWebsite } from "../_lib/validation";
 
-import styles from "../_styling/adminDash.module.css"
+import styles from "../_styling/adminDash.module.css";
 
 // Frontend checks, in display order. UX only — the backend re-validates everything.
 function validate({ name, email, website }) {

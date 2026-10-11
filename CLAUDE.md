@@ -8,7 +8,7 @@
 
 The frontend codebase of our Headless CMS project. The backend is in a separate repository which we connect to through the API contract in `docs/api.md`. This repo also serves a public, static landing page for SEO, separate from the two authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each have their own dashboard view.
 
-- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites, creates new site owner accounts, and links websites to existing accounts.
+- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites (in the Accounts aside, present on every `/admin` route), creates new site owner accounts, and links websites to existing accounts.
 - The Site Owner (`/dashboard`) views, creates, edits, archives and reactivates posts for their own websites.
 
 Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on Railway at `https://api.3dwebdev.com`. Both share the parent domain `3dwebdev.com`, so the backend's session cookie (`Domain=.3dwebdev.com`) is also visible to this app's `proxy.js`.
@@ -18,7 +18,8 @@ Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on R
 - Framework - Next.js (current stable, App Router) / JavaScript
 - Auth - Google Identity Services via `@react-oauth/google`
 - Fetch - custom hooks (useEffect / useState) on top of one shared `apiFetch()`
-- State Handling - React Context (auth only)
+- State Handling - React Context (auth, and the admin data shared by the admin layout and page)
+- Icons - react-icons
 - Testing - Vitest + React Testing Library (jsdom)
 
 ## Project Architecture
@@ -37,10 +38,11 @@ root
 │       │                          LinkFields.jsx, ItemFields.jsx,
 │       │                          ConfirmDialog.jsx, SignInForm.jsx,
 │       │                          MessageDialog.jsx, CreateAccountForm.jsx,
-│       │                          AccountList.jsx, LinkWebsiteDialog.jsx,
+│       │                          AccountList.jsx, AccountsAside.jsx, LinkWebsiteDialog.jsx,
 │       │                          SubmitErrors.jsx, PostForm.jsx, PostList.jsx
 │       ├── _context/
-│       │   └── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
+│       │   ├── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
+│       │   └── AdminDataContext.jsx *admin accounts + websites, shared by the admin layout and page
 │       ├── _hooks/               *all hooks used
 │       ├── _layout/              *Navbar.jsx (holds AuthButton) and Footer.jsx
 │       ├── _lib/
@@ -57,8 +59,8 @@ root
 │       │       └── [id]/
 │       │           └── page.js   *single post, Edit, Archive / Make Active
 │       ├── admin/
-│       │   ├── layout.js         *calls /me, role-gates admin routes
-│       │   └── page.js           *account list, Create an Account, Link a Website
+│       │   ├── layout.js         *calls /me, role-gates admin routes, AdminDataProvider + Accounts aside
+│       │   └── page.js           *Create an Account
 │       ├── globals.css           *global styling
 │       ├── layout.js             *root layout (AuthProvider, Navbar, Footer)
 │       └── page.js               *main landing page (static)
@@ -106,6 +108,12 @@ New work after the MVP Build Order, numbered and named the same as in the backen
 
    Merged in both repos (frontend PR #10, backend PR #13).
 
+2. **Admin Accounts aside** — frontend only. Branch `12-styling`.
+   - The account list moves from the `/admin` page into `AccountsAside`, rendered by the admin layout so it is present on every `/admin` route: top right, below the Navbar, closed by default, overlaying the page when open. At phone width the toggle shows only its icon.
+   - Each account's websites and its "Link a Website" button sit in a "Websites" `<details>` disclosure.
+   - `AdminDataContext` (`useAdminData()`) shares `useAccounts()` and `useAllWebsites()` between the aside and the Create an Account page.
+   - `react-icons` added, for icons only.
+
 ## Role Ownership Check Rule
 
 Every read/write operation derives account/website from the session, never from client input, and verifies the requested resource belongs to it. This is enforced by the backend; the frontend never sends an account id and never assumes it can see something just because it has an id.
@@ -137,7 +145,7 @@ A field containing just a space is still a truthy, non-empty string — it'll sl
 Local useState first — Context is for things like auth/role that genuinely span the app, not a default reach for anything async.
 
 **Never make aesthetic styling decisions:**
-No CSS frameworks, no component libraries, no color/font/spacing choices. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction. The one approved exception is functional, not aesthetic: the inline `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it during his styling pass.
+No CSS frameworks or UI component libraries, no color/font/spacing choices. The one approved exception is `react-icons`, for icons only, chosen by Rich. Never add another UI dependency without his approval. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction. The one approved exception is functional, not aesthetic: the inline `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it during his styling pass.
 
 ## Patterns and Preferences
 
@@ -150,6 +158,7 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `useRoleGate(role)` \*dashboard layouts: calls `/me`, fills AuthContext, redirects on role mismatch
 - `useAccounts()` \*admin: all site owner accounts with their websites; also exposes `createAccount` and `linkWebsite`
 - `useAllWebsites()` \*admin: every active website (powers the WebsitePicker)
+- `useAdminData()` \*admin: reads AdminDataContext, `{ accounts, websites }` (the results of `useAccounts()` and `useAllWebsites()`, called once by the admin layout)
 - `useWebsites()` \*site owner: their own websites, each with post summaries
 - `usePost(id)` \*site owner: a single post; also exposes `update` and `setStatus`
 - `usePosts()` \*site owner: creation only (`create`)

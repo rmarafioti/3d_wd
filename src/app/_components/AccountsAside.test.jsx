@@ -1,11 +1,13 @@
-// Tests for the admin dashboard's own wiring (docs/flows.md → Link a Website): the dialog opens
-// for the clicked account, an existing-website link confirms with that account's name, and a
-// new-website link opens the one-time reveal and refreshes the website list on close.
+// Tests for AccountsAside (docs/flows.md → Admin Dashboard, Link a Website): closed by default and
+// toggled open; the Link a Website dialog opens for the clicked account, an existing-website link
+// confirms with that account's name, and a new-website link opens the one-time reveal and
+// refreshes the website list on close.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import AdminPage from "./page";
+import { AdminDataProvider } from "../_context/AdminDataContext";
+import AccountsAside from "./AccountsAside";
 import { deferred, mockFetch, pressEscape } from "../../test/helpers";
 
 const STEVIE = {
@@ -24,6 +26,15 @@ const ACCOUNT = {
   websites: [],
 };
 
+function renderAside() {
+  render(
+    <AdminDataProvider>
+      <AccountsAside />
+    </AdminDataProvider>,
+  );
+}
+
+// Opens the aside, the account's Websites disclosure and its Link a Website dialog.
 async function setup(linkRoute) {
   const { calls } = mockFetch({
     "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
@@ -31,14 +42,63 @@ async function setup(linkRoute) {
     "POST /api/admin/accounts/a1/websites": linkRoute,
   });
   const user = userEvent.setup();
-  render(<AdminPage />);
-  await user.click(
-    await screen.findByRole("button", { name: "Link a Website" }),
-  );
+  renderAside();
+  await user.click(screen.getByRole("button", { name: "Accounts" }));
+  await user.click(await screen.findByText("Websites"));
+  await user.click(screen.getByRole("button", { name: "Link a Website" }));
   return { user, calls };
 }
 
-describe("Admin page", () => {
+describe("AccountsAside", () => {
+  it("starts closed, with no accounts shown", async () => {
+    const { calls } = mockFetch({
+      "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
+      "GET /api/admin/websites": { body: { data: [STEVIE] } },
+    });
+
+    renderAside();
+    // Wait for the accounts to load, so their absence is down to the closed panel.
+    await waitFor(() => expect(calls).toHaveLength(2));
+
+    expect(screen.getByRole("button", { name: "Accounts" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByText("Richard Marafioti")).not.toBeInTheDocument();
+  });
+
+  it("opens to show the accounts from its toggle", async () => {
+    mockFetch({
+      "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
+      "GET /api/admin/websites": { body: { data: [STEVIE] } },
+    });
+    const user = userEvent.setup();
+    renderAside();
+    const toggle = screen.getByRole("button", { name: "Accounts" });
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(await screen.findByText("Richard Marafioti")).toBeInTheDocument();
+  });
+
+  it("closes again from the same toggle", async () => {
+    mockFetch({
+      "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
+      "GET /api/admin/websites": { body: { data: [STEVIE] } },
+    });
+    const user = userEvent.setup();
+    renderAside();
+    const toggle = screen.getByRole("button", { name: "Accounts" });
+    await user.click(toggle);
+    await screen.findByText("Richard Marafioti");
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Richard Marafioti")).not.toBeInTheDocument();
+  });
+
   it("links an existing website and confirms with the account's name", async () => {
     const { user } = await setup({
       status: 201,

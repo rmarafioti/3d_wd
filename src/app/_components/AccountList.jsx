@@ -1,6 +1,7 @@
 // AccountList (admin): every site owner account (active and inactive, sorted by name as the
-// API returns them) with the websites linked to each. Never shows post content. Each account has
-// a "Link a Website" button; the page owns the dialog it opens (onLink receives the account).
+// API returns them): site owner, email and status. Each account's "Websites" disclosure holds the
+// websites linked to it and a "Link a Website" button; AccountsAside owns the dialog it opens
+// (onLink receives the account). Never shows post content.
 
 import styles from "../_styling/adminDash.module.css";
 
@@ -22,36 +23,38 @@ export default function AccountList({ accounts, loading, error, onLink }) {
           >
             {account.active ? "active" : "inactive"}
           </p>
-          <p className={styles.key}>Websites:</p>
-          {account.websites.length === 0 ? (
-            <p>No websites linked.</p>
-          ) : (
-            <ul className={styles.websites}>
-              {account.websites.map((website) => (
-                <li key={website.id}>
-                  <a
-                    href={website.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {website.websiteName}
-                  </a>{" "}
-                  <span
-                    className={`${styles.pill} ${website.active ? styles.active : styles.inactive}`}
-                  >
-                    {website.active ? "active" : "inactive"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            type="button"
-            onClick={() => onLink(account)}
-            className={styles.linkWebsiteButton}
-          >
-            Link a Website
-          </button>
+          <details>
+            <summary className={styles.key}>Websites</summary>
+            {account.websites.length === 0 ? (
+              <p>No websites linked.</p>
+            ) : (
+              <ul className={styles.websites}>
+                {account.websites.map((website) => (
+                  <li key={website.id}>
+                    <a
+                      href={website.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {website.websiteName}
+                    </a>{" "}
+                    <span
+                      className={`${styles.pill} ${website.active ? styles.active : styles.inactive}`}
+                    >
+                      {website.active ? "active" : "inactive"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => onLink(account)}
+              className={styles.linkWebsiteButton}
+            >
+              Link a Website
+            </button>
+          </details>
         </li>
       ))}
     </ul>

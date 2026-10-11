@@ -59,18 +59,18 @@ If an already signed-in user lands on `/` or `/sign-in` directly, the proxy redi
 
 ## Admin Dashboard (`/admin`)
 
-Hooks used: `useAccounts()`, `useAllWebsites()`
+Hooks used: `useAccounts()`, `useAllWebsites()`, both called once by the admin layout's `AdminDataProvider` and read through `useAdminData()`, so the page and the Accounts aside share the same lists.
 
-The admin dashboard has two sections on one page:
+The admin dashboard has two parts:
 
-1. **Create an Account** — the form described below.
-2. **Accounts** — a list of every site owner account.
+1. **Create an Account** — the page itself: the form described below.
+2. **Accounts aside** — rendered by the admin layout, so it is present on every `/admin` route. It sits at the top right of the admin content, below the Navbar, and is **closed by default** on every page load. Closed, it shows only its toggle: a triangle icon with the text "Accounts", or only the icon at phone width (the button is still named "Accounts" for screen readers, with `aria-expanded`). The triangle points right when closed and down when open, like the marker on each account's "Websites" disclosure. Opening it overlays the page content with the account list (Get All Accounts below); the same toggle closes it. It is a disclosure panel, not a pop-up, so it is not a `<dialog>`.
 
 ### Get All Accounts
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
+Lists every site owner account (active and inactive) sorted by name. Each account shows its site owner name, email and an "active"/"inactive" indicator, and below them a **"Websites"** disclosure (native `<details>`, closed by default). Opened, it lists the websites linked to the account (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator) followed by the account's **"Link a Website"** button. An account with no websites shows "No websites linked." there. With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
 
 ### Get All Websites (admin)
 
