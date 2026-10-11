@@ -10,6 +10,8 @@ import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { apiFetch } from "../_lib/apiFetch";
 import { HOME_BY_ROLE } from "../_lib/roles";
 
+import styles from "../_styling/signIn.module.css";
+
 export default function SignInForm({ expired }) {
   const router = useRouter();
   const dialogRef = useRef(null);
@@ -37,7 +39,15 @@ export default function SignInForm({ expired }) {
       {expired && <p>Your session expired, please sign in again.</p>}
 
       {/* A failed or cancelled Google step sends nothing; Google's own UI covers it. */}
-      <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => {}} />
+      <GoogleLogin
+        onSuccess={handleGoogleSuccess}
+        onError={() => {}}
+        size="large"
+        width="400"
+        shape="pill" // optional: "rectangular" | "pill" | "circle" | "square"
+        theme="outline" // optional: "outline" | "filled_blue" | "filled_black"
+        text="signin_with" // optional: "signin_with" | "continue_with" | "signup_with" | "signin"
+      />
 
       <dialog ref={dialogRef}>
         {error ? (

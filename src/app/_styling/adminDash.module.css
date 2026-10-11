@@ -1,0 +1,62 @@
+.dashContainer {
+  display: flex;
+  flex-direction: row;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.accountsHeader {
+  margin-bottom: 1rem;
+}
+
+.accounts,
+.account,
+.accountInfo,
+.createAccounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.accounts {
+    margin-right: 4rem;
+}
+
+.accountInfo {
+  border-bottom: 1px solid lightgray;
+}
+
+.websites,
+.account {
+  margin-bottom: 1rem;
+}
+
+.linkWebsiteButton {
+  margin-bottom: 1rem;
+}
+
+.key {
+    font-weight: bold;
+}
+
+.value {
+    margin-bottom: .5rem;
+}
+
+.pill {
+  padding: 0.2rem 0.5rem;
+  border-radius: 25px;
+  margin: 0rem 0rem 1rem 0rem;
+}
+
+.active {
+  background-color: rgb(15, 174, 15);
+  color: white;
+}
+
+.inactive {
+  background-color: red;
+  color: white;
+}

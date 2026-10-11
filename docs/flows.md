@@ -70,7 +70,7 @@ The admin dashboard has two sections on one page:
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name, URL, "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
+Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
 
 ### Get All Websites (admin)
 

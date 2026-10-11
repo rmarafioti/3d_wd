@@ -56,15 +56,33 @@ describe("AccountList", () => {
     );
 
     expect(
-      screen.getByText(
-        "Richard Marafioti — steviethedogchi@gmail.com — active",
-      ),
+      screen.getByText("Site Owner: Richard Marafioti"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Stevie The Dog — https://www.steviethedog.com — inactive",
-      ),
+      screen.getByText("Email: steviethedogchi@gmail.com"),
     ).toBeInTheDocument();
+    expect(screen.getByText("active")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Stevie The Dog" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("inactive")).toBeInTheDocument();
+  });
+
+  it("links each website name to its URL in a new tab", () => {
+    render(
+      <AccountList
+        accounts={[ACCOUNT]}
+        loading={false}
+        error={null}
+        onLink={() => {}}
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "Stevie The Dog" });
+
+    expect(link).toHaveAttribute("href", "https://www.steviethedog.com");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it('shows "No websites linked." for an account without websites', () => {

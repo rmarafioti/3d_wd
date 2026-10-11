@@ -13,6 +13,8 @@ import LinkWebsiteDialog from "../_components/LinkWebsiteDialog";
 import CredentialRevealModal from "../_components/CredentialRevealModal";
 import MessageDialog from "../_components/MessageDialog";
 
+import styles from "../_styling/adminDash.module.css";
+
 export default function AdminPage() {
   const accounts = useAccounts();
   const websites = useAllWebsites();
@@ -36,51 +38,52 @@ export default function AdminPage() {
   }
 
   return (
-    <>
-      <h1>Admin Dashboard</h1>
+    <article>
+      <h1 className={styles.header}>Admin Dashboard</h1>
+      <div className={styles.dashContainer}>
+        <section className={styles.accounts}>
+          <h2 className={styles.accountsHeader}>Accounts</h2>
+          <AccountList
+            accounts={accounts.data}
+            loading={accounts.loading}
+            error={accounts.error}
+            onLink={setLinkingAccount}
+          />
+        </section>
 
-      <section>
-        <h2>Create an Account</h2>
-        {websites.error && <p>{websites.error.message}</p>}
-        <CreateAccountForm
-          websites={websites.data ?? []}
-          createAccount={accounts.createAccount}
-          onNewWebsite={websites.refetch}
-        />
-      </section>
+        <section className={styles.createAccounts}>
+          <h2>Create an Account</h2>
+          {websites.error && <p>{websites.error.message}</p>}
+          <CreateAccountForm
+            websites={websites.data ?? []}
+            createAccount={accounts.createAccount}
+            onNewWebsite={websites.refetch}
+          />
+        </section>
 
-      <section>
-        <h2>Accounts</h2>
-        <AccountList
-          accounts={accounts.data}
-          loading={accounts.loading}
-          error={accounts.error}
-          onLink={setLinkingAccount}
-        />
-      </section>
-
-      {linkingAccount && (
-        <LinkWebsiteDialog
-          account={linkingAccount}
-          websites={websites.data ?? []}
-          linkWebsite={accounts.linkWebsite}
-          onSuccess={handleLinked}
-          onClose={() => setLinkingAccount(null)}
-        />
-      )}
-      {linkResult?.response.credentials && (
-        <CredentialRevealModal
-          website={linkResult.response.website}
-          credentials={linkResult.response.credentials}
-          onClose={handleRevealClose}
-        />
-      )}
-      {linkResult && !linkResult.response.credentials && (
-        <MessageDialog
-          message={`${linkResult.response.website.websiteName} linked to ${linkResult.accountName}. No new API key or webhook secret were generated — the website's existing credentials are unchanged.`}
-          onClose={() => setLinkResult(null)}
-        />
-      )}
-    </>
+        {linkingAccount && (
+          <LinkWebsiteDialog
+            account={linkingAccount}
+            websites={websites.data ?? []}
+            linkWebsite={accounts.linkWebsite}
+            onSuccess={handleLinked}
+            onClose={() => setLinkingAccount(null)}
+          />
+        )}
+        {linkResult?.response.credentials && (
+          <CredentialRevealModal
+            website={linkResult.response.website}
+            credentials={linkResult.response.credentials}
+            onClose={handleRevealClose}
+          />
+        )}
+        {linkResult && !linkResult.response.credentials && (
+          <MessageDialog
+            message={`${linkResult.response.website.websiteName} linked to ${linkResult.accountName}. No new API key or webhook secret were generated — the website's existing credentials are unchanged.`}
+            onClose={() => setLinkResult(null)}
+          />
+        )}
+      </div>
+    </article>
   );
 }

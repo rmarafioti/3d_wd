@@ -5,8 +5,7 @@
   width: 400px;
 }
 
-.home,
-.signButton {
+.home {
   padding: 1rem;
   border-radius: 5px;
   width: 140px;
@@ -17,8 +16,7 @@
   transition: background-color 300ms ease-in-out;
 }
 
-.home:hover,
-.signButton:hover {
+.home:hover {
   background-color: white;
 }
 
