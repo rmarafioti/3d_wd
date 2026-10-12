@@ -33,7 +33,7 @@ root
 │   │   └── helpers.js            *mockFetch (the only fake network) and other browser-edge helpers
 │   └── app/
 │       ├── _components/          *all one-time and reusable components, e.g.
-│       │                          AuthButton.jsx, WebsitePicker.jsx,
+│       │                          AuthButton.jsx, DashboardTitle.jsx, WebsitePicker.jsx,
 │       │                          CredentialRevealModal.jsx, PostBodyFields.jsx,
 │       │                          LinkFields.jsx, ItemFields.jsx,
 │       │                          ConfirmDialog.jsx, SignInForm.jsx,
@@ -44,7 +44,7 @@ root
 │       │   ├── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
 │       │   └── AdminDataContext.jsx *admin accounts + websites, shared by the admin layout and page
 │       ├── _hooks/               *all hooks used
-│       ├── _layout/              *Navbar.jsx (holds AuthButton) and Footer.jsx
+│       ├── _layout/              *Navbar.jsx (holds DashboardTitle and AuthButton) and Footer.jsx
 │       ├── _lib/
 │       │   ├── apiFetch.js       *the only place fetch is called
 │       │   ├── roles.js          *HOME_BY_ROLE: each role's dashboard route
@@ -109,7 +109,7 @@ New work after the MVP Build Order, numbered and named the same as in the backen
    Merged in both repos (frontend PR #10, backend PR #13).
 
 2. **Admin Accounts aside** — frontend only. Branch `12-styling`.
-   - The account list moves from the `/admin` page into `AccountsAside`, rendered by the admin layout so it is present on every `/admin` route: top right, below the Navbar, closed by default, overlaying the page when open. At phone width the toggle shows only its icon.
+   - The account list moves from the `/admin` page into `AccountsAside`, rendered by the admin layout so it is present on every `/admin` route: top right, below the Navbar, closed by default, overlaying the page when open. At phone width the closed toggle shows only its icon; open, it shows "Accounts" as on desktop.
    - Each account's websites and its "Link a Website" button sit in a "Websites" `<details>` disclosure.
    - `AdminDataContext` (`useAdminData()`) shares `useAccounts()` and `useAllWebsites()` between the aside and the Create an Account page.
    - `react-icons` added, for icons only.
@@ -205,6 +205,12 @@ Keep all code readable and explicit. Comments should be used to inform other dev
 - Key/secret rotation. `CredentialRevealModal` is written so rotation can reuse it later, but there is no rotation UI in the MVP.
 - UI to deactivate/reactivate accounts or websites.
 - Drag-to-reorder body elements or links (body elements reorder with Move up / Move down).
+
+## Planned Later
+
+Ideas Rich has chosen for later. Not scheduled and not to be built yet. Each becomes a numbered Feature (see Features) when it starts.
+
+- **Admin action hub.** While Create an Account is the only admin action, `/admin` is that form, with "Create an Account" as its `<h1>`. Once there are more admin actions, `/admin` becomes a main page asking "What would you like to do?", with a choice of actions, each opening its own page: Create an Account, Deactivate an Account, Roll a Secret, Roll a Key. Build it together with the first new admin action (the last three are currently Out of Scope above).
 
 ## Code Style
 

@@ -124,7 +124,11 @@ export default function CreateAccountForm({
           fieldErrors={fieldErrors}
         />
 
-        <button type="submit" disabled={!isValid || submitting}>
+        <button
+          type="submit"
+          disabled={!isValid || submitting}
+          className={styles.submitButton}
+        >
           Submit
         </button>
 

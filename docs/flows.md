@@ -17,6 +17,12 @@ All pop-ups below are native `<dialog>` elements with a Close button, never clos
 
 On the landing page and sign-in page the context is always empty (signed-in users never reach them — see Proxy), so they always show "Sign in". On the dashboards the layouts have filled the context, so they always show "Sign out".
 
+**Navbar `DashboardTitle`:** a small client component that reads `useAuth()` and names the dashboard, replacing a heading on the dashboard pages.
+
+- No user in context → shows nothing (the landing page and sign-in page).
+- Admin → "Admin Dashboard".
+- Site owner → "{name}'s Dashboard", with the site owner's name from `/me`.
+
 **Proxy (`src/proxy.js`):** matches only `/` and `/sign-in`. If the request has a `session` cookie, redirect to `/dashboard`. It never decodes the cookie. An admin redirected to `/dashboard` is sent on to `/admin` by the dashboard layout. A signed-in user who wants the landing page signs out first, which routes them there. If the cookie is stale, the backend clears it on the first 401, so the user is never stuck in a redirect loop.
 
 **Dashboard layouts (`dashboard/layout.js`, `admin/layout.js`):** client components. On load, call `GET /api/auth/me`.

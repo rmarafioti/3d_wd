@@ -30,8 +30,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <h1>Dashboard</h1>
-
       <button
         type="button"
         disabled={!websites.data}

@@ -15,9 +15,8 @@ export default function AdminPage() {
 
   return (
     <article>
-      <h1 className={styles.header}>Admin Dashboard</h1>
       <section className={styles.createAccounts}>
-        <h2>Create an Account</h2>
+        <h1 className={styles.header}>Create an Account</h1>
         {websites.error && <p>{websites.error.message}</p>}
         <CreateAccountForm
           websites={websites.data ?? []}

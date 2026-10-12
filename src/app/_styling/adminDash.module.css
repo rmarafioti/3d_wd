@@ -4,27 +4,20 @@
 }
 
 .header {
-  margin-bottom: 2rem;
-}
-
-.accountsHeader {
   margin-bottom: 1rem;
 }
 
-.accounts,
 .account,
 .accountInfo,
 .createAccounts {
   display: flex;
   flex-direction: column;
+  text-align: left;
   align-items: flex-start;
 }
 
-.accounts {
-  margin-right: 4rem;
-}
-
 .accountInfo {
+  margin-top: 1rem;
   border-bottom: 1px solid lightgray;
 }
 
@@ -59,4 +52,14 @@
 .inactive {
   background-color: red;
   color: white;
+}
+
+.submitButton {
+  width: 100%;
+}
+
+@media (max-width: 667px) {
+  .header {
+    margin-left: 1rem;
+  }
 }

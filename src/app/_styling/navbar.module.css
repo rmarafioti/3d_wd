@@ -8,3 +8,9 @@
   background-color: rgb(117, 99, 236);
   cursor: pointer;
 }
+
+@media (max-width: 667px) {
+  .signButton {
+    width: 88px;
+  }
+}

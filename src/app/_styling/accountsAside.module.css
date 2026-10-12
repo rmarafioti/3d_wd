@@ -1,7 +1,3 @@
-/* Accounts aside: the admin layout's wrapper is the positioning context, so the aside sits at the
-   top right of the admin content (below the Navbar) and overlays the page. It has two states:
-   .closed is just the "Accounts" tab; .open is the full-height panel whose account list scrolls. */
-
 .adminLayout {
   position: relative;
 }
@@ -14,7 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-left: 1rem;
+  padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
 /* Closed: only the tab (the toggle button) shows, at its own width. Keep at least one declaration
@@ -34,7 +30,9 @@
 }
 
 .panel {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-height: 0;
   width: 100%;
   overflow-y: auto;
@@ -52,8 +50,13 @@
   text-align: left;
 }
 
+/* At phone width the closed tab shows only its icon; open, the text returns as on desktop. */
 @media (max-width: 667px) {
-  .toggleText {
+  .closed .toggleText {
     display: none;
+  }
+
+  .accountAside {
+    padding: 0.5rem 0rem 0.5rem 0rem;
   }
 }

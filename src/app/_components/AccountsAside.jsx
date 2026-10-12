@@ -47,7 +47,7 @@ export default function AccountsAside() {
       aria-label="Accounts"
       className={`${styles.aside} ${open ? styles.open : styles.closed}`}
     >
-      {/* aria-label keeps the name "Accounts" at phone width, where the text is hidden. */}
+      {/* aria-label keeps the name "Accounts" at phone width, where the text is hidden while closed. */}
       <button
         type="button"
         aria-label="Accounts"

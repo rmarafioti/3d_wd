@@ -42,8 +42,6 @@ export default function WebsitePicker({
 
   return (
     <fieldset>
-      <legend>Website</legend>
-
       <label htmlFor={`${id}-select`}>Choose a website</label>
       <select
         id={`${id}-select`}

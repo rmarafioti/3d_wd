@@ -97,10 +97,55 @@ fieldset {
   text-align: left;
 }
 
+form,
+fieldset,
+select {
+  width: 400px;
+}
+
+summary {
+  margin-bottom: 1rem;
+}
+
+label {
+  padding-bottom: 0.5rem;
+}
+
+input,
+select {
+  border: 1px solid black;
+  padding: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* A modal dialog is centred by the browser's margin: auto, which the * reset above removes, so
+   it is restored here. The max sizes keep it inside the viewport; long content scrolls. */
+dialog {
+  margin: auto;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 2rem;
+}
+
 @media (max-width: 667px) {
   nav,
-  footer {
+  footer,
+  form {
     width: 100vw;
+  }
+
+  fieldset {
+    width: 100%;
+  }
+
+  form {
+    padding: 0rem 1rem 0rem 1rem;
+  }
+
+  dialog {
+    padding: 1rem;
   }
 }
 
