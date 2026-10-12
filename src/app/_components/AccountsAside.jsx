@@ -43,7 +43,10 @@ export default function AccountsAside() {
   }
 
   return (
-    <aside aria-label="Accounts" className={styles.aside}>
+    <aside
+      aria-label="Accounts"
+      className={`${styles.aside} ${open ? styles.open : styles.closed}`}
+    >
       {/* aria-label keeps the name "Accounts" at phone width, where the text is hidden. */}
       <button
         type="button"
@@ -58,7 +61,7 @@ export default function AccountsAside() {
       </button>
 
       {open && (
-        <div id="accounts-panel">
+        <div id="accounts-panel" className={styles.panel}>
           <AccountList
             accounts={accounts.data}
             loading={accounts.loading}

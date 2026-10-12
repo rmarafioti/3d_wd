@@ -1,6 +1,6 @@
-/* Accounts aside: functional layout only. The admin layout's wrapper is the positioning context,
-   so the aside sits at the top right of the admin content (below the Navbar) and overlays the
-   page when open. */
+/* Accounts aside: the admin layout's wrapper is the positioning context, so the aside sits at the
+   top right of the admin content (below the Navbar) and overlays the page. It has two states:
+   .closed is just the "Accounts" tab; .open is the full-height panel whose account list scrolls. */
 
 .adminLayout {
   position: relative;
@@ -8,27 +8,48 @@
 
 .aside {
   position: absolute;
-  display: flex;
   top: 0;
   right: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  padding-left: 1rem;
+}
 
+/* Closed: only the tab (the toggle button) shows, at its own width. Keep at least one declaration
+   here: the build drops an empty rule, and styles.closed would then be undefined. */
+.closed {
+  width: auto;
+  border-left: 1px solid lightgray;
+  border-bottom: 1px solid lightgray;
+}
+
+/* Open: runs the height of the viewport; the toggle stays at the top and the list scrolls. */
+.open {
   width: 240px;
   height: 100vh;
   background-color: white;
   border-left: 1px solid lightgray;
 }
 
+.panel {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+}
+
 .accountAside {
+  display: flex;
+  align-items: center;
   color: black;
   background-color: white;
   font-size: 18px;
   border-radius: 0px;
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 0rem;
   width: 100%;
+  text-align: left;
 }
 
 @media (max-width: 667px) {
