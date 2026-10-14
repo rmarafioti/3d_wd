@@ -92,7 +92,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below. Next steps, in order: general styling (branch `12-styling`, about 50% done, includes Feature 2), then Feature 3 Post preview (v1), then security hardening, then the production deploy. Four client websites are waiting to onboard after launch.
 
 ## Features
 
@@ -105,6 +105,20 @@ New work after the MVP Build Order, numbered and named the same as in the backen
    - `docs/api.md` copied the new contract.
 
    Merged in both repos (frontend PR #10, backend PR #13).
+
+2. **Admin Accounts aside** — frontend only. Branch `12-styling`.
+   - The account list moves from the `/admin` page into `AccountsAside`, rendered by the admin layout so it is present on every `/admin` route: top right, below the Navbar, closed by default, overlaying the page when open. At phone width the closed toggle shows only its icon; open, it shows "Accounts" as on desktop.
+   - Each account's websites and its "Link a Website" button sit in a "Websites" `<details>` disclosure.
+   - `AdminDataContext` (`useAdminData()`) shares `useAccounts()` and `useAllWebsites()` between the aside and the Create an Account page.
+   - `react-icons` added, for icons only.
+
+   In progress on `12-styling`, not merged.
+
+3. **Post preview (v1)** — frontend only. Not started; planned on its own branch after the general styling branch merges.
+   - Before a Create a Post or Edit a Post is saved, the site owner sees the post in a basic styled layout: header, sub header, date, the body elements in order, and links.
+   - Images render with Next.js `<Image>` using their stored `width` and `height`, so the Cloudinary host is added to `images.remotePatterns` in `next.config.mjs`.
+   - "Publish" saves (the existing create or update request); "Back to edit" returns to the form with everything kept. Nothing is saved before that choice.
+   - No API contract change.
 
 ## Role Ownership Check Rule
 
@@ -196,6 +210,16 @@ Keep all code readable and explicit. Comments should be used to inform other dev
 - Key/secret rotation. `CredentialRevealModal` is written so rotation can reuse it later, but there is no rotation UI in the MVP.
 - UI to deactivate/reactivate accounts or websites.
 - Drag-to-reorder body elements or links (body elements reorder with Move up / Move down).
+
+## Planned Later
+
+Ideas Rich has chosen for later. Not scheduled and not to be built yet. Each becomes a numbered Feature (see Features) when it starts. The backend's CLAUDE.md holds the source copy of this list; this copy matches it item for item, with frontend detail added.
+
+- **Admin action hub.** While Create an Account is the only admin action, `/admin` is that form, with "Create an Account" as its `<h1>`. Once there are more admin actions, `/admin` becomes a main page asking "What would you like to do?", with a choice of actions, each opening its own page: Create an Account, Deactivate an Account, Roll a Secret, Roll a Key. Build it together with the first new admin action (the last three are currently Out of Scope above).
+- **Post preview v2 (true preview on the client website).** The client website renders an unsaved post with its own styling, through Next.js draft mode and a short-lived signed token. That needs a new public endpoint and an update to the client template. It brings a draft / published state. Rule: two separate flags, never one flag with two meanings: draft vs published, and hidden vs live. Today `active` means hidden vs live. The new flag's name is decided when this starts. On the frontend, a "Preview on your website" step replaces v1's in-dashboard preview, and the dashboard shows both states.
+- **Add-on catalog.** An "Add to your website" list for site owners, each add-on with a one-line description, Photo Gallery and Business Hours first. A website's add-ons go in a backend `website_feature` table, built together with the first add-on. An add-on moves through available → requested → live: the site owner turns it on and fills it in, the administrator sees it as requested, and Rich wires it into the client website and marks it live. An add-on's optional fields sit behind "More options" so the basic form stays short. On the frontend, the list lives on `/dashboard`, and each add-on's status shows in the Accounts aside for the administrator.
+- **Administrator notifications.** An alert when a site owner requests an add-on, or one is filled in and ready to wire. The backend sends it from a job row written in the same transaction. Until then, the admin dashboard shows "requested".
+- **Site owner collaboration.** Site owners suggest add-ons, or optional fields for existing ones. Rich curates: a suggestion is built when at least two businesses want it. Sharing between owners is opt-in or anonymized. It starts as a shared suggestion board outside the app and moves into the app at roughly 10–20 site owners.
 
 ## Code Style
 
