@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-The frontend codebase of our Headless CMS project. The backend is in a separate repository which we connect to through the API contract in `docs/api.md`. This repo also serves a public, static landing page for SEO, separate from the two authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each have their own dashboard view.
+The frontend codebase of our Headless CMS project. 3D Web Dev is the business; this CMS tool is called the Client Portal. The backend is in a separate repository which we connect to through the API contract in `docs/api.md`. This repo also serves a public, static landing page for SEO, separate from the two authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each have their own dashboard view.
 
 - The Administrator (`/admin`) sees a summary of all site owner accounts and their websites, creates new site owner accounts, and links websites to existing accounts.
 - The Site Owner (`/dashboard`) views, creates, edits, archives and reactivates posts for their own websites.
@@ -219,7 +219,7 @@ Ideas Rich has chosen for later. Not scheduled and not to be built yet. Each bec
 - **Post preview v2 (true preview on the client website).** The client website renders an unsaved post with its own styling, through Next.js draft mode and a short-lived signed token. That needs a new public endpoint and an update to the client template. It brings a draft / published state. Rule: two separate flags, never one flag with two meanings: draft vs published, and hidden vs live. Today `active` means hidden vs live. The new flag's name is decided when this starts. On the frontend, a "Preview on your website" step replaces v1's in-dashboard preview, and the dashboard shows both states.
 - **Add-on catalog.** An "Add to your website" list for site owners, each add-on with a one-line description, Photo Gallery and Business Hours first. A website's add-ons go in a backend `website_feature` table, built together with the first add-on. An add-on moves through available → requested → live: the site owner turns it on and fills it in, the administrator sees it as requested, and Rich wires it into the client website and marks it live. An add-on's optional fields sit behind "More options" so the basic form stays short. On the frontend, the list lives on `/dashboard`, and each add-on's status shows in the Accounts aside for the administrator.
 - **Administrator notifications.** An alert when a site owner requests an add-on, or one is filled in and ready to wire. The backend sends it from a job row written in the same transaction. Until then, the admin dashboard shows "requested".
-- **Site owner collaboration.** Site owners suggest add-ons, or optional fields for existing ones. Rich curates: a suggestion is built when at least two businesses want it. Sharing between owners is opt-in or anonymized. It starts as a shared suggestion board outside the app and moves into the app at roughly 10–20 site owners.
+- **Site owner collaboration.** Site owners suggest add-ons, or optional fields for existing ones. Rich curates: a suggestion is built when at least two businesses want it. Sharing between owners is opt-in or anonymized. It starts as a shared suggestion board outside the app and moves into the app at roughly 10–20 site owners. Feature creep until live use with the early adopters shows owners want it. Not built before then.
 
 ## Code Style
 
