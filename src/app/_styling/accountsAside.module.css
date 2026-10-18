@@ -13,10 +13,8 @@
   padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
-/* Closed: only the tab (the toggle button) shows, at its own width. Keep at least one declaration
-   here: the build drops an empty rule, and styles.closed would then be undefined. */
+/* Closed: only the tab (the toggle button) shows, at its own width. */
 .closed {
-  width: auto;
   border-left: 1px solid lightgray;
   border-bottom: 1px solid lightgray;
 }
@@ -38,7 +36,7 @@
   overflow-y: auto;
 }
 
-.accountAside {
+.toggle {
   display: flex;
   align-items: center;
   color: black;
@@ -56,7 +54,7 @@
     display: none;
   }
 
-  .accountAside {
+  .toggle {
     padding: 0.5rem 0rem 0.5rem 0rem;
   }
 }

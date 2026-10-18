@@ -8,6 +8,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostForm, { postToFormValues } from "./PostForm";
 
+// The Add buttons read "Add a / an …" with none of that type and "Add another …" once there is
+// one; the exact label is tested on its own in PostBodyFields.test.jsx.
+const ADD_PARAGRAPH = /^Add (a|another) paragraph$/;
+const ADD_IMAGE = /^Add (an|another) image$/;
+
 const STEVIE = { id: "w1", websiteName: "Stevie The Dog", posts: [] };
 const GOOD_BOYS = { id: "w2", websiteName: "Good Boys", posts: [] };
 const IMAGE = {
@@ -35,7 +40,7 @@ const POST = {
   links: [],
 };
 
-// Fills the blank image element that "Add image" appended.
+// Fills the blank image element that "Add an image" appended.
 async function fillImage(user) {
   await user.type(
     screen.getByLabelText("Image URL"),
@@ -104,9 +109,9 @@ describe("PostForm (create)", () => {
       screen.getByLabelText("Paragraph"),
       "  We went{Enter}for a walk. ",
     );
-    await user.click(screen.getByRole("button", { name: "Add image" }));
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
     await fillImage(user);
-    await user.click(screen.getByRole("button", { name: "Add paragraph" }));
+    await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
     await user.type(screen.getAllByLabelText("Paragraph")[1], "The end.");
     await user.click(screen.getByLabelText("Active"));
 
@@ -141,7 +146,7 @@ describe("PostForm (create)", () => {
     const { user } = renderCreate();
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "Hi");
-    await user.click(screen.getByRole("button", { name: "Add image" }));
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
     await fillImage(user);
     expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
 
@@ -159,7 +164,7 @@ describe("PostForm (create)", () => {
     const { user } = renderCreate();
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "Hi");
-    await user.click(screen.getByRole("button", { name: "Add image" }));
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
     await fillImage(user);
     expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
 
@@ -264,7 +269,7 @@ describe("PostForm (edit)", () => {
     await user.click(screen.getByRole("button", { name: "Submit" }));
     await screen.findByText("Add at least one paragraph.");
 
-    await user.click(screen.getByRole("button", { name: "Add paragraph" }));
+    await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
 
     expect(
       screen.queryByText("Add at least one paragraph."),

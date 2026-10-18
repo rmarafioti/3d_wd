@@ -10,6 +10,8 @@ import PostForm from "../_components/PostForm";
 import PostList from "../_components/PostList";
 import MessageDialog from "../_components/MessageDialog";
 
+import styles from "../_styling/dashPages.module.css";
+
 export default function DashboardPage() {
   const websites = useWebsites();
   const { create } = usePosts();
@@ -29,36 +31,40 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
-      <button
-        type="button"
-        disabled={!websites.data}
-        onClick={() => setCreating(true)}
-      >
-        Create a Post
-      </button>
+    <article>
+      <section className={styles.siteOwnerAccount}>
+        <button
+          type="button"
+          disabled={!websites.data}
+          onClick={() => setCreating(true)}
+          className={styles.createAPost}
+        >
+          Create a Post
+        </button>
 
-      <PostList
-        websites={websites.data}
-        loading={websites.loading}
-        error={websites.error}
-      />
-
-      {creating && (
-        <PostForm
-          mode="create"
+        <h1 className={styles.postHeader}>Your Posts</h1>
+        <PostList
           websites={websites.data}
-          onSubmit={create}
-          onSuccess={handleCreated}
-          onClose={() => setCreating(false)}
+          loading={websites.loading}
+          error={websites.error}
         />
-      )}
-      {createdName && (
-        <MessageDialog
-          message={`Post ${createdName} has been created`}
-          onClose={handleCreatedClose}
-        />
-      )}
-    </>
+
+        {creating && (
+          <PostForm
+            mode="create"
+            websites={websites.data}
+            onSubmit={create}
+            onSuccess={handleCreated}
+            onClose={() => setCreating(false)}
+          />
+        )}
+        {createdName && (
+          <MessageDialog
+            message={`Post ${createdName} has been created`}
+            onClose={handleCreatedClose}
+          />
+        )}
+      </section>
+    </article>
   );
 }

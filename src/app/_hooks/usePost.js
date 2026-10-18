@@ -23,7 +23,7 @@ export function usePost(id) {
     [path, setData],
   );
 
-  // active: true (Make Post Active) or false (Archive Post). Returns the updated Post.
+  // active: true (the Active switch on) or false (off). Returns the updated Post.
   const setStatus = useCallback(
     async (active) => {
       const post = await apiFetch(`${path}/status`, {

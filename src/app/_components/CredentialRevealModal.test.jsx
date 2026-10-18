@@ -32,7 +32,7 @@ describe("CredentialRevealModal", () => {
 
     expect(screen.getByRole("dialog")).toHaveAttribute("open");
     expect(
-      screen.getByText("Copy these now — they will never be shown again."),
+      screen.getByText("Copy these now! They will never be shown again."),
     ).toBeInTheDocument();
     for (const value of [
       "Stevie The Dog",

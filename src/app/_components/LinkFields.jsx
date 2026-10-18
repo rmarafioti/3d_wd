@@ -15,6 +15,8 @@ import { useState } from "react";
 import ItemFields, { serverErrorsFor } from "./ItemFields";
 import { validateLink } from "../_lib/validation";
 
+import styles from "../_styling/postForm.module.css";
+
 const MAX_LINKS = 10;
 
 const EMPTY_LINK = { name: "", url: "" };
@@ -65,7 +67,7 @@ export default function LinkFields({
 
   return (
     <fieldset>
-      <legend>Links</legend>
+      <legend className={styles.linksHeader}>Links</legend>
       {fieldErrors.links && <p>{fieldErrors.links}</p>}
 
       {links.map((link, index) => (
@@ -83,6 +85,7 @@ export default function LinkFields({
             type="button"
             aria-label={`Delete link ${index + 1}`}
             onClick={() => deleteLink(link.key)}
+            className={styles.deleteLinkButton}
           >
             Delete
           </button>
@@ -90,7 +93,7 @@ export default function LinkFields({
       ))}
 
       {draft ? (
-        <div>
+        <div className={styles.section}>
           <ItemFields
             fields={LINK_FIELDS}
             validate={validateLink}
@@ -101,20 +104,22 @@ export default function LinkFields({
             serverErrors={{}}
             showAllErrors={draftTried}
           />
-          <button type="button" onClick={addDraft}>
-            Add
-          </button>
-          <button type="button" onClick={() => setDraft(null)}>
-            Cancel
-          </button>
+          <div className={styles.buttonRow}>
+            <button type="button" onClick={addDraft}>
+              Add
+            </button>
+            <button type="button" onClick={() => setDraft(null)}>
+              Cancel
+            </button>
+          </div>
         </div>
       ) : (
-        <>
+        <div className={styles.addLinkButton}>
           {full && <p>Maximum of {MAX_LINKS} links</p>}
           <button type="button" disabled={full} onClick={startDraft}>
             Add link
           </button>
-        </>
+        </div>
       )}
     </fieldset>
   );

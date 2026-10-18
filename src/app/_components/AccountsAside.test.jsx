@@ -191,7 +191,7 @@ describe("AccountsAside", () => {
 
     expect(await screen.findByText("key_123")).toBeInTheDocument();
     expect(
-      screen.getByText("Copy these now — they will never be shown again."),
+      screen.getByText("Copy these now! They will never be shown again."),
     ).toBeInTheDocument();
   });
 });

@@ -8,7 +8,7 @@
 import { useAdminData } from "../_hooks/useAdminData";
 import CreateAccountForm from "../_components/CreateAccountForm";
 
-import styles from "../_styling/adminDash.module.css";
+import styles from "../_styling/dashPages.module.css";
 
 export default function AdminPage() {
   const { accounts, websites } = useAdminData();

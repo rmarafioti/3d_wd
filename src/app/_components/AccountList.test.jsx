@@ -69,7 +69,7 @@ describe("AccountList", () => {
     expect(screen.getByText("inactive")).toBeInTheDocument();
   });
 
-  it("links each website name to its URL in a new tab", () => {
+  it("links each website name to its URL in a new tab", async () => {
     render(
       <AccountList
         accounts={[ACCOUNT]}
@@ -78,6 +78,8 @@ describe("AccountList", () => {
         onLink={() => {}}
       />,
     );
+
+    await userEvent.setup().click(screen.getByText("Websites"));
 
     const link = screen.getByRole("link", { name: "Stevie The Dog" });
 

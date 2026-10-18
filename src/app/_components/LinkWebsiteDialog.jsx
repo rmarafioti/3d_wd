@@ -3,7 +3,7 @@
 // errors render below Submit; backend field messages render next to their field. Nothing picked
 // or typed is cleared on failure.
 //
-// Opens when mounted; the parent unmounts it in onClose (Close button or Esc) or after
+// Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
 // onSuccess. The API response is handed straight to onSuccess and never kept here, because it
 // may contain the one-time credentials.
 
@@ -16,6 +16,7 @@ import WebsitePicker, {
   toWebsitePayload,
 } from "./WebsitePicker";
 import SubmitErrors from "./SubmitErrors";
+import DialogCloseButton from "./DialogCloseButton";
 import { validateWebsite } from "../_lib/validation";
 
 export default function LinkWebsiteDialog({
@@ -59,8 +60,9 @@ export default function LinkWebsiteDialog({
   }
 
   return (
-    // The close event fires for both the Close button and Esc.
+    // The close event fires for both the X and Esc.
     <dialog ref={dialogRef} onClose={onClose}>
+      <DialogCloseButton dialogRef={dialogRef} />
       <h2>Link a website to {account.name}</h2>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -82,10 +84,6 @@ export default function LinkWebsiteDialog({
           serverError={serverError}
         />
       </form>
-
-      <button type="button" onClick={() => dialogRef.current.close()}>
-        Close
-      </button>
     </dialog>
   );
 }

@@ -54,7 +54,7 @@ export default function AccountsAside() {
         aria-expanded={open}
         aria-controls="accounts-panel"
         onClick={() => setOpen((current) => !current)}
-        className={styles.accountAside}
+        className={styles.toggle}
       >
         <ToggleIcon aria-hidden="true" />
         <span className={styles.toggleText}>Accounts</span>

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { apiFetch } from "../_lib/apiFetch";
 import { HOME_BY_ROLE } from "../_lib/roles";
+import DialogCloseButton from "./DialogCloseButton";
 
 import styles from "../_styling/signIn.module.css";
 
@@ -44,12 +45,13 @@ export default function SignInForm({ expired }) {
         onError={() => {}}
         size="large"
         width="400"
-        shape="pill" // optional: "rectangular" | "pill" | "circle" | "square"
-        theme="outline" // optional: "outline" | "filled_blue" | "filled_black"
-        text="signin_with" // optional: "signin_with" | "continue_with" | "signup_with" | "signin"
+        shape="pill"
+        theme="outline"
+        text="signin_with"
       />
 
       <dialog ref={dialogRef}>
+        <DialogCloseButton dialogRef={dialogRef} />
         {error ? (
           <p>
             {error.message}
@@ -67,9 +69,6 @@ export default function SignInForm({ expired }) {
         ) : (
           <p>Signing in…</p>
         )}
-        <button type="button" onClick={() => dialogRef.current.close()}>
-          Close
-        </button>
       </dialog>
     </GoogleOAuthProvider>
   );

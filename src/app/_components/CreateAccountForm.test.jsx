@@ -182,7 +182,7 @@ describe("CreateAccountForm", () => {
 
     expect(
       await screen.findByText(
-        "Copy these now — they will never be shown again.",
+        "Copy these now! They will never be shown again.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("key_123")).toBeInTheDocument();

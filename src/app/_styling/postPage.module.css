@@ -1,0 +1,47 @@
+.postPage {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  align-items: flex-start;
+  width: 800px;
+}
+
+.statusPill {
+  margin: 0rem 2rem 0rem 0rem;
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 280px;
+  margin: 1rem 0rem 1rem 0rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid lightgray;
+}
+
+dl .value,
+.bodySection,
+.linksSection,
+.timeStampSection {
+  margin-bottom: 1rem;
+}
+
+.bodySection {
+  width: 600px;
+}
+
+.key {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+@media (max-width: 667px) {
+  .postPage {
+    width: 100vw;
+    margin-left: 2rem;
+  }
+  .statusRow {
+    width: 90%;
+  }
+}

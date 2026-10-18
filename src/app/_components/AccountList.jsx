@@ -3,7 +3,9 @@
 // websites linked to it and a "Link a Website" button; AccountsAside owns the dialog it opens
 // (onLink receives the account). Never shows post content.
 
-import styles from "../_styling/adminDash.module.css";
+import StatusPill from "./StatusPill";
+
+import styles from "../_styling/dashPages.module.css";
 
 export default function AccountList({ accounts, loading, error, onLink }) {
   if (error) return <p>{error.message}</p>;
@@ -11,18 +13,14 @@ export default function AccountList({ accounts, loading, error, onLink }) {
   if (accounts.length === 0) return <p>No site owner accounts yet.</p>;
 
   return (
-    <ul className={styles.account}>
+    <ul className={styles.accountList}>
       {accounts.map((account) => (
-        <li key={account.id} className={styles.accountInfo}>
+        <li key={account.id} className={styles.account}>
           <p className={styles.key}>Site Owner:</p>
           <p className={styles.value}>{account.name}</p>
           <p className={styles.key}>Email:</p>
           <p className={styles.value}>{account.email}</p>
-          <p
-            className={`${styles.pill} ${account.active ? styles.active : styles.inactive}`}
-          >
-            {account.active ? "active" : "inactive"}
-          </p>
+          <StatusPill active={account.active} className={styles.statusPill} />
           <details>
             <summary className={styles.key}>Websites</summary>
             {account.websites.length === 0 ? (
@@ -38,11 +36,7 @@ export default function AccountList({ accounts, loading, error, onLink }) {
                     >
                       {website.websiteName}
                     </a>{" "}
-                    <span
-                      className={`${styles.pill} ${website.active ? styles.active : styles.inactive}`}
-                    >
-                      {website.active ? "active" : "inactive"}
-                    </span>
+                    <StatusPill active={website.active} />
                   </li>
                 ))}
               </ul>

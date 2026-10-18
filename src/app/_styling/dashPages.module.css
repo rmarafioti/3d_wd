@@ -1,31 +1,34 @@
-.dashContainer {
+.postNameSection {
   display: flex;
   flex-direction: row;
 }
 
-.header {
-  margin-bottom: 1rem;
+.postName {
+  font-size: 18px;
+  margin-right: 1rem;
 }
 
+.accountList,
 .account,
-.accountInfo,
-.createAccounts {
+.createAccounts,
+.siteOwnerAccount,
+.postList {
   display: flex;
   flex-direction: column;
   text-align: left;
   align-items: flex-start;
 }
 
-.accountInfo {
+.account {
   margin-top: 1rem;
   border-bottom: 1px solid lightgray;
 }
 
+.header,
+.postHeader,
 .websites,
-.account {
-  margin-bottom: 1rem;
-}
-
+.accountList,
+.createAPost,
 .linkWebsiteButton {
   margin-bottom: 1rem;
 }
@@ -34,27 +37,17 @@
   font-weight: bold;
 }
 
-.value {
+.value,
+.websiteHeader {
   margin-bottom: 0.5rem;
 }
 
-.pill {
-  padding: 0.2rem 0.5rem;
-  border-radius: 25px;
+.statusPill {
   margin: 0rem 0rem 1rem 0rem;
 }
 
-.active {
-  background-color: rgb(15, 174, 15);
-  color: white;
-}
-
-.inactive {
-  background-color: red;
-  color: white;
-}
-
-.submitButton {
+.submitButton,
+.createAPost {
   width: 100%;
 }
 

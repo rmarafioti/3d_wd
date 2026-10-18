@@ -1,4 +1,4 @@
-// Footer: site footer. Placeholder until content is decided.
+// Footer: site footer with the copyright line.
 
 export default function Footer() {
   return (
