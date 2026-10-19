@@ -294,9 +294,11 @@ function positionsOf({ outerStart, outerEnd, innerStart, innerEnd }) {
 //   marker, after the closing one), where typing is plain; inside the markers it is null, so a
 //   button stays on while the site owner types, even with the cursor between the closing *.
 // - A link is found when the cursor is in its text.
-// - An empty run ("**", "****", "******" with the cursor in the middle) isn't found by reading
-//   left to right, so when no run touches the cursor it is recognised from the same number of *
-//   on both sides.
+// - An empty run ("**", "****", "******") isn't found by reading left to right, so when no run
+//   touches the cursor it is recognised from the stars around it: the same number on both sides
+//   (the cursor in the middle), or four or six on one side only (the cursor just outside an
+//   empty bold or bold-italic pair, with run.edge set). Two stars on one side aren't read as an
+//   empty italic pair, since they could as well close bold the editor doesn't recognise.
 export function formatsAtCaret(text, caret) {
   const inText = (segment) =>
     segment.innerStart <= caret && caret <= segment.innerEnd;
@@ -322,19 +324,33 @@ export function formatsAtCaret(text, caret) {
   }
   if (run) return { run, link: link ? positionsOf(link) : null };
 
+  return {
+    run: emptyRunAt(text, caret),
+    link: link ? positionsOf(link) : null,
+  };
+}
+
+// The empty run the cursor is in or just outside (see formatsAtCaret), or null.
+function emptyRunAt(text, caret) {
   const before = starsBefore(text, caret);
-  if (before >= 1 && before <= 3 && starsFrom(text, caret) === before) {
-    return {
-      run: {
-        level: before,
-        edge: null,
-        outerStart: caret - before,
-        outerEnd: caret + before,
-        innerStart: caret,
-        innerEnd: caret,
-      },
-      link: null,
-    };
+  const after = starsFrom(text, caret);
+  const emptyRun = (outerStart, level, edge) => ({
+    level,
+    edge,
+    outerStart,
+    outerEnd: outerStart + 2 * level,
+    innerStart: outerStart + level,
+    innerEnd: outerStart + level,
+  });
+  const isPair = (count) => count === 4 || count === 6;
+  if (before >= 1 && before <= 3 && after === before) {
+    return emptyRun(caret - before, before, null);
   }
-  return { run: null, link: link ? positionsOf(link) : null };
+  if (after === 0 && isPair(before)) {
+    return emptyRun(caret - before, before / 2, "end");
+  }
+  if (before === 0 && isPair(after)) {
+    return emptyRun(caret, after / 2, "start");
+  }
+  return null;
 }

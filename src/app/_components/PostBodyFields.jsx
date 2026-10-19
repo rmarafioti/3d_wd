@@ -294,6 +294,9 @@ function ParagraphField({ name, value, onChange, serverError, requiredNoted }) {
   // touching a run, the click always acts on that run, never adds new markers beside it.
   function toggleAtCaret({ run }, bit, caret) {
     if (!run) {
+      // Against stars that aren't a run the editor recognises (** word**|), adding more would
+      // only pile them up; new markers start once a space or letter separates the cursor.
+      if (value.text[caret - 1] === "*" || value.text[caret] === "*") return;
       const marker = markersOf(bit);
       replaceText(caret, caret, marker + marker, caret + bit, caret + bit);
       return;
