@@ -1,6 +1,7 @@
 // Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with
 // messages checked word for word (docs/flows.md for Create an Account, the backend's field
-// messages for posts, paragraphs, images and links).
+// messages for posts, paragraphs and images). Paragraph links use docs/api.md → Paragraph
+// formatting → Rejected examples, row for row.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -12,7 +13,6 @@ import {
   isWholeNumberInRange,
   validateBody,
   validateImage,
-  validateLink,
   validateParagraph,
   validatePost,
   validateWebsite,
@@ -178,30 +178,6 @@ describe("validateImage", () => {
   });
 });
 
-describe("validateLink", () => {
-  it("accepts a complete link", () => {
-    expect(
-      validateLink({ name: "Instagram", url: "https://instagram.com/stevie" }),
-    ).toEqual({});
-  });
-
-  it("reports missing fields with the backend's messages", () => {
-    expect(validateLink({ name: "", url: "" })).toEqual({
-      name: "Link name is required.",
-      url: "Link URL is required.",
-    });
-  });
-
-  it("rejects a name over 100 characters and a non-https URL", () => {
-    expect(
-      validateLink({ name: "a".repeat(101), url: "http://x.com" }),
-    ).toEqual({
-      name: "Link name must be 100 characters or fewer.",
-      url: "Must be a valid URL starting with https://",
-    });
-  });
-});
-
 describe("validateParagraph", () => {
   it("requires text that isn't blank after trimming", () => {
     expect(validateParagraph({ text: " \n " })).toEqual({
@@ -215,6 +191,53 @@ describe("validateParagraph", () => {
       text: "Paragraph must be 10000 characters or fewer.",
     });
   });
+
+  it("accepts formatted text with a valid link", () => {
+    expect(
+      validateParagraph({
+        text: "**Bold** and *italic* and [a link](https://example.com)",
+      }),
+    ).toEqual({});
+  });
+
+  // docs/api.md → Paragraph formatting → Rejected examples.
+  it.each([
+    [
+      "[menu](http://example.com)",
+      "Each link must be a valid URL starting with https://",
+    ],
+    [
+      "[menu](javascript:alert(1))",
+      "Each link must be a valid URL starting with https://",
+    ],
+    ["[ ](https://example.com)", "Each link needs link text."],
+    [
+      "**[menu](http://example.com)**",
+      "Each link must be a valid URL starting with https://",
+    ],
+    [
+      `[${"a".repeat(101)}](https://example.com)`,
+      "Link text must be 100 characters or fewer.",
+    ],
+  ])("rejects %s", (text, message) => {
+    expect(validateParagraph({ text })).toEqual({ text: message });
+  });
+
+  it("checks a link's text before its URL", () => {
+    expect(validateParagraph({ text: "[ ](http://x)" })).toEqual({
+      text: "Each link needs link text.",
+    });
+  });
+
+  it("reports the first failing link in the text", () => {
+    expect(
+      validateParagraph({
+        text: "[ok](https://example.com) [old](http://example.com) [ ](https://example.com)",
+      }),
+    ).toEqual({
+      text: "Each link must be a valid URL starting with https://",
+    });
+  });
 });
 
 describe("validateBody", () => {
@@ -225,6 +248,12 @@ describe("validateBody", () => {
         { type: "paragraph", text: "" },
         { type: "paragraph", text: "Hi" },
       ]),
+    ).toEqual({});
+  });
+
+  it("counts a paragraph with text even when its own check fails", () => {
+    expect(
+      validateBody([{ type: "paragraph", text: "[menu](http://example.com)" }]),
     ).toEqual({});
   });
 

@@ -2,6 +2,11 @@
 
 The frontend's rules for changing the app after the MVP is deployed. Imported from `CLAUDE.md` via `@docs/scaling.md`. The shared rules live in the backend repo's `docs/scaling.md`, which is the source of truth for schema and migrations, the expand → migrate → contract process, API contract rules, the new-feature template, performance, running more than one instance, and environments and deployment. This file covers only what the frontend must do to follow them. It restates a backend rule only word for word, with its backend → N reference; references below read "backend → N", meaning section N of the backend's `docs/scaling.md`.
 
+## 0. Before the first production deploy
+
+- Backend → 0, word for word: "Nothing is in production yet. Stevie The Dog is a test site that nobody reads publicly. Until the first production deploy, a breaking change is made in place: no versioned public path, no expand → migrate → contract, and existing test rows may be dropped. Everything else still applies: plan, classify the change (Section 1), update both repos' contract in the same piece of work, and test. The rest of this file applies from the first production deploy, once real clients use the API."
+- On the frontend this means: until then, section 3 (deploy order) doesn't apply. A breaking change lands in both repos' code and docs together, in the same piece of work, and every other section here still applies.
+
 ## 1. Classify the change first
 
 - Before planning, state whether the change is **additive**, **breaking** or **data-changing**, using the backend's definitions (backend → 1).

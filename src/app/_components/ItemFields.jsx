@@ -1,6 +1,6 @@
-// ItemFields: the labelled inputs for one image or link in the post form, shared by
-// PostBodyFields (image elements) and LinkFields. Messages show for a field once it has been
-// left, or for every field when showAllErrors is set; otherwise the server's message shows.
+// ItemFields: the labelled inputs for one image element in PostBodyFields, built from a list of
+// field definitions. A field's message shows once it has been left; otherwise the server's
+// message shows.
 
 "use client";
 
@@ -26,14 +26,13 @@ export default function ItemFields({
   value,
   onPatch,
   serverErrors,
-  showAllErrors,
 }) {
   const id = useId();
   const [touched, setTouched] = useState({});
   const errors = validate(value);
 
   function messageFor(name) {
-    if ((showAllErrors || touched[name]) && errors[name]) return errors[name];
+    if (touched[name] && errors[name]) return errors[name];
     return serverErrors[name];
   }
 

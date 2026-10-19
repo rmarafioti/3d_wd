@@ -37,7 +37,6 @@ const POST = {
     { type: "paragraph", text: "We went for a walk." },
     { type: "image", image: IMAGE },
   ],
-  links: [],
 };
 
 // Fills the blank image element that "Add an image" appended.
@@ -138,7 +137,6 @@ describe("PostForm (create)", () => {
         },
         { type: "paragraph", text: "The end." },
       ],
-      links: [],
     });
   });
 
@@ -210,17 +208,15 @@ describe("PostForm (edit)", () => {
     expect(screen.getByLabelText("Width")).toHaveValue(800);
   });
 
-  it("sends the full form: a moved image keeps its id, new links have none, no websiteId or active", async () => {
+  it("sends the full form: a moved image keeps its id, formatting as typed, no websiteId or active", async () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
     await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
-    await user.click(screen.getByRole("button", { name: "Add link" }));
-    await user.type(screen.getByLabelText("Link Name"), "Instagram");
+    await user.clear(screen.getByLabelText("Paragraph"));
     await user.type(
-      screen.getByLabelText("URL"),
-      "https://instagram.com/stevie",
+      screen.getByLabelText("Paragraph"),
+      "We went for a **walk**.",
     );
-    await user.click(screen.getByRole("button", { name: "Add" }));
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
@@ -241,9 +237,8 @@ describe("PostForm (edit)", () => {
             altText: "Stevie",
           },
         },
-        { type: "paragraph", text: "We went for a walk." },
+        { type: "paragraph", text: "We went for a **walk**." },
       ],
-      links: [{ name: "Instagram", url: "https://instagram.com/stevie" }],
     });
   });
 

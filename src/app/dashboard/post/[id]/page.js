@@ -13,6 +13,7 @@ import PostForm, { postToFormValues } from "../../../_components/PostForm";
 import MessageDialog from "../../../_components/MessageDialog";
 import Toggle from "../../../_components/Toggle";
 import StatusPill from "../../../_components/StatusPill";
+import FormattedText from "../../../_components/FormattedText";
 
 import styles from "../../../_styling/postPage.module.css";
 
@@ -85,9 +86,10 @@ export default function PostPage() {
           {/* Elements have no id and this list is read-only, so the index is a stable key. */}
           {post.body.map((element, index) =>
             element.type === "paragraph" ? (
-              // pre-line keeps the line breaks the site owner typed (docs/api.md → Shapes).
+              // pre-line keeps the line breaks the site owner typed (docs/api.md → Shapes);
+              // FormattedText draws its bold, italic and links.
               <p key={index} style={{ whiteSpace: "pre-line" }}>
-                {element.text}
+                <FormattedText text={element.text} />
               </p>
             ) : (
               <p key={index}>
@@ -102,23 +104,6 @@ export default function PostPage() {
                 {element.image.height}
               </p>
             ),
-          )}
-        </div>
-        <div className={styles.linksSection}>
-          <h3>Links</h3>
-          {post.links.length === 0 ? (
-            <p>No links.</p>
-          ) : (
-            <ul>
-              {post.links.map((link) => (
-                <li key={link.id}>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
-                    {link.name}
-                  </a>{" "}
-                  — {link.url}
-                </li>
-              ))}
-            </ul>
           )}
         </div>
 

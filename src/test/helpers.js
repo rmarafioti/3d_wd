@@ -3,6 +3,7 @@
 // request the app sends and how it reads the response.
 
 import { vi } from "vitest";
+import { fireEvent } from "@testing-library/react";
 
 // Replaces global fetch with a route table keyed "METHOD /path", e.g.
 //   mockFetch({ "GET /api/admin/accounts": { status: 200, body: { data: [] } } })
@@ -85,4 +86,12 @@ export function pressEscape(dialog) {
   const event = new Event("cancel", { cancelable: true });
   dialog.dispatchEvent(event);
   if (!event.defaultPrevented) dialog.close();
+}
+
+// Selects text[start, end) in a textarea the way a site owner's drag does: sets the selection
+// and fires the select event (user-event can't drag a selection inside a textarea).
+export function selectText(textarea, start, end) {
+  textarea.focus();
+  textarea.setSelectionRange(start, end);
+  fireEvent.select(textarea);
 }

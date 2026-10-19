@@ -6,7 +6,7 @@
 // toggle, → PATCH /api/siteOwner/posts/:id with the full form.
 //
 // Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
-// onSuccess. The body is edited by PostBodyFields and the links by LinkFields. Frontend messages
+// onSuccess. The body, with its formatting, is edited by PostBodyFields. Frontend messages
 // render next to their field once it has been left; backend error.fields render next to their
 // field and error.message below Submit. Nothing typed is cleared on failure.
 
@@ -18,15 +18,9 @@ import PostBodyFields, {
   EMPTY_PARAGRAPH,
   isIncompleteElement,
 } from "./PostBodyFields";
-import LinkFields from "./LinkFields";
 import Toggle from "./Toggle";
 import DialogCloseButton from "./DialogCloseButton";
-import {
-  isBlank,
-  validateBody,
-  validateLink,
-  validatePost,
-} from "../_lib/validation";
+import { isBlank, validateBody, validatePost } from "../_lib/validation";
 
 import styles from "../_styling/postForm.module.css";
 
@@ -37,12 +31,11 @@ const EMPTY_POST = {
   header: "",
   subHeader: "",
   body: [{ ...EMPTY_PARAGRAPH, key: "first-paragraph" }],
-  links: [],
 };
 
 // Form values for a Post loaded by usePost: nulls become "" and numbers become strings, so
 // every input is controlled. Body elements are flattened for PostBodyFields; paragraphs have
-// no id, so they get a fresh key. Existing images/links keep their id (and use it as their key).
+// no id, so they get a fresh key. Existing images keep their id (and use it as their key).
 export function postToFormValues(post) {
   return {
     postName: post.postName,
@@ -68,12 +61,6 @@ export function postToFormValues(post) {
         altText: image.altText,
       };
     }),
-    links: post.links.map((link) => ({
-      key: link.id,
-      id: link.id,
-      name: link.name,
-      url: link.url,
-    })),
   };
 }
 
@@ -83,7 +70,7 @@ function optional(value) {
 }
 
 // One body element in the contract's shape. A paragraph is trimmed only at its ends, so the
-// line breaks inside it are kept.
+// line breaks and formatting markup inside it are kept as typed.
 function toElementPayload(element) {
   if (element.type === "paragraph") {
     return { type: "paragraph", text: element.text.trim() };
@@ -102,7 +89,7 @@ function toElementPayload(element) {
 }
 
 // Builds the request body. Width/height become JSON numbers (the backend rejects strings),
-// the client-only key is dropped, and id is only sent for images and links that already exist.
+// the client-only key is dropped, and id is only sent for images that already exist.
 function toPayload(values) {
   return {
     postName: values.postName.trim(),
@@ -110,11 +97,6 @@ function toPayload(values) {
     subHeader: optional(values.subHeader),
     postDate: optional(values.postDate),
     body: values.body.map(toElementPayload),
-    links: values.links.map(({ id, name, url }) => ({
-      ...(id ? { id } : {}),
-      name: name.trim(),
-      url: url.trim(),
-    })),
   };
 }
 
@@ -138,7 +120,6 @@ export default function PostForm({
   const [header, setHeader] = useState(initialValues.header);
   const [subHeader, setSubHeader] = useState(initialValues.subHeader);
   const [body, setBody] = useState(initialValues.body);
-  const [links, setLinks] = useState(initialValues.links);
   const [active, setActive] = useState(true);
 
   // Fields the site owner has left at least once; only their messages are shown.
@@ -153,8 +134,7 @@ export default function PostForm({
   const isValid =
     Object.keys(errors).length === 0 &&
     Object.keys(validateBody(body)).length === 0 &&
-    !body.some(isIncompleteElement) &&
-    links.every((link) => Object.keys(validateLink(link)).length === 0);
+    !body.some(isIncompleteElement);
   const fieldErrors = serverError?.fields ?? {};
 
   function touch(field) {
@@ -166,16 +146,16 @@ export default function PostForm({
     return fieldErrors[field];
   }
 
-  // Adding, moving or deleting a body element or link shifts the indices the server's
-  // "body.N.…" / "links.N.…" messages point at, so those messages are dropped rather than shown
-  // on the wrong item. The list's own message ("body", "links") is dropped too: it was about
-  // the list as it was, which has now changed.
+  // Adding, moving or deleting a body element shifts the indices the server's "body.N.…"
+  // messages point at, so those messages are dropped rather than shown on the wrong element.
+  // The list's own message ("body") is dropped too: it was about the list as it was, which has
+  // now changed.
   function clearItemErrors() {
     setServerError((current) => {
       if (!current?.fields) return current;
       const fields = Object.fromEntries(
         Object.entries(current.fields).filter(
-          ([path]) => !/^(body|links)(\.\d+\.|$)/.test(path),
+          ([path]) => !/^body(\.\d+\.|$)/.test(path),
         ),
       );
       return { ...current, fields };
@@ -194,7 +174,6 @@ export default function PostForm({
       header,
       subHeader,
       body,
-      links,
     });
 
     setSubmitting(true);
@@ -307,13 +286,6 @@ export default function PostForm({
         <PostBodyFields
           body={body}
           setBody={setBody}
-          fieldErrors={fieldErrors}
-          onReindex={clearItemErrors}
-        />
-
-        <LinkFields
-          links={links}
-          setLinks={setLinks}
           fieldErrors={fieldErrors}
           onReindex={clearItemErrors}
         />

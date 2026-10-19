@@ -153,12 +153,11 @@ The "Create a Post" button on `/dashboard` opens a dialog with a form:
 - **Header** — optional, max 150. The headline shown on the website.
 - **Sub Header** — optional, max 200.
 - **Body** — `PostBodyFields` (see below): an ordered list of paragraphs and images. Starts with one empty paragraph.
-- **Links** — `LinkFields` (see below).
 - **Status** — the Active switch (the shared `Toggle`, named "Active" for screen readers) reading "inactive" / "active" either side, on by default. Off saves the post as inactive so it can be made active later. Help text: "Set a post to active for it to be live on your website, or inactive to save it and make it live at a later date."
 
 All fields go through the same frontend validation used everywhere else — UX only, never the actual gate. Field messages render next to their field; the Submit button stays disabled until the form is valid.
 
-On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, header, subHeader, postDate, active, body, links }` (empty optional fields sent as `null`, an empty link list as `[]`; `body` is the elements in order, `{ type: 'paragraph', text }` or `{ type: 'image', image: { src, width, height, altText } }`). The backend independently re-validates every field, confirms the website belongs to the session's account, and creates the post with its body and links in one transaction.
+On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, header, subHeader, postDate, active, body }` (empty optional fields sent as `null`; `body` is the elements in order, `{ type: 'paragraph', text }` or `{ type: 'image', image: { src, width, height, altText } }`). The backend independently re-validates every field, confirms the website belongs to the session's account, and creates the post with its body in one transaction.
 
 - **Success:** close the form dialog; a dialog reads "Post {postName} has been created"; on close, refetch `useWebsites()` so the new post appears on `/dashboard`.
 - **Failure:** the backend's `error.message` renders inside the form dialog (and `error.fields` next to their fields). The form keeps everything entered — nothing needs to be retyped.
@@ -169,8 +168,8 @@ The post body is an ordered array of elements in the form, each a paragraph or a
 
 - Elements show in body order. Each has "Move up" (disabled on the first), "Move down" (disabled on the last) and "Delete" buttons. For screen readers each button is named by the element's type and its position among that type: "Move paragraph 2 up", "Move image 1 down", "Delete paragraph 1". There is no drag-to-reorder.
 - "Add a paragraph" / "Add an image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid. Once the body has an element of that type, the button reads "Add another paragraph" / "Add another image", so it is clear the one already filled in counts: what is typed is part of the form, and Submit saves it.
-- **Complete it before adding another.** While a paragraph is blank, the Add paragraph button is disabled; while an image is incomplete, the Add image button is disabled. Being disabled doesn't change their labels.
-- **Paragraph:** a textarea (required, max 10000) with the help text "Line breaks you add will show on your website." Only the ends are trimmed when sent, so the line breaks inside are kept.
+- **Complete it before adding another.** While a paragraph is blank or fails its check (a bad link, too long), the Add paragraph button is disabled; while an image is incomplete, the Add image button is disabled. Being disabled doesn't change their labels.
+- **Paragraph:** a textarea (required, max 10000) with the help text "Line breaks you add will show on your website." Only the ends are trimmed when sent, so the line breaks inside are kept. Its formatting markup is sent exactly as typed (see Paragraph formatting below).
 - **Image fields:** Image URL (`src`, required, `https://`), Width and Height (required, whole numbers 1–10000), Alt Text (required, max 200). Images are hosted in the site owner's own Cloudinary account; the site owner pastes the Cloudinary URL.
 - **Auto-fill width/height:** when a valid `https://` URL is entered, load it in the background with `new Image()`; on load, fill Width and Height from `naturalWidth` / `naturalHeight`. The fields stay editable. If the image fails to load, leave them empty for manual entry (the site owner can read the dimensions in Cloudinary).
 - **One paragraph is required.** While no paragraph has text (the first one is still blank, or every paragraph was deleted), Submit is disabled and the Add buttons are hidden, not disabled: both appear once a paragraph has text. The one exception is when every paragraph was deleted: then "Add a paragraph" shows (it is the only way forward) and the Add image button stays hidden. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
@@ -178,39 +177,49 @@ The post body is an ordered array of elements in the form, each a paragraph or a
 - **Notes** explain whatever is disabled, one line each, inside the section they belong to (each section ends in its border):
   - Under an incomplete element's Move up / Move down / Delete buttons: "One paragraph is required to submit a post." while that paragraph is blank and no paragraph has text (the paragraph's own "Paragraph is required." is then hidden, since it would repeat the note); "Complete or delete paragraph to submit." while that paragraph is blank and another has text; or "Complete or delete image to submit." while that image is incomplete.
   - Above the Add buttons, in this order: "One paragraph is required to submit a post." when every paragraph was deleted (so there is no paragraph to show it under), then "Maximum of 5 paragraphs" / "Maximum of 5 images" at the limit.
+- A paragraph with text that fails its own check (a bad link, or over 10000 characters) shows its message under the textarea as soon as the problem is there, without waiting for the field to be left, since the format buttons change the text without leaving it. "Paragraph is required." still shows once a blank paragraph has been left.
 - Backend field messages show next to their element: `body.N.text` under that paragraph, `body.N.image.<field>` under that image field, `body.N.type` under that element, and `body` (list-level) at the top. Adding, moving or deleting an element shifts the indexes, so the backend's `body.N.…` messages are dropped then rather than shown on the wrong element; the list-level `body` message is dropped too, since the list it described has changed.
 - In Edit, existing images keep their `image.id`; new images and every paragraph have no id.
 
-### LinkFields (shared by Create a Post and Edit a Post)
+### Paragraph formatting (in PostBodyFields)
 
-Links are held in an array in the form.
+A paragraph's text can hold bold, italic, bold and italic together, and links, written as `**bold**`, `*italic*`, `***both***` and `[link text](https://…)`. Bold, italic and bold-italic text may contain links (`**[our menu](https://…)**`); link text is plain. The rules and the exact rendering are in `docs/api.md` → Paragraph formatting; the text is stored exactly as typed.
 
-- Each existing link shows its fields and a "Delete" button that removes it from the array. For screen readers the button is named by position: "Delete link 2".
-- An "Add link" button reveals blank fields for a new link; its "Add" button validates them and appends the link to the array, and "Cancel" drops them.
-- **Link fields:** Link Name (required, max 100) and URL (required, `https://`).
-- Limit: maximum **10 links** per post. At the limit the "Add link" button is disabled (its label doesn't change) and "Maximum of 10 links" shows above it, after the last link.
-- Links appear in the order they were added. There is no drag-to-reorder.
-- In Edit, existing links keep their `id` in the array; new links have no `id`.
-- Backend field messages show next to their link (`links.N.name`, `links.N.url`), and a list-level `links` message above the list. Adding or deleting a link drops them, as in `PostBodyFields`.
+- Above each paragraph's textarea sit three icon buttons: a bold B, an italic I and a chain link. They work like a text editor's. For screen readers they are named by the paragraph's position, "Bold text in paragraph 2", "Italic text in paragraph 2", "Link text in paragraph 2"; on hover each shows its name and shortcut, for example "Bold (Ctrl+B or ⌘B)".
+- **Shortcuts:** Ctrl or Cmd + B, I and K press Bold, Italic and Link while the cursor is in the paragraph.
+- **Pressed:** Bold shows as pressed (`aria-pressed`, filled purple) while the cursor or highlighted words are in bold or bold-italic text, Italic while they are in italic or bold-italic text, and Link while they are in a link or its panel is open. Bold and Italic can both be pressed.
+- **Highlighted words:** Bold / Italic switch their part of the format around the words and keep them highlighted: plain words become `**…**` / `*…*`; Italic on bold words gives `***…***`; Bold off on those leaves `*…*`; switching off the last one removes the markers. Spaces at either end of the highlight stay outside the markers, so the formatting applies. When the highlighted words are a link's text, Bold / Italic act around the whole link (`**[menu](https://…)**`).
+- **Just the cursor:**
+  - Away from any formatted words, Bold / Italic put an empty pair (`****` / `**`) at the cursor with the cursor between the markers, so what is typed next is formatted. This is the only time a click adds new markers: once a space is typed after a run's last `*`, the cursor is away from it again.
+  - With the cursor in formatted words (anywhere from just after the opening markers to just before the closing ones), or in an empty pair, Bold / Italic switch their part of the format for the whole run, and the cursor keeps its place in the words. Bold then Italic in an empty pair gives `******`, so what is typed is bold and italic. In `***Hello World***` with the cursor after the `d`, Bold leaves `*Hello World*` and Italic leaves `**Hello World**`. Switching off the last part removes the markers.
+  - With the cursor in a run's markers (for example between the two closing `*` of `**bold**`), or just outside them, a click moves the cursor back into the words and changes nothing. Between the markers the buttons show the run's format; just outside them typing is plain, so they don't.
+  - Before the site owner has clicked into the paragraph, the cursor counts as being at the end of its text.
+- Markers with only a space after the opening one (`** **`, `* *`, `5 * 3 * 2`) are never treated as a format, so no button shows as pressed there.
+- Every combination is allowed, so the buttons are never disabled for one another. A highlight that runs over a line break disables all three, since formatting never crosses a line break.
+- **Link** removes the link the highlighted words or the cursor are in, keeping its text and any bold or italic around it (`**[menu](https://…)**` becomes `**menu**`). Otherwise it opens a panel above the textarea, and shows as pressed while it is open; clicking it again closes the panel, as "Cancel" does. A link can be added inside bold or italic text:
+  - **Link text** shows the highlighted words, locked (read-only), so the site owner sees exactly which words become the link. With nothing highlighted, it is an empty field to type the link text into.
+  - **Link URL**, then "Add link" and "Cancel". "Add link" checks both fields with the contract messages ("Each link needs link text." / "Link text must be 100 characters or fewer." under Link text, "Each link must be a valid URL starting with https://" under Link URL). Once both pass, the highlighted words, or the cursor, become `[link text](url)` and the panel closes. "Cancel" closes it. Editing the paragraph's text while it is open also closes it, so the place it would insert at is never stale.
+- Typing the markup by hand works the same way.
+- Every link in the text is checked, the link text before its URL, and the first failing link's message shows under the paragraph: "Each link needs link text." / "Link text must be 100 characters or fewer." / "Each link must be a valid URL starting with https://". The backend's `body.N.text` message shows there too.
 
 ### Get a Post by ID
 
 Hook used: `usePost(id)` → `GET /api/siteOwner/posts/:id`
 
-Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line`, each image with its alt text and dimensions) and every link, plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
+Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line` and its formatting rendered by `FormattedText`, with links opening in a new tab; each image with its alt text and dimensions), plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
 
 ### Edit a Post
 
 Hook used: `usePost(id)` (`update`)
 
-On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body and links), with two differences:
+On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body), with two differences:
 
 - **No Website field** — a post never moves to another website. The website name is shown as read-only text.
 - **No Active toggle** — status changes only through the Active switch on the post page.
 
-The body uses `PostBodyFields` and links use `LinkFields`: elements and links can be edited in place, deleted, or added (and body elements moved), with the same validation and limits.
+The body uses `PostBodyFields`: elements can be edited in place (with the same format buttons), moved, deleted or added, with the same validation and limits.
 
-On submit → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, header, subHeader, postDate, body, links }` — `body` in its new order, existing images carry their `image.id` and existing links their `id`, new ones don't, removed ones are simply absent. The backend updates the post's fields, rewrites the body in the new order and reconciles images and links (update existing, insert new, delete missing) in one transaction; if any part fails nothing is edited.
+On submit → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, header, subHeader, postDate, body }` — `body` in its new order, existing images carry their `image.id`, new ones don't, removed ones are simply absent. The backend updates the post's fields, rewrites the body in the new order and reconciles images (update existing, insert new, delete missing) in one transaction; if any part fails nothing is edited.
 
 - **Success:** close the form dialog; a dialog reads "Post {postName} has been updated"; on close, stay on `/dashboard/post/{id}`, which already shows the updated post so the site owner can check the edit landed.
 - **Failure:** the backend's `error.message` renders inside the form dialog; entered data stays intact.
