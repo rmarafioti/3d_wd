@@ -1,9 +1,10 @@
 // Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Archive / Make
-// Active, Edit a Post): the body in order with line breaks kept, the 404 view, archive behind ConfirmDialog then back to /dashboard, Make
-// Post Active with no confirmation, a failed status change, and staying put after an edit.
+// Active, Edit a Post): the body in order with line breaks kept, the 404 view, the Active switch
+// (off archives and on activates straight away, with no dialogs, the pill following and the page
+// staying put), a failed status change leaving the switch as it was, and staying put after an edit.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostPage from "./page";
 import { mockFetch } from "../../../../test/helpers";
@@ -49,7 +50,7 @@ async function setup(routes) {
   });
   const user = userEvent.setup();
   render(<PostPage />);
-  await screen.findByRole("heading", { name: "Walk day" });
+  await screen.findByRole("heading", { name: "Post Name: Walk day" });
   return { user, calls };
 }
 
@@ -91,47 +92,31 @@ describe("Post page", () => {
     ).toHaveAttribute("href", "/dashboard");
   });
 
-  it("asks before archiving, then archives and routes to /dashboard when the result is closed", async () => {
+  it("archives straight away when the Active switch is turned off: no confirmation, no dialog, and the pill follows", async () => {
     const { user, calls } = await setup({
       "PATCH /api/siteOwner/posts/p1/status": {
         body: { data: { ...POST, active: false } },
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "Archive Post" }));
+    await user.click(screen.getByRole("switch", { name: "Active" }));
 
-    expect(
-      screen.getByText(
-        "Are you sure you want to archive Walk day? It will be removed from your website.",
+    await waitFor(() =>
+      expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+        "aria-checked",
+        "false",
       ),
-    ).toBeInTheDocument();
-    expect(statusCalls(calls)).toHaveLength(0);
-
-    await user.click(screen.getByRole("button", { name: "Archive" }));
-
-    expect(
-      await screen.findByText("Post Walk day has been updated to Archived"),
-    ).toBeInTheDocument();
+    );
     expect(statusCalls(calls)[0].body).toEqual({ active: false });
-
-    await user.click(screen.getByRole("button", { name: "Close" }));
-
-    expect(router.push).toHaveBeenCalledWith("/dashboard");
+    // The switch's own words always show "inactive" and "active", so the pill is the second
+    // "inactive" and there is no longer an "active" pill.
+    expect(screen.getAllByText("inactive")).toHaveLength(2);
+    expect(screen.getAllByText("active")).toHaveLength(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
   });
 
-  it("sends nothing when the archive confirmation is cancelled", async () => {
-    const { user, calls } = await setup();
-
-    await user.click(screen.getByRole("button", { name: "Archive Post" }));
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
-
-    expect(statusCalls(calls)).toHaveLength(0);
-    expect(
-      screen.getByRole("button", { name: "Archive Post" }),
-    ).toBeInTheDocument();
-  });
-
-  it("makes an inactive post active straight away, with no confirmation", async () => {
+  it("makes an inactive post active straight away when the switch is turned on", async () => {
     const { user, calls } = await setup({
       "GET /api/siteOwner/posts/p1": {
         body: { data: { ...POST, active: false } },
@@ -139,27 +124,35 @@ describe("Post page", () => {
       "PATCH /api/siteOwner/posts/p1/status": { body: { data: POST } },
     });
 
-    await user.click(screen.getByRole("button", { name: "Make Post Active" }));
+    await user.click(screen.getByRole("switch", { name: "Active" }));
 
-    expect(
-      await screen.findByText("Post Walk day has been updated to Active"),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      ),
+    );
     expect(statusCalls(calls)[0].body).toEqual({ active: true });
+    expect(screen.getAllByText("active")).toHaveLength(2);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("shows a failed status change in a dialog and stays on the page", async () => {
+  it("shows a failed status change in a dialog and leaves the switch as it was", async () => {
     const { user } = await setup({
       "PATCH /api/siteOwner/posts/p1/status": {
         status: 500,
         body: { error: { message: "Something went wrong, please try again." } },
       },
     });
-    await user.click(screen.getByRole("button", { name: "Archive Post" }));
-    await user.click(screen.getByRole("button", { name: "Archive" }));
+    await user.click(screen.getByRole("switch", { name: "Active" }));
 
     await screen.findByText("Something went wrong, please try again.");
     await user.click(screen.getByRole("button", { name: "Close" }));
 
+    expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     expect(router.push).not.toHaveBeenCalled();
   });
 
@@ -178,7 +171,7 @@ describe("Post page", () => {
     await user.click(screen.getByRole("button", { name: "Close" }));
 
     expect(
-      screen.getByRole("heading", { name: "Beach day" }),
+      screen.getByRole("heading", { name: "Post Name: Beach day" }),
     ).toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
   });

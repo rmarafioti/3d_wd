@@ -15,6 +15,8 @@ import MessageDialog from "./MessageDialog";
 import SubmitErrors from "./SubmitErrors";
 import { isBlank, isValidEmail, validateWebsite } from "../_lib/validation";
 
+import styles from "../_styling/dashPages.module.css";
+
 // Frontend checks, in display order. UX only — the backend re-validates everything.
 function validate({ name, email, website }) {
   const errors = {};
@@ -102,7 +104,7 @@ export default function CreateAccountForm({
           onChange={(e) => setName(e.target.value)}
           onBlur={() => touch("name")}
         />
-        {fieldErrors.name && <p>{fieldErrors.name}</p>}
+        {fieldErrors.name && <p className="fieldError">{fieldErrors.name}</p>}
 
         <label htmlFor="create-account-email">Site Owner Email</label>
         <input
@@ -112,7 +114,7 @@ export default function CreateAccountForm({
           onChange={(e) => setEmail(e.target.value)}
           onBlur={() => touch("email")}
         />
-        {fieldErrors.email && <p>{fieldErrors.email}</p>}
+        {fieldErrors.email && <p className="fieldError">{fieldErrors.email}</p>}
 
         <WebsitePicker
           websites={websites}
@@ -122,7 +124,11 @@ export default function CreateAccountForm({
           fieldErrors={fieldErrors}
         />
 
-        <button type="submit" disabled={!isValid || submitting}>
+        <button
+          type="submit"
+          disabled={!isValid || submitting}
+          className={styles.submitButton}
+        >
           Submit
         </button>
 

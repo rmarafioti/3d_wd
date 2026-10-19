@@ -1,8 +1,10 @@
 // PostBodyFields: the post body editor shared by Create and Edit a Post. The body is an ordered
 // list of elements, each a paragraph or an image; the site owner adds, moves, and deletes them.
 // Handles validation, the limits (5 paragraphs, 5 images), the one-paragraph rule, the
-// "complete it before adding another" rule and image width/height auto-fill. The messages that
-// explain a disabled Add button (and a disabled Submit) show after the last element.
+// "complete it before adding another" rule and image width/height auto-fill. An incomplete
+// element's note (including "One paragraph is required…" under a blank paragraph) shows inside
+// that element's section, under its buttons; the limits, and the required message once every
+// paragraph is deleted, show inside the Add buttons' section, above them.
 //
 // Controlled by the parent form, which owns the body array and passes its React state setter
 // (setBody) so every change is a functional update. That matters for auto-fill: an image load
@@ -17,14 +19,23 @@
 import { useId, useState } from "react";
 import ItemFields, { serverErrorsFor } from "./ItemFields";
 import {
+  isBlank,
   isHttpsUrl,
   validateBody,
   validateImage,
   validateParagraph,
 } from "../_lib/validation";
 
+import styles from "../_styling/postForm.module.css";
+
 const MAX_PARAGRAPHS = 5;
 const MAX_IMAGES = 5;
+
+// The note under an incomplete element, which also explains the disabled Add button and Submit.
+const INCOMPLETE_NOTES = {
+  paragraph: "Complete or delete paragraph to submit.",
+  image: "Complete or delete image to submit.",
+};
 
 export const EMPTY_PARAGRAPH = { type: "paragraph", text: "" };
 const EMPTY_IMAGE = {
@@ -87,17 +98,21 @@ export function isIncompleteElement(element) {
 }
 
 // The textarea for one paragraph. Its message shows once it has been left; otherwise the
-// server's message shows.
-function ParagraphField({ value, onChange, serverError }) {
+// server's message shows. requiredNoted: "One paragraph is required to submit a post." already
+// shows under this paragraph, so its own "Paragraph is required." would repeat it and is hidden.
+function ParagraphField({ value, onChange, serverError, requiredNoted }) {
   const id = useId();
   const [touched, setTouched] = useState(false);
   const error = validateParagraph(value).text;
-  const message = touched && error ? error : serverError;
+  const repeatsNote = requiredNoted && isBlank(value.text);
+  const message = touched && error && !repeatsNote ? error : serverError;
 
   return (
     <>
       <label htmlFor={id}>Paragraph</label>
-      <p>Line breaks you add will show on your website.</p>
+      <p className={styles.message}>
+        <i>*Line breaks you add will show on your website.</i>
+      </p>
       <textarea
         id={id}
         maxLength={10000}
@@ -105,7 +120,7 @@ function ParagraphField({ value, onChange, serverError }) {
         onChange={(e) => onChange({ text: e.target.value })}
         onBlur={() => setTouched(true)}
       />
-      {message && <p>{message}</p>}
+      {message && <p className="fieldError">{message}</p>}
     </>
   );
 }
@@ -131,17 +146,29 @@ export default function PostBodyFields({
   const imageIncomplete = body.some(
     (element) => element.type === "image" && isIncompleteElement(element),
   );
-  // Shown after the last element. The paragraph note is left out while paragraphRequired
-  // already says the same thing.
+  // While no paragraph has text the Add buttons are hidden, not disabled: the note under the blank
+  // paragraph says what to do. Add paragraph still shows when there is no paragraph at all, as
+  // it is then the only way to add one.
+  const showAddParagraph = !paragraphRequired || paragraphCount === 0;
+  const showAddImage = !paragraphRequired;
+
+  // Notes for the whole body, shown above the Add buttons. The required message only shows here
+  // when there is no paragraph to show it under (every paragraph was deleted).
   const notes = [
-    paragraphRequired,
-    !paragraphRequired &&
-      paragraphIncomplete &&
-      "Complete or delete paragraph to submit.",
-    imageIncomplete && "Complete or delete image to submit.",
+    paragraphCount === 0 && paragraphRequired,
     paragraphsFull && `Maximum of ${MAX_PARAGRAPHS} paragraphs`,
     imagesFull && `Maximum of ${MAX_IMAGES} images`,
   ].filter(Boolean);
+
+  // An element's own note, shown under its buttons. While no paragraph has text, a blank
+  // paragraph shows the required message instead of "Complete or delete paragraph".
+  function incompleteNoteFor(element) {
+    if (!isIncompleteElement(element)) return null;
+    if (element.type === "paragraph" && paragraphRequired) {
+      return paragraphRequired;
+    }
+    return INCOMPLETE_NOTES[element.type];
+  }
 
   // Each element's name for screen readers, counted within its type ("paragraph 2", "image 1"),
   // so its Move up / Move down / Delete buttons can be told apart.
@@ -188,17 +215,21 @@ export default function PostBodyFields({
   }
 
   return (
-    <fieldset>
-      <legend>Body</legend>
+    <fieldset className={styles.bodySection}>
+      <legend className={styles.bodyHeader}>Body</legend>
       {fieldErrors.body && <p>{fieldErrors.body}</p>}
 
       {body.map((element, index) => (
-        <div key={element.key}>
+        <div
+          key={element.key}
+          className={`${styles.bodyElement} ${styles.section}`}
+        >
           {element.type === "paragraph" ? (
             <ParagraphField
               value={element}
               onChange={(changes) => patchElement(element, changes)}
               serverError={fieldErrors[`body.${index}.text`]}
+              requiredNoted={Boolean(paragraphRequired)}
             />
           ) : (
             <ItemFields
@@ -215,49 +246,71 @@ export default function PostBodyFields({
           {fieldErrors[`body.${index}.type`] && (
             <p>{fieldErrors[`body.${index}.type`]}</p>
           )}
-          <button
-            type="button"
-            aria-label={`Move ${elementNames[index]} up`}
-            disabled={index === 0}
-            onClick={() => moveElement(index, -1)}
-          >
-            Move up
-          </button>
-          <button
-            type="button"
-            aria-label={`Move ${elementNames[index]} down`}
-            disabled={index === body.length - 1}
-            onClick={() => moveElement(index, 1)}
-          >
-            Move down
-          </button>
-          <button
-            type="button"
-            aria-label={`Delete ${elementNames[index]}`}
-            onClick={() => deleteElement(element.key)}
-          >
-            Delete
-          </button>
+          <div className={styles.buttonRow}>
+            <div className={styles.upDownButtons}>
+              <button
+                type="button"
+                aria-label={`Move ${elementNames[index]} up`}
+                disabled={index === 0}
+                onClick={() => moveElement(index, -1)}
+                className={styles.bodyButton}
+              >
+                Move up
+              </button>
+              <button
+                type="button"
+                aria-label={`Move ${elementNames[index]} down`}
+                disabled={index === body.length - 1}
+                onClick={() => moveElement(index, 1)}
+                className={styles.bodyButton}
+              >
+                Move down
+              </button>
+            </div>
+            <button
+              type="button"
+              aria-label={`Delete ${elementNames[index]}`}
+              onClick={() => deleteElement(element.key)}
+              className={styles.bodyButton}
+            >
+              Delete
+            </button>
+          </div>
+          {incompleteNoteFor(element) && <p>{incompleteNoteFor(element)}</p>}
         </div>
       ))}
 
-      {notes.map((note) => (
-        <p key={note}>{note}</p>
-      ))}
-      <button
-        type="button"
-        disabled={paragraphsFull || paragraphIncomplete}
-        onClick={() => addElement(EMPTY_PARAGRAPH)}
-      >
-        Add paragraph
-      </button>
-      <button
-        type="button"
-        disabled={imagesFull || Boolean(paragraphRequired) || imageIncomplete}
-        onClick={() => addElement(EMPTY_IMAGE)}
-      >
-        Add image
-      </button>
+      {(showAddParagraph || notes.length > 0) && (
+        <div className={styles.section}>
+          {notes.map((note) => (
+            <p key={note}>{note}</p>
+          ))}
+          <div className={styles.buttonRow}>
+            {showAddParagraph && (
+              <button
+                type="button"
+                disabled={paragraphsFull || paragraphIncomplete}
+                onClick={() => addElement(EMPTY_PARAGRAPH)}
+                className={styles.addButton}
+              >
+                {paragraphCount === 0
+                  ? "Add a paragraph"
+                  : "Add another paragraph"}
+              </button>
+            )}
+            {showAddImage && (
+              <button
+                type="button"
+                disabled={imagesFull || imageIncomplete}
+                onClick={() => addElement(EMPTY_IMAGE)}
+                className={styles.addButton}
+              >
+                {imageCount === 0 ? "Add an image" : "Add another image"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </fieldset>
   );
 }

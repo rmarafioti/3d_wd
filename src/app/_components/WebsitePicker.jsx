@@ -42,8 +42,6 @@ export default function WebsitePicker({
 
   return (
     <fieldset>
-      <legend>Website</legend>
-
       <label htmlFor={`${id}-select`}>Choose a website</label>
       <select
         id={`${id}-select`}
@@ -68,7 +66,9 @@ export default function WebsitePicker({
         onChange={(e) => onChange({ ...value, websiteName: e.target.value })}
         onBlur={() => onBlur("websiteName")}
       />
-      {fieldErrors.websiteName && <p>{fieldErrors.websiteName}</p>}
+      {fieldErrors.websiteName && (
+        <p className="fieldError">{fieldErrors.websiteName}</p>
+      )}
 
       <label htmlFor={`${id}-url`}>Website URL</label>
       <input
@@ -80,7 +80,9 @@ export default function WebsitePicker({
         onChange={(e) => onChange({ ...value, websiteUrl: e.target.value })}
         onBlur={() => onBlur("websiteUrl")}
       />
-      {fieldErrors.websiteUrl && <p>{fieldErrors.websiteUrl}</p>}
+      {fieldErrors.websiteUrl && (
+        <p className="fieldError">{fieldErrors.websiteUrl}</p>
+      )}
     </fieldset>
   );
 }

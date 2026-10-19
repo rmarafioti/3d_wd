@@ -8,7 +8,7 @@
 
 The frontend codebase of our Headless CMS project. 3D Web Dev is the business; this CMS tool is called the Client Portal. The backend is in a separate repository which we connect to through the API contract in `docs/api.md`. This repo also serves a public, static landing page for SEO, separate from the two authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each have their own dashboard view.
 
-- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites, creates new site owner accounts, and links websites to existing accounts.
+- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites (in the Accounts aside, present on every `/admin` route), creates new site owner accounts, and links websites to existing accounts.
 - The Site Owner (`/dashboard`) views, creates, edits, archives and reactivates posts for their own websites.
 
 Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on Railway at `https://api.3dwebdev.com`. Both share the parent domain `3dwebdev.com`, so the backend's session cookie (`Domain=.3dwebdev.com`) is also visible to this app's `proxy.js`.
@@ -18,7 +18,8 @@ Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on R
 - Framework - Next.js (current stable, App Router) / JavaScript
 - Auth - Google Identity Services via `@react-oauth/google`
 - Fetch - custom hooks (useEffect / useState) on top of one shared `apiFetch()`
-- State Handling - React Context (auth only)
+- State Handling - React Context (auth, and the admin data shared by the admin layout and page)
+- Icons - react-icons
 - Testing - Vitest + React Testing Library (jsdom)
 
 ## Project Architecture
@@ -32,17 +33,19 @@ root
 │   │   └── helpers.js            *mockFetch (the only fake network) and other browser-edge helpers
 │   └── app/
 │       ├── _components/          *all one-time and reusable components, e.g.
-│       │                          AuthButton.jsx, WebsitePicker.jsx,
+│       │                          AuthButton.jsx, DashboardTitle.jsx, WebsitePicker.jsx,
 │       │                          CredentialRevealModal.jsx, PostBodyFields.jsx,
 │       │                          LinkFields.jsx, ItemFields.jsx,
-│       │                          ConfirmDialog.jsx, SignInForm.jsx,
+│       │                          ConfirmDialog.jsx, DialogCloseButton.jsx, SignInForm.jsx,
 │       │                          MessageDialog.jsx, CreateAccountForm.jsx,
-│       │                          AccountList.jsx, LinkWebsiteDialog.jsx,
-│       │                          SubmitErrors.jsx, PostForm.jsx, PostList.jsx
+│       │                          AccountList.jsx, AccountsAside.jsx, LinkWebsiteDialog.jsx,
+│       │                          SubmitErrors.jsx, PostForm.jsx, PostList.jsx, Toggle.jsx,
+│       │                          StatusPill.jsx
 │       ├── _context/
-│       │   └── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
+│       │   ├── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
+│       │   └── AdminDataContext.jsx *admin accounts + websites, shared by the admin layout and page
 │       ├── _hooks/               *all hooks used
-│       ├── _layout/              *Navbar.jsx (holds AuthButton) and Footer.jsx
+│       ├── _layout/              *Navbar.jsx (holds DashboardTitle and AuthButton) and Footer.jsx
 │       ├── _lib/
 │       │   ├── apiFetch.js       *the only place fetch is called
 │       │   ├── roles.js          *HOME_BY_ROLE: each role's dashboard route
@@ -55,10 +58,10 @@ root
 │       │   ├── page.js           *websites + post list, Create a Post
 │       │   └── post/
 │       │       └── [id]/
-│       │           └── page.js   *single post, Edit, Archive / Make Active
+│       │           └── page.js   *single post, Edit, Active switch (Archive / Make Active)
 │       ├── admin/
-│       │   ├── layout.js         *calls /me, role-gates admin routes
-│       │   └── page.js           *account list, Create an Account, Link a Website
+│       │   ├── layout.js         *calls /me, role-gates admin routes, AdminDataProvider + Accounts aside
+│       │   └── page.js           *Create an Account
 │       ├── globals.css           *global styling
 │       ├── layout.js             *root layout (AuthProvider, Navbar, Footer)
 │       └── page.js               *main landing page (static)
@@ -92,7 +95,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below. Next steps, in order: general styling (branch `12-styling`, about 50% done, includes Feature 2), then Feature 3 Post preview (v1), then security hardening, then the production deploy. Four client websites are waiting to onboard after launch.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below. Branch `12-styling` (2026-10-19) is committed as one commit and pushed, ready for its PR: Rich's general styling and Feature 2, plus the shared `Toggle` (post Status switch, no archive confirmation, stays on the post page), the shared `DialogCloseButton` X on every dialog except the one-time reveal, the page behind a dialog no longer scrolling, the post form notes moved inside their bordered sections, the Add buttons hidden until a paragraph has text and reading "Add a / Add another", sign out as a full page load to `/` (it used to bounce back to `/dashboard`), `adminDash.module.css` renamed `dashPages.module.css`, the shared `StatusPill` for every active / inactive indicator, each form field's validation message sitting directly under its field (the global `fieldError` class), and a CSS and code-review cleanup. `main` (PR #14) is merged into it. The backend's "Links inside paragraphs" handoff is done: the Planned Later entry matches the backend's wording word for word (plus its frontend detail) and has no "not yet in the backend" marker. Still to bring into `docs/flows.md` in the docs alignment session: the em dashes left in user-facing text (the post page's empty-field "—" and image line, and the two "No new API key or webhook secret were generated — …" messages). Next steps, in order: merge the `12-styling` PR, then a docs alignment session across the backend docs, these docs and the master doc, then Feature 3 Post preview (v1), then security hardening, then the production deploy. Four client websites are waiting to onboard after launch.
 
 ## Features
 
@@ -112,7 +115,7 @@ New work after the MVP Build Order, numbered and named the same as in the backen
    - `AdminDataContext` (`useAdminData()`) shares `useAccounts()` and `useAllWebsites()` between the aside and the Create an Account page.
    - `react-icons` added, for icons only.
 
-   In progress on `12-styling`, not merged.
+   In the `12-styling` PR, not merged.
 
 3. **Post preview (v1)** — frontend only. Not started; planned on its own branch after the general styling branch merges.
    - Before a Create a Post or Edit a Post is saved, the site owner sees the post in a basic styled layout: header, sub header, date, the body elements in order, and links.
@@ -151,7 +154,7 @@ A field containing just a space is still a truthy, non-empty string — it'll sl
 Local useState first — Context is for things like auth/role that genuinely span the app, not a default reach for anything async.
 
 **Never make aesthetic styling decisions:**
-No CSS frameworks, no component libraries, no color/font/spacing choices. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction. The one approved exception is functional, not aesthetic: the inline `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it during his styling pass.
+No CSS frameworks or UI component libraries, no color/font/spacing choices. The one approved exception is `react-icons`, for icons only, chosen by Rich. Never add another UI dependency without his approval. Styling is owned entirely by Rich. The agent's only job with layout is basic structural formatting (flexbox only) to keep content readable within the viewport. If a component needs some layout to function at all, keep it minimal and unstyled beyond that. Don't add polish, don't guess at a visual direction. The one approved exception is functional, not aesthetic: the inline `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it during his styling pass.
 
 ## Patterns and Preferences
 
@@ -164,6 +167,7 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `useRoleGate(role)` \*dashboard layouts: calls `/me`, fills AuthContext, redirects on role mismatch
 - `useAccounts()` \*admin: all site owner accounts with their websites; also exposes `createAccount` and `linkWebsite`
 - `useAllWebsites()` \*admin: every active website (powers the WebsitePicker)
+- `useAdminData()` \*admin: reads AdminDataContext, `{ accounts, websites }` (the results of `useAccounts()` and `useAllWebsites()`, called once by the admin layout)
 - `useWebsites()` \*site owner: their own websites, each with post summaries
 - `usePost(id)` \*site owner: a single post; also exposes `update` and `setStatus`
 - `usePosts()` \*site owner: creation only (`create`)
@@ -179,13 +183,16 @@ Every data-fetching hook returns the same shape, plus whichever mutations are re
 `apiFetch` handles a 401 the same way everywhere: a full page load to `/sign-in?expired=1`, which resets all client state and so clears AuthContext; the sign-in page shows "Your session expired, please sign in again." Unsaved form data is lost. Exception: the login call itself — its 401 is "You are not authorized to log in." and is shown in the sign-in dialog instead.
 
 **Every pop-up is a native `<dialog>`:**
-For accessibility, every pop-up (signing in, errors, success messages, the Create/Edit Post forms, confirmations, the one-time reveal) uses a native `<dialog>` opened with `showModal()`. Every dialog has a visible Close button. Clicking outside a dialog never closes it. Esc closes ordinary dialogs (native behaviour); **only the one-time reveal blocks Esc** (handle the `cancel` event) so credentials can't be lost by an accidental keypress — it closes only with its Close button.
+For accessibility, every pop-up (signing in, errors, success messages, the Create/Edit Post forms, confirmations, the one-time reveal) uses a native `<dialog>` opened with `showModal()`. Every dialog closes with the shared `DialogCloseButton`: an X in its top right corner, named "Close" for screen readers, that stays in view while the dialog scrolls. Two exceptions: the one-time reveal keeps its labelled Close button and has no X, and `ConfirmDialog` keeps "Cancel" beside its confirm button as well as the X. Clicking outside a dialog never closes it. Esc closes ordinary dialogs (native behaviour); **only the one-time reveal blocks Esc** (handle the `cancel` event) so credentials can't be lost by an accidental keypress — it closes only with its Close button.
 
 **Destructive actions are gated by a confirmation dialog:**
-Archiving a post opens `ConfirmDialog` ("Are you sure you want to archive {postName}? It will be removed from your website.") before the request is sent. Make Active does not need a confirmation.
+`ConfirmDialog` gates an action that can't be undone in one step. It is kept for that future use and has no caller now. A post's Active switch is not gated: archiving is a reversible flag, undone with the same switch, and the pill shows the result immediately.
 
 **The one-time key/secret reveal is a single reusable component:**
 `CredentialRevealModal` is used by Create an Account and Link a Website now, and will be reused by key rotation later — one piece rather than recreating the "show once, discard on close" logic for each flow.
+
+**Every on/off state is a single reusable `Toggle` switch:**
+`Toggle` is used for a post's Active status (the post page and Create a Post), and is the control for every future on/off state (add-ons such as business hours, and turning an account or website on or off). It is a native `<button role="switch">` with `aria-checked`, named by its `label` for what "on" means ("Active"), with any visible heading for the setting ("Status") kept separate. Its optional `offLabel` / `onLabel` words ("inactive" / "active") sit either side, hidden from screen readers. It is always controlled by the saved value and never flips optimistically: the switch moves only once the request succeeds. A reversible on/off state saves in one motion with no confirmation.
 
 **The website picker is a single reusable component:**
 `WebsitePicker` is used by Create an Account and Link a Website.
@@ -220,6 +227,7 @@ Ideas Rich has chosen for later. Not scheduled and not to be built yet. Each bec
 - **Add-on catalog.** An "Add to your website" list for site owners, each add-on with a one-line description, Photo Gallery and Business Hours first. A website's add-ons go in a backend `website_feature` table, built together with the first add-on. An add-on moves through available → requested → live: the site owner turns it on and fills it in, the administrator sees it as requested, and Rich wires it into the client website and marks it live. An add-on's optional fields sit behind "More options" so the basic form stays short. On the frontend, the list lives on `/dashboard`, and each add-on's status shows in the Accounts aside for the administrator.
 - **Administrator notifications.** An alert when a site owner requests an add-on, or one is filled in and ready to wire. The backend sends it from a job row written in the same transaction. Until then, the admin dashboard shows "requested".
 - **Site owner collaboration.** Site owners suggest add-ons, or optional fields for existing ones. Rich curates: a suggestion is built when at least two businesses want it. Sharing between owners is opt-in or anonymized. It starts as a shared suggestion board outside the app and moves into the app at roughly 10–20 site owners. Feature creep until live use with the early adopters shows owners want it. Not built before then.
+- **Links inside paragraphs.** The separate links list on a post goes away. A site owner writes a link straight into a paragraph's text, and the `link` table is dropped. The link format inside the text is decided when this starts (for example `[link text](https://…)`). A link's URL must start with `https://`, the same rule `links.N.url` has today, and paragraph validation checks it. The 10,000-character paragraph limit includes the link markup. `PublicPost` paragraphs carry the markup, and the client website template turns it into real links; it never renders raw HTML from paragraph text. This is a breaking and data-changing contract change: `links` leaves `Post`, the `POST /api/siteOwner/posts` and `PATCH /api/siteOwner/posts/:id` request bodies, and `PublicPost`. It follows `docs/scaling.md` §3 (expand → migrate → contract): existing links are moved into their posts' paragraphs before the table is dropped. Because the public API only grows (`docs/scaling.md` §4), the new `PublicPost` ships on a versioned path (`/api/public/v2/posts`), and `/api/public/posts` keeps working until every client website has moved to the new template. Where migrated links are placed in a post, and how the old path keeps serving `links` once the table is gone, are decided when this starts. On the frontend, `LinkFields` and its draft "Add" step go away, the paragraph help text explains the link format, link validation moves into the paragraph check in `_lib/validation.js`, and the post page renders the links inside paragraphs.
 
 ## Code Style
 
@@ -232,6 +240,7 @@ Formatting is Prettier with default settings (`.prettierrc`), run before every c
 - **Text input:** always `(value ?? "").trim()` before checking emptiness or length. Use the helpers in `_lib/validation.js` instead of re-writing the check inline.
 - **Control flow:** early returns over nested `if`/`else`. No nested ternaries in JSX.
 - **User-facing strings:** copy them word for word from `docs/flows.md` / `docs/api.md`. Never paraphrase a message the spec states.
+- **No em dashes in user-facing text.** Rich's preference: use a comma, a full stop or "!" instead. It applies to every new or changed frontend string and its copy in `docs/flows.md`. Messages that come from the backend (`docs/api.md`) change only together with the backend (`docs/scaling.md` §5).
 
 ## Code Review
 
@@ -281,7 +290,7 @@ Write a test when the code carries a rule that someone could break without notic
 - **A bug that was fixed:** write the failing test first, then fix the code, so it can't come back.
 - **One layer is enough:** if a flow test already proves a behaviour through the real code (a page or form test running the real hook), don't repeat it in a unit test of the piece. Test the piece directly only for what the flow can't reach (edge states, stale responses, security rules).
 
-Don't write a test for: static markup with no logic, styling, a constant (`roles.js`), a one-line pass-through (`useAuth`), or Next.js/React behaviour itself. A page made only of tested pieces needs a test only for the wiring it adds (e.g. the archive confirm → status request → route to `/dashboard` flow).
+Don't write a test for: static markup with no logic, styling, a constant (`roles.js`), a one-line pass-through (`useAuth`), or Next.js/React behaviour itself. A page made only of tested pieces needs a test only for the wiring it adds (e.g. the Active switch → status request → pill updates flow).
 
 ### The pattern every test follows
 
@@ -310,7 +319,7 @@ Don't write a test for: static markup with no logic, styling, a constant (`roles
   - Hook returns consistent `{ data, loading, error }` shape
   - Requests and responses match `docs/api.md`
   - Role-gating redirect at layout level (UX only)
-  - Every pop-up is a `<dialog>` with a Close button and no outside-click close
+  - Every pop-up is a `<dialog>` with the X close button (the one-time reveal: its labelled Close button) and no outside-click close
   - No aesthetic styling added
   - Test: verified in the browser, not just Postman
   - List every record the browser test created (accounts, websites, posts) so Rich can have the backend session delete them

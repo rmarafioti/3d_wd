@@ -1,0 +1,47 @@
+.toggleContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(45deg, #908c8c, rgba(255, 255, 255, 0.87));
+  height: 26px;
+  box-shadow: inset 5px 5px 10px #7d7b7b;
+  border-radius: 50px;
+  width: 50px;
+  /* Reset the global button padding and native border so the thumb sits in the track. */
+  padding: 0rem;
+  margin: 0rem 0.2rem 0rem 0.2rem;
+  border: none;
+}
+
+.toggleButton {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.87);
+  height: 20px;
+  width: 20px;
+  top: 2.5px;
+  left: 4px;
+  border-radius: 50px;
+  transition: left 0.3s ease-in-out;
+}
+
+.toggled {
+  left: calc(100% - 26px);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 667px) {
+  .toggleContainer {
+    height: 30px;
+    width: 60px;
+  }
+
+  .toggleButton {
+    height: 22px;
+    width: 22px;
+    top: 2px;
+  }
+}

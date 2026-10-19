@@ -3,8 +3,15 @@
 
 import SignInForm from "../_components/SignInForm";
 
+import styles from "../_styling/signIn.module.css";
+
 export default async function SignInPage({ searchParams }) {
   const params = await searchParams;
 
-  return <SignInForm expired={params.expired === "1"} />;
+  return (
+    <article>
+      <h1 className={styles.header}>Sign In</h1>
+      <SignInForm expired={params.expired === "1"} />
+    </article>
+  );
 }

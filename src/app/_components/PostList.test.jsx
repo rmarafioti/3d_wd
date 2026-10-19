@@ -2,7 +2,7 @@
 // each post linking to its page with its date and indicator, and the empty states.
 
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import PostList from "./PostList";
 
 const WEBSITE = {
@@ -37,11 +37,11 @@ describe("PostList", () => {
     render(<PostList websites={[WEBSITE]} loading={false} error={null} />);
 
     expect(
-      screen.getByRole("heading", { name: "Stevie The Dog" }),
+      screen.getByRole("heading", { name: "Website: Stevie The Dog" }),
     ).toBeInTheDocument();
     const links = screen.getAllByRole("link");
     expect(links.map((link) => link.textContent)).toEqual([
-      "Beach day",
+      "2026-10-07 - Beach day",
       "Walk day",
     ]);
     expect(links[0]).toHaveAttribute("href", "/dashboard/post/p2");
@@ -51,8 +51,14 @@ describe("PostList", () => {
     render(<PostList websites={[WEBSITE]} loading={false} error={null} />);
 
     const [beach, walk] = screen.getAllByRole("listitem");
-    expect(beach).toHaveTextContent("Beach day — 2026-10-07 — active");
-    expect(walk).toHaveTextContent("Walk day — inactive");
+    expect(
+      within(beach).getByRole("link", { name: "2026-10-07 - Beach day" }),
+    ).toBeInTheDocument();
+    expect(within(beach).getByText("active")).toBeInTheDocument();
+    expect(
+      within(walk).getByRole("link", { name: "Walk day" }),
+    ).toBeInTheDocument();
+    expect(within(walk).getByText("inactive")).toBeInTheDocument();
   });
 
   it('shows "No posts yet." for a website without posts', () => {

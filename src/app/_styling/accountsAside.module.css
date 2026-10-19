@@ -1,0 +1,60 @@
+.adminLayout {
+  position: relative;
+}
+
+.aside {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0rem 0.5rem 0rem 0.5rem;
+}
+
+/* Closed: only the tab (the toggle button) shows, at its own width. */
+.closed {
+  border-left: 1px solid lightgray;
+  border-bottom: 1px solid lightgray;
+}
+
+/* Open: runs the height of the viewport; the toggle stays at the top and the list scrolls. */
+.open {
+  width: 240px;
+  height: 100vh;
+  background-color: white;
+  border-left: 1px solid lightgray;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  color: black;
+  background-color: white;
+  font-size: 18px;
+  border-radius: 0px;
+  padding: 1rem 1rem 1rem 0rem;
+  width: 100%;
+  text-align: left;
+}
+
+/* At phone width the closed tab shows only its icon; open, the text returns as on desktop. */
+@media (max-width: 667px) {
+  .closed .toggleText {
+    display: none;
+  }
+
+  .toggle {
+    padding: 0.5rem 0rem 0.5rem 0rem;
+  }
+}

@@ -1,0 +1,58 @@
+.postNameSection {
+  display: flex;
+  flex-direction: row;
+}
+
+.postName {
+  font-size: 18px;
+  margin-right: 1rem;
+}
+
+.accountList,
+.account,
+.createAccounts,
+.siteOwnerAccount,
+.postList {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.account {
+  margin-top: 1rem;
+  border-bottom: 1px solid lightgray;
+}
+
+.header,
+.postHeader,
+.websites,
+.accountList,
+.createAPost,
+.linkWebsiteButton {
+  margin-bottom: 1rem;
+}
+
+.key {
+  font-weight: bold;
+}
+
+.value,
+.websiteHeader {
+  margin-bottom: 0.5rem;
+}
+
+.statusPill {
+  margin: 0rem 0rem 1rem 0rem;
+}
+
+.submitButton,
+.createAPost {
+  width: 100%;
+}
+
+@media (max-width: 667px) {
+  .header {
+    margin-left: 1rem;
+  }
+}

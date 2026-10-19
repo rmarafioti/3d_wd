@@ -10,6 +10,13 @@
   }
 }
 
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
 html {
   height: 100%;
 }
@@ -31,14 +38,149 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 a {
   color: inherit;
+}
+
+article {
+  padding-top: 4rem;
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+header {
+  font-size: 26px;
+}
+
+nav,
+footer {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid lightgray;
+}
+
+footer {
+  width: 100vw;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: none;
+  border-top: 1px solid lightgray;
+}
+
+button {
+  padding: 0.5rem;
+  width: 140px;
+  text-align: center;
+  border-radius: 5px;
+  color: white;
+  background-color: rgb(117, 99, 236);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+li {
+  list-style-type: none;
+}
+
+form,
+fieldset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+form,
+fieldset,
+select {
+  width: 400px;
+}
+
+summary {
+  margin-bottom: 1rem;
+}
+
+label {
+  font-weight: bold;
+}
+
+textarea {
+  font-family: "Arial", Times, serif;
+  width: 100%;
+  /* Resize only in height, never wider than its container, so it can't be dragged out of a dialog. */
+  max-width: 100%;
+  resize: vertical;
+  height: 160px;
+  border: 1px solid black;
+  padding: 0.5rem;
+}
+
+input,
+select {
+  border: 1px solid black;
+  padding: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* A field's validation message sits directly under its field and takes over the field's
+   bottom spacing, so it reads as part of that field, not the next one's label. */
+.fieldError {
+  margin-bottom: 1rem;
+}
+
+input:has(+ .fieldError),
+select:has(+ .fieldError),
+textarea:has(+ .fieldError) {
+  margin-bottom: 0;
+}
+
+/* A modal dialog is centred by the browser's margin: auto, which the * reset above removes, so
+   it is restored here. The max sizes keep it inside the viewport; long content scrolls, and
+   scrolling past its end doesn't carry on into the page. */
+dialog {
+  margin: auto;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2rem;
+}
+
+/* While any modal dialog is open the page behind it can't scroll. */
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 667px) {
+  nav,
+  footer,
+  form,
+  fieldset {
+    width: 100%;
+  }
+
+  form {
+    padding: 0rem 1rem 0rem 1rem;
+  }
+
+  dialog {
+    padding: 1rem;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

@@ -10,6 +10,8 @@
 import { useState } from "react";
 import { useModalDialog } from "../_hooks/useModalDialog";
 
+import styles from "../_styling/credentialRevealModal.module.css";
+
 export default function CredentialRevealModal({
   website,
   credentials,
@@ -50,11 +52,13 @@ export default function CredentialRevealModal({
       closedby="none"
       onCancel={(event) => event.preventDefault()}
     >
-      <p>Copy these now — they will never be shown again.</p>
+      <p className={styles.message}>
+        Copy these now! They will never be shown again.
+      </p>
 
-      <dl>
+      <dl className={styles.creds}>
         {rows.map(([label, value]) => (
-          <div key={label}>
+          <div className={styles.credValues} key={label}>
             <dt>{label}</dt>
             <dd>
               <code>{value}</code>
@@ -62,14 +66,19 @@ export default function CredentialRevealModal({
           </div>
         ))}
       </dl>
+      <div className={styles.buttonContainer}>
+        <button type="button" onClick={copyAll}>
+          {copied ? "Copied" : "Copy all"}
+        </button>
 
-      <button type="button" onClick={copyAll}>
-        {copied ? "Copied" : "Copy all"}
-      </button>
-
-      <button type="button" onClick={handleClose}>
-        Close
-      </button>
+        <button
+          type="button"
+          onClick={handleClose}
+          className={styles.closeButton}
+        >
+          Close
+        </button>
+      </div>
     </dialog>
   );
 }

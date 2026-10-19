@@ -6,6 +6,8 @@
 
 import { Fragment, useId, useState } from "react";
 
+import styles from "../_styling/postForm.module.css";
+
 // Picks one item's server messages out of error.fields by its path prefix:
 // ("body.2.image.") turns "body.2.image.src" into { src: "..." }.
 export function serverErrorsFor(fieldErrors, prefix) {
@@ -46,8 +48,9 @@ export default function ItemFields({
           value={value[name]}
           onChange={(e) => onPatch({ [name]: e.target.value })}
           onBlur={() => setTouched((t) => ({ ...t, [name]: true }))}
+          className={styles.input}
         />
-        {message && <p>{message}</p>}
+        {message && <p className="fieldError">{message}</p>}
       </Fragment>
     );
   });

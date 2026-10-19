@@ -9,6 +9,9 @@ import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { apiFetch } from "../_lib/apiFetch";
 import { HOME_BY_ROLE } from "../_lib/roles";
+import DialogCloseButton from "./DialogCloseButton";
+
+import styles from "../_styling/signIn.module.css";
 
 export default function SignInForm({ expired }) {
   const router = useRouter();
@@ -37,9 +40,18 @@ export default function SignInForm({ expired }) {
       {expired && <p>Your session expired, please sign in again.</p>}
 
       {/* A failed or cancelled Google step sends nothing; Google's own UI covers it. */}
-      <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => {}} />
+      <GoogleLogin
+        onSuccess={handleGoogleSuccess}
+        onError={() => {}}
+        size="large"
+        width="400"
+        shape="pill"
+        theme="outline"
+        text="signin_with"
+      />
 
       <dialog ref={dialogRef}>
+        <DialogCloseButton dialogRef={dialogRef} />
         {error ? (
           <p>
             {error.message}
@@ -57,9 +69,6 @@ export default function SignInForm({ expired }) {
         ) : (
           <p>Signing in…</p>
         )}
-        <button type="button" onClick={() => dialogRef.current.close()}>
-          Close
-        </button>
       </dialog>
     </GoogleOAuthProvider>
   );

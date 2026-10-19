@@ -2,7 +2,7 @@
 
 Full behavioral spec for each frontend flow. `CLAUDE.md` holds the short, always-loaded rules (ownership checks, anti-patterns, patterns); this file holds the specific flow detail those rules apply to. Imported from `CLAUDE.md` via `@docs/flows.md`. Request and response shapes for every call referenced here are in `docs/api.md`.
 
-All pop-ups below are native `<dialog>` elements with a Close button, never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
+All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button. They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
 
 ---
 
@@ -13,9 +13,15 @@ All pop-ups below are native `<dialog>` elements with a Close button, never clos
 **Navbar `AuthButton`:** a small client component that reads `useAuth()`.
 
 - No user in context → reads "Sign in" and links to `/sign-in`.
-- User in context → reads "Sign out". On click: `POST /api/auth/logout`, clear AuthContext, route to `/`.
+- User in context → reads "Sign out". On click: `POST /api/auth/logout`, clear AuthContext, then a full page load to `/`.
 
 On the landing page and sign-in page the context is always empty (signed-in users never reach them — see Proxy), so they always show "Sign in". On the dashboards the layouts have filled the context, so they always show "Sign out".
+
+**Navbar `DashboardTitle`:** a small client component that reads `useAuth()` and names the dashboard, replacing a heading on the dashboard pages.
+
+- No user in context → shows nothing (the landing page and sign-in page).
+- Admin → "Admin Dashboard".
+- Site owner → "{name}'s Dashboard", with the site owner's name from `/me`.
 
 **Proxy (`src/proxy.js`):** matches only `/` and `/sign-in`. If the request has a `session` cookie, redirect to `/dashboard`. It never decodes the cookie. An admin redirected to `/dashboard` is sent on to `/admin` by the dashboard layout. A signed-in user who wants the landing page signs out first, which routes them there. If the cookie is stale, the backend clears it on the first 401, so the user is never stuck in a redirect loop.
 
@@ -44,7 +50,7 @@ On the landing page (`/`) the Navbar's "Sign in" button routes the user to `/sig
 If the Google step succeeds, the returned `credential` (a signed Google ID token) is sent with `POST /api/auth/login`. To compensate for latency, a dialog opens reading "Signing in…" while the request is in flight.
 
 - **Success:** the backend sets the httpOnly `session` cookie (every later request carries it automatically) and returns `{ role }` in the JSON body, just for that one moment. The frontend reads it once and routes to `/admin` (admin) or `/dashboard` (site_owner). The layout there then calls `/me` and fills AuthContext.
-- **Error (401):** the same dialog changes to the backend's message "You are not authorized to log in." followed by "contact us" — a `mailto:` link to `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL`. The dialog has a Close button; closing it leaves the user on `/sign-in` to try again.
+- **Error (401):** the same dialog changes to the backend's message "You are not authorized to log in." followed by "contact us" — a `mailto:` link to `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL`. The dialog's X closes it, leaving the user on `/sign-in` to try again.
 - **Google step fails or is cancelled:** no request is sent; nothing is shown beyond Google's own UI.
 
 For validation purposes, as a final check: confirm the cookie has landed by checking the `Set-Cookie` response header in the Network tab (the cookie can't be read from JS — that's by design).
@@ -53,24 +59,24 @@ If an already signed-in user lands on `/` or `/sign-in` directly, the proxy redi
 
 ## Sign Out
 
-"Sign out" in the Navbar → `POST /api/auth/logout` → clear AuthContext → route to `/`. If the request fails, still clear AuthContext and route to `/` (the cookie will expire on its own within 24 hours at worst).
+"Sign out" in the Navbar → `POST /api/auth/logout` → clear AuthContext → a full page load to `/`. If the request fails, still clear AuthContext and load `/` (the cookie will expire on its own within 24 hours at worst). It is a full page load, not a client-side route, because the client router cache may still hold the proxy's signed-in redirect for `/`, which would bounce the user back to `/dashboard`; a full load asks the server, so the proxy sees the cookie is gone. If the logout request failed and the cookie is still there, the proxy sends the user to a freshly loaded dashboard, which is correct: they are still signed in.
 
 ---
 
 ## Admin Dashboard (`/admin`)
 
-Hooks used: `useAccounts()`, `useAllWebsites()`
+Hooks used: `useAccounts()`, `useAllWebsites()`, both called once by the admin layout's `AdminDataProvider` and read through `useAdminData()`, so the page and the Accounts aside share the same lists.
 
-The admin dashboard has two sections on one page:
+The admin dashboard has two parts:
 
-1. **Create an Account** — the form described below.
-2. **Accounts** — a list of every site owner account.
+1. **Create an Account** — the page itself: the form described below.
+2. **Accounts aside** — rendered by the admin layout, so it is present on every `/admin` route. It sits at the top right of the admin content, below the Navbar, and is **closed by default** on every page load. Closed, it shows only its toggle: a triangle icon with the text "Accounts", or only the icon at phone width (the button is still named "Accounts" for screen readers, with `aria-expanded`). The triangle points right when closed and down when open, like the marker on each account's "Websites" disclosure. Opening it overlays the page content with the account list (Get All Accounts below); the same toggle closes it. It is a disclosure panel, not a pop-up, so it is not a `<dialog>`.
 
 ### Get All Accounts
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every site owner account (active and inactive) sorted by name. Each account shows its name, email, an "active"/"inactive" indicator, and below it the websites linked to it (website name, URL, "active"/"inactive" indicator). Each account has a **"Link a Website"** button. An account with no websites shows "No websites linked." With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
+Lists every site owner account (active and inactive) sorted by name. Each account shows its site owner name, email and an "active"/"inactive" indicator, and below them a **"Websites"** disclosure (native `<details>`, closed by default). Opened, it lists the websites linked to the account (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator) followed by the account's **"Link a Website"** button. An account with no websites shows "No websites linked." there. With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
 
 ### Get All Websites (admin)
 
@@ -108,7 +114,7 @@ The Submit button stays disabled until every required field is filled and valid.
 The payload is `{ name, email, websiteId }` for an existing website, or `{ name, email, websiteName, websiteUrl }` for a new one → `POST /api/admin/accounts`.
 
 - **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found."
-- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now — they will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. The account list refetches as soon as the request succeeds; on close, clear the form and refetch the website list.
+- **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now! They will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. The account list refetches as soon as the request succeeds; on close, clear the form and refetch the website list.
 - **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." The account list refetches as soon as the request succeeds; on close, clear the form.
 
 ### Link a Website
@@ -131,7 +137,7 @@ Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/ac
 
 Hook used: `useWebsites()` → `GET /api/siteOwner/websites`
 
-Fetches the site owner's active websites, each with summaries of its posts. Rendered as a list per website: the `websiteName` is the heading, and under it each post shows its `postName`, its `postDate` if set, and an indicator pill reading "active" or "inactive". Posts are ordered by `createdAt`, newest first (as returned). Each `postName` links to `/dashboard/post/{id}`. A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
+Fetches the site owner's active websites, each with summaries of its posts. Rendered under a "Your Posts" heading as a list per website: each website's heading reads "Website: {websiteName}", and under it each post shows a link to `/dashboard/post/{id}` followed by an indicator pill reading "active" or "inactive". The link reads "{postDate} - {postName}" when the post has a date, otherwise just "{postName}". Posts are ordered by `createdAt`, newest first (as returned). A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
 
 The same data also fills the website dropdown in Create a Post.
 
@@ -142,13 +148,13 @@ Hook used: `usePosts()` (`create`), plus `useWebsites()` for the dropdown
 The "Create a Post" button on `/dashboard` opens a dialog with a form:
 
 - **Website** — dropdown of the site owner's websites from `useWebsites()`. Required. If the site owner has exactly one website it is pre-selected.
-- **Post Name** — required, max 100. Help text: "Only you see this — it's how you find the post on your dashboard."
+- **Post Name** — required, max 100. Help text: "Only you see this, it's how you find the post on your dashboard."
 - **Post Date** — optional date input. Help text: "Shown on your website so visitors know how recent the post is."
 - **Header** — optional, max 150. The headline shown on the website.
 - **Sub Header** — optional, max 200.
 - **Body** — `PostBodyFields` (see below): an ordered list of paragraphs and images. Starts with one empty paragraph.
 - **Links** — `LinkFields` (see below).
-- **Active** — a toggle, on by default. Off saves the post as inactive so it can be made active later.
+- **Status** — the Active switch (the shared `Toggle`, named "Active" for screen readers) reading "inactive" / "active" either side, on by default. Off saves the post as inactive so it can be made active later. Help text: "Set a post to active for it to be live on your website, or inactive to save it and make it live at a later date."
 
 All fields go through the same frontend validation used everywhere else — UX only, never the actual gate. Field messages render next to their field; the Submit button stays disabled until the form is valid.
 
@@ -162,18 +168,16 @@ On submit → `POST /api/siteOwner/posts` with `{ websiteId, postName, header, s
 The post body is an ordered array of elements in the form, each a paragraph or an image, so the client website can interleave text and photos.
 
 - Elements show in body order. Each has "Move up" (disabled on the first), "Move down" (disabled on the last) and "Delete" buttons. For screen readers each button is named by the element's type and its position among that type: "Move paragraph 2 up", "Move image 1 down", "Delete paragraph 1". There is no drag-to-reorder.
-- "Add paragraph" / "Add image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid.
-- **Complete it before adding another.** While a paragraph is blank, "Add paragraph" is disabled; while an image is incomplete, "Add image" is disabled. The buttons keep their labels.
+- "Add a paragraph" / "Add an image" append a blank element to the end of the body; its fields are validated in place and the Submit button stays disabled until they are valid. Once the body has an element of that type, the button reads "Add another paragraph" / "Add another image", so it is clear the one already filled in counts: what is typed is part of the form, and Submit saves it.
+- **Complete it before adding another.** While a paragraph is blank, the Add paragraph button is disabled; while an image is incomplete, the Add image button is disabled. Being disabled doesn't change their labels.
 - **Paragraph:** a textarea (required, max 10000) with the help text "Line breaks you add will show on your website." Only the ends are trimmed when sent, so the line breaks inside are kept.
 - **Image fields:** Image URL (`src`, required, `https://`), Width and Height (required, whole numbers 1–10000), Alt Text (required, max 200). Images are hosted in the site owner's own Cloudinary account; the site owner pastes the Cloudinary URL.
 - **Auto-fill width/height:** when a valid `https://` URL is entered, load it in the background with `new Image()`; on load, fill Width and Height from `naturalWidth` / `naturalHeight`. The fields stay editable. If the image fails to load, leave them empty for manual entry (the site owner can read the dimensions in Cloudinary).
-- **One paragraph is required.** While no paragraph has text (the first one is still blank, or every paragraph was deleted), "Add image" and Submit are disabled. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
+- **One paragraph is required.** While no paragraph has text (the first one is still blank, or every paragraph was deleted), Submit is disabled and the Add buttons are hidden, not disabled: both appear once a paragraph has text. The one exception is when every paragraph was deleted: then "Add a paragraph" shows (it is the only way forward) and the Add image button stays hidden. If the backend still rejects it, its "Add at least one paragraph." shows at the top of the body.
 - Limits: maximum **5 paragraphs** and **5 images** per post. At the limit the matching Add button is disabled; its label doesn't change.
-- **Notes after the last element**, above the Add buttons, explain whatever is disabled, one line each, in this order:
-  - "One paragraph is required to submit a post." while no paragraph has text.
-  - "Complete or delete paragraph to submit." while a paragraph is blank and another has text.
-  - "Complete or delete image to submit." while an image is incomplete.
-  - "Maximum of 5 paragraphs" / "Maximum of 5 images" at the limit.
+- **Notes** explain whatever is disabled, one line each, inside the section they belong to (each section ends in its border):
+  - Under an incomplete element's Move up / Move down / Delete buttons: "One paragraph is required to submit a post." while that paragraph is blank and no paragraph has text (the paragraph's own "Paragraph is required." is then hidden, since it would repeat the note); "Complete or delete paragraph to submit." while that paragraph is blank and another has text; or "Complete or delete image to submit." while that image is incomplete.
+  - Above the Add buttons, in this order: "One paragraph is required to submit a post." when every paragraph was deleted (so there is no paragraph to show it under), then "Maximum of 5 paragraphs" / "Maximum of 5 images" at the limit.
 - Backend field messages show next to their element: `body.N.text` under that paragraph, `body.N.image.<field>` under that image field, `body.N.type` under that element, and `body` (list-level) at the top. Adding, moving or deleting an element shifts the indexes, so the backend's `body.N.…` messages are dropped then rather than shown on the wrong element; the list-level `body` message is dropped too, since the list it described has changed.
 - In Edit, existing images keep their `image.id`; new images and every paragraph have no id.
 
@@ -184,7 +188,7 @@ Links are held in an array in the form.
 - Each existing link shows its fields and a "Delete" button that removes it from the array. For screen readers the button is named by position: "Delete link 2".
 - An "Add link" button reveals blank fields for a new link; its "Add" button validates them and appends the link to the array, and "Cancel" drops them.
 - **Link fields:** Link Name (required, max 100) and URL (required, `https://`).
-- Limit: maximum **10 links** per post. At the limit the "Add link" button is disabled (its label doesn't change) and "Maximum of 10 links" shows after the last link.
+- Limit: maximum **10 links** per post. At the limit the "Add link" button is disabled (its label doesn't change) and "Maximum of 10 links" shows above it, after the last link.
 - Links appear in the order they were added. There is no drag-to-reorder.
 - In Edit, existing links keep their `id` in the array; new links have no `id`.
 - Backend field messages show next to their link (`links.N.name`, `links.N.url`), and a list-level `links` message above the list. Adding or deleting a link drops them, as in `PostBodyFields`.
@@ -193,7 +197,7 @@ Links are held in an array in the form.
 
 Hook used: `usePost(id)` → `GET /api/siteOwner/posts/:id`
 
-Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line`, each image with its alt text and dimensions) and every link, plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and "Archive Post" / "Make Post Active". A 404 shows "Post not found." with a link back to `/dashboard`.
+Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line`, each image with its alt text and dimensions) and every link, plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
 
 ### Edit a Post
 
@@ -202,7 +206,7 @@ Hook used: `usePost(id)` (`update`)
 On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body and links), with two differences:
 
 - **No Website field** — a post never moves to another website. The website name is shown as read-only text.
-- **No Active toggle** — status changes only through the Archive / Make Active button.
+- **No Active toggle** — status changes only through the Active switch on the post page.
 
 The body uses `PostBodyFields` and links use `LinkFields`: elements and links can be edited in place, deleted, or added (and body elements moved), with the same validation and limits.
 
@@ -217,12 +221,14 @@ Hook used: `usePost(id)` (`setStatus`)
 
 This is not a true delete — it is a PATCH of the post's `active` flag, for several reasons: all information stays in the database for the application's analytics; site owners can see all of their posts, active or inactive; and site owners can create posts that aren't live yet and activate them later.
 
-On `/dashboard` and `/dashboard/post/{id}` every post shows an "active" or "inactive" pill. On `/dashboard/post/{id}`, next to "Edit Post", a button reads conditionally:
+On `/dashboard` and `/dashboard/post/{id}` every post shows an "active" or "inactive" pill. On `/dashboard/post/{id}`, to the right of the pill, an **Active switch** (the shared `Toggle`, named "Active" for screen readers) reads "inactive" on its left and "active" on its right, and is on when the post is active. The switch follows the post's saved status: it only moves once the request succeeds, and it is disabled while the request is in flight.
 
-- `active === true` → **"Archive Post"**. Clicking it first opens `ConfirmDialog`: "Are you sure you want to archive {postName}? It will be removed from your website." with "Archive" and "Cancel" buttons. Only "Archive" sends the request.
-- `active === false` → **"Make Post Active"**. Sends the request immediately, no confirmation.
+- **Switching it off (archive)** sends `{ active: false }` immediately.
+- **Switching it on (make active)** sends `{ active: true }` immediately.
+
+There is no confirmation and no success dialog: archiving is reversible with the same switch, so the change is one motion. `ConfirmDialog` is kept for future destructive actions that can't be undone in one step.
 
 Request: `PATCH /api/siteOwner/posts/:id/status` with `{ active: false }` or `{ active: true }`.
 
-- **Failure:** render the backend's `error.message` in a dialog.
-- **Success:** a dialog reads "Post {postName} has been updated to Archived" or "…to Active"; on close, route to `/dashboard`.
+- **Failure:** render the backend's `error.message` in a dialog; the switch and the pill stay as they were.
+- **Success:** the pill and the switch change to the new status; the site owner stays on `/dashboard/post/{id}`.

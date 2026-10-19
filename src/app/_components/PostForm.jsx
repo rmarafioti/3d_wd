@@ -5,7 +5,7 @@
 // → POST /api/siteOwner/posts. mode "edit": the website name as read-only text, no Active
 // toggle, → PATCH /api/siteOwner/posts/:id with the full form.
 //
-// Opens when mounted; the parent unmounts it in onClose (Close button or Esc) or after
+// Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
 // onSuccess. The body is edited by PostBodyFields and the links by LinkFields. Frontend messages
 // render next to their field once it has been left; backend error.fields render next to their
 // field and error.message below Submit. Nothing typed is cleared on failure.
@@ -19,12 +19,16 @@ import PostBodyFields, {
   isIncompleteElement,
 } from "./PostBodyFields";
 import LinkFields from "./LinkFields";
+import Toggle from "./Toggle";
+import DialogCloseButton from "./DialogCloseButton";
 import {
   isBlank,
   validateBody,
   validateLink,
   validatePost,
 } from "../_lib/validation";
+
+import styles from "../_styling/postForm.module.css";
 
 // A new post starts with one empty paragraph, since every body needs at least one.
 const EMPTY_POST = {
@@ -208,19 +212,21 @@ export default function PostForm({
   }
 
   return (
-    // The close event fires for both the Close button and Esc.
+    // The close event fires for both the X and Esc.
     <dialog ref={dialogRef} onClose={onClose}>
+      <DialogCloseButton dialogRef={dialogRef} />
       <h2>{isCreate ? "Create a Post" : "Edit Post"}</h2>
 
       <form onSubmit={handleSubmit} noValidate>
         {isCreate ? (
-          <>
+          <section className={styles.websiteSection}>
             <label htmlFor="post-website">Website</label>
             <select
               id="post-website"
               value={websiteId}
               onChange={(e) => setWebsiteId(e.target.value)}
               onBlur={() => touch("websiteId")}
+              className={styles.websiteDropdown}
             >
               <option value="">Choose a website</option>
               {websites.map((website) => (
@@ -229,16 +235,22 @@ export default function PostForm({
                 </option>
               ))}
             </select>
-            {messageFor("websiteId") && <p>{messageFor("websiteId")}</p>}
-          </>
+            {messageFor("websiteId") && (
+              <p className="fieldError">{messageFor("websiteId")}</p>
+            )}
+          </section>
         ) : (
-          <p>Website: {websiteName}</p>
+          <p className={styles.websiteSection}>Website: {websiteName}</p>
         )}
 
         <label htmlFor="post-name">Post Name</label>
-        <p>
-          Only you see this — it&apos;s how you find the post on your dashboard.
+        <p className={styles.message}>
+          <i>
+            *Only you see this, it&apos;s how you find the post on your
+            dashboard.
+          </i>
         </p>
+
         <input
           id="post-name"
           type="text"
@@ -247,10 +259,14 @@ export default function PostForm({
           onChange={(e) => setPostName(e.target.value)}
           onBlur={() => touch("postName")}
         />
-        {messageFor("postName") && <p>{messageFor("postName")}</p>}
+        {messageFor("postName") && (
+          <p className="fieldError">{messageFor("postName")}</p>
+        )}
 
         <label htmlFor="post-date">Post Date</label>
-        <p>Shown on your website so visitors know how recent the post is.</p>
+        <p className={styles.message}>
+          <i>*Shown on your website so visitors know how recent the post is.</i>
+        </p>
         <input
           id="post-date"
           type="date"
@@ -258,7 +274,9 @@ export default function PostForm({
           onChange={(e) => setPostDate(e.target.value)}
           onBlur={() => touch("postDate")}
         />
-        {messageFor("postDate") && <p>{messageFor("postDate")}</p>}
+        {messageFor("postDate") && (
+          <p className="fieldError">{messageFor("postDate")}</p>
+        )}
 
         <label htmlFor="post-header">Header</label>
         <input
@@ -269,7 +287,9 @@ export default function PostForm({
           onChange={(e) => setHeader(e.target.value)}
           onBlur={() => touch("header")}
         />
-        {messageFor("header") && <p>{messageFor("header")}</p>}
+        {messageFor("header") && (
+          <p className="fieldError">{messageFor("header")}</p>
+        )}
 
         <label htmlFor="post-sub-header">Sub Header</label>
         <input
@@ -280,7 +300,9 @@ export default function PostForm({
           onChange={(e) => setSubHeader(e.target.value)}
           onBlur={() => touch("subHeader")}
         />
-        {messageFor("subHeader") && <p>{messageFor("subHeader")}</p>}
+        {messageFor("subHeader") && (
+          <p className="fieldError">{messageFor("subHeader")}</p>
+        )}
 
         <PostBodyFields
           body={body}
@@ -298,25 +320,33 @@ export default function PostForm({
 
         {isCreate && (
           <>
-            <input
-              id="post-active"
-              type="checkbox"
+            {/* A heading for the section, not the switch's label: the switch is named "Active"
+                so screen readers announce what "on" means. */}
+            <p className={styles.statusHeader}>Status</p>
+            <p className={`${styles.message} ${styles.statusNote}`}>
+              <i>
+                *Set a post to active for it to be live on your website, or
+                inactive to save it and make it live at a later date.
+              </i>
+            </p>
+            <Toggle
+              label="Active"
+              offLabel="inactive"
+              onLabel="active"
               checked={active}
-              onChange={(e) => setActive(e.target.checked)}
+              onChange={setActive}
             />
-            <label htmlFor="post-active">Active</label>
           </>
         )}
-
-        <button type="submit" disabled={!isValid || submitting}>
-          Submit
-        </button>
-        {serverError && <p>{serverError.message}</p>}
+        <div className={styles.submitSection}>
+          <div className={styles.buttonRow}>
+            <button type="submit" disabled={!isValid || submitting}>
+              Submit
+            </button>
+          </div>
+          {serverError && <p>{serverError.message}</p>}
+        </div>
       </form>
-
-      <button type="button" onClick={() => dialogRef.current.close()}>
-        Close
-      </button>
     </dialog>
   );
 }

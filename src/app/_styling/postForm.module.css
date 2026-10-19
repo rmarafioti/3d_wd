@@ -1,0 +1,110 @@
+.websiteSection {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.websiteDropdown {
+  margin-bottom: 0rem;
+}
+
+/* The section's own margin already spaces it from the next field. */
+.websiteSection > :global(.fieldError) {
+  margin-bottom: 0;
+}
+
+.message {
+  color: grey;
+  margin-bottom: 0.2rem;
+}
+
+.statusNote {
+  margin-bottom: 1rem;
+}
+
+.bodyHeader,
+.linksHeader,
+.statusHeader {
+  font-weight: bold;
+}
+
+.bodyHeader {
+  font-size: 20px;
+  float: left;
+  margin-bottom: 1rem;
+}
+
+.linksHeader,
+.deleteLinkButton {
+  margin-bottom: 1rem;
+}
+
+.bodySection {
+  border-top: 1px solid lightgray;
+  padding-top: 1rem;
+}
+
+/* A section ends in the light grey border; everything that belongs to it, including its
+   messages, sits inside it. */
+.section {
+  border-bottom: 1px solid lightgray;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.submitSection {
+  margin-top: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.addLinkButton {
+  border-top: 1px solid lightgray;
+  border-bottom: 1px solid lightgray;
+  padding: 1rem 0rem 1rem 0rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+/* A row of buttons inside a section. */
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.upDownButtons {
+  display: flex;
+  justify-content: space-between;
+  width: 210px;
+}
+
+.bodyButton {
+  width: 100px;
+}
+
+.input {
+  margin-bottom: 0.5rem;
+}
+
+/* Every body element spans the fieldset, so each paragraph textarea is the same width. */
+.bodyElement {
+  width: 100%;
+}
+
+@media (max-width: 667px) {
+  .upDownButtons {
+    width: 180px;
+  }
+
+  .buttonRow button {
+    width: 88px;
+  }
+
+  /* Wider than the other row buttons, for the "Add another …" labels. */
+  .buttonRow .addButton {
+    width: 120px;
+  }
+}

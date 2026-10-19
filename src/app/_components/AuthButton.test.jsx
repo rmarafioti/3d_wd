@@ -1,15 +1,14 @@
 // Tests for AuthButton (docs/flows.md → App Shell, Sign Out): "Sign in" with no user; "Sign out"
-// logs out, clears the user and routes home — even when the logout request fails.
+// logs out, clears the user and goes home with a full page load, even when the logout request
+// fails. A full load (not a client-side route) is what stops the router cache from replaying the
+// proxy's signed-in redirect back to /dashboard.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AuthButton from "./AuthButton";
 import { AuthContext } from "../_context/AuthContext";
-import { mockFetch } from "../../test/helpers";
-
-const router = { push: vi.fn(), replace: vi.fn() };
-vi.mock("next/navigation", () => ({ useRouter: () => router }));
+import { mockFetch, stubLocation } from "../../test/helpers";
 
 const USER = {
   id: "u1",
@@ -38,15 +37,16 @@ describe("AuthButton", () => {
     );
   });
 
-  it("logs out, clears the user and routes to / on Sign out", async () => {
+  it("logs out, clears the user and does a full page load to / on Sign out", async () => {
     const { calls } = mockFetch({ "POST /api/auth/logout": { status: 204 } });
+    const { assign } = stubLocation();
     const { setUser } = renderWithUser(USER);
 
     await userEvent
       .setup()
       .click(screen.getByRole("button", { name: "Sign out" }));
 
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
     expect(calls[0]).toMatchObject({
       method: "POST",
       path: "/api/auth/logout",
@@ -54,15 +54,16 @@ describe("AuthButton", () => {
     expect(setUser).toHaveBeenCalledWith(null);
   });
 
-  it("still clears the user and routes to / when the logout request fails", async () => {
+  it("still clears the user and does a full page load to / when the logout request fails", async () => {
     mockFetch({ "POST /api/auth/logout": { networkError: true } });
+    const { assign } = stubLocation();
     const { setUser } = renderWithUser(USER);
 
     await userEvent
       .setup()
       .click(screen.getByRole("button", { name: "Sign out" }));
 
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/"));
     expect(setUser).toHaveBeenCalledWith(null);
   });
 });
