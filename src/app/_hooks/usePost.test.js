@@ -18,7 +18,6 @@ const POST = {
   createdAt: "2026-10-01T00:00:00.000Z",
   updatedAt: "2026-10-01T00:00:00.000Z",
   body: [{ type: "paragraph", text: "We went for a walk." }],
-  links: [],
 };
 
 async function renderLoaded(id = "p1") {
@@ -57,7 +56,6 @@ describe("usePost", () => {
       subHeader: null,
       postDate: null,
       body: POST.body,
-      links: [],
     };
     const { calls } = mockFetch({
       "GET /api/siteOwner/posts/p1": { body: { data: POST } },

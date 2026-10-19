@@ -2,9 +2,15 @@
 // the backend re-validates everything and its rejections must still be shown. Every check
 // trims first, so a field holding only spaces counts as empty.
 
+import { findLinks } from "./postFormatting";
+
 // Deliberately loose (something@something.something); the backend has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HTTPS_MESSAGE = "Must be a valid URL starting with https://";
+// Paragraph link messages, word for word from docs/api.md → Paragraph formatting.
+const LINK_URL_MESSAGE = "Each link must be a valid URL starting with https://";
+const LINK_TEXT_REQUIRED_MESSAGE = "Each link needs link text.";
+const LINK_TEXT_TOO_LONG_MESSAGE = "Link text must be 100 characters or fewer.";
 
 export function isBlank(value) {
   return (value ?? "").trim() === "";
@@ -75,39 +81,57 @@ export function validateImage({ src, width, height, altText }) {
   return errors;
 }
 
-// Validates one paragraph element in PostBodyFields. Only the ends are trimmed when sent, so
-// line breaks inside the text count toward the length.
-export function validateParagraph({ text }) {
+// Validates one link in a paragraph, from findLinks or the editor's Link panel. Returns
+// { linkText, url } messages for each failure.
+export function validateParagraphLink({ linkText, url }) {
   const errors = {};
-  if (isBlank(text)) errors.text = "Paragraph is required.";
-  else if (isTooLong(text, 10000))
-    errors.text = "Paragraph must be 10000 characters or fewer.";
+  if (isBlank(linkText)) errors.linkText = LINK_TEXT_REQUIRED_MESSAGE;
+  else if (isTooLong(linkText, 100))
+    errors.linkText = LINK_TEXT_TOO_LONG_MESSAGE;
+  if (!isHttpsUrl(url)) errors.url = LINK_URL_MESSAGE;
   return errors;
 }
 
-// Validates the post body as a whole: it needs at least one paragraph with text. The
-// 5-paragraph and 5-image limits are enforced by PostBodyFields disabling its Add buttons. This
-// message is the form's own (docs/flows.md); the backend's is "Add at least one paragraph."
+// The message for the first failing [link text](url) in a paragraph, or null when every link
+// passes. A link's text is checked before its URL, as on the backend.
+function linkErrorIn(text) {
+  for (const link of findLinks(text)) {
+    const errors = validateParagraphLink(link);
+    if (errors.linkText) return errors.linkText;
+    if (errors.url) return errors.url;
+  }
+  return null;
+}
+
+// Validates one paragraph element in PostBodyFields. Only the ends are trimmed when sent, so
+// line breaks inside the text, and its formatting markup, count toward the length.
+export function validateParagraph({ text }) {
+  const errors = {};
+  if (isBlank(text)) {
+    errors.text = "Paragraph is required.";
+    return errors;
+  }
+  if (isTooLong(text, 10000)) {
+    errors.text = "Paragraph must be 10000 characters or fewer.";
+    return errors;
+  }
+  const linkError = linkErrorIn(text);
+  if (linkError) errors.text = linkError;
+  return errors;
+}
+
+// Validates the post body as a whole: it needs at least one paragraph with text. A paragraph
+// with text that fails its own check (a bad link, too long) still counts here; its own message
+// says what's wrong. The 5-paragraph and 5-image limits are enforced by PostBodyFields disabling
+// its Add buttons. This message is the form's own (docs/flows.md); the backend's is "Add at
+// least one paragraph."
 export function validateBody(elements) {
   const errors = {};
   const hasParagraph = elements.some(
-    (element) =>
-      element.type === "paragraph" &&
-      Object.keys(validateParagraph(element)).length === 0,
+    (element) => element.type === "paragraph" && !isBlank(element.text),
   );
   if (!hasParagraph)
     errors.body = "One paragraph is required to submit a post.";
-  return errors;
-}
-
-// Validates one link in LinkFields. Returns { fieldName: message } for each failure.
-export function validateLink({ name, url }) {
-  const errors = {};
-  if (isBlank(name)) errors.name = "Link name is required.";
-  else if (isTooLong(name, 100))
-    errors.name = "Link name must be 100 characters or fewer.";
-  if (isBlank(url)) errors.url = "Link URL is required.";
-  else if (!isHttpsUrl(url)) errors.url = HTTPS_MESSAGE;
   return errors;
 }
 

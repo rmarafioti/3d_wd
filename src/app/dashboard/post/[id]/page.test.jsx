@@ -40,7 +40,6 @@ const POST = {
     },
     { type: "paragraph", text: "The end." },
   ],
-  links: [],
 };
 
 async function setup(routes) {
@@ -74,6 +73,29 @@ describe("Post page", () => {
     expect(image.compareDocumentPosition(last)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+  });
+
+  it("renders a paragraph's bold, italic and links", async () => {
+    await setup({
+      "GET /api/siteOwner/posts/p1": {
+        body: {
+          data: {
+            ...POST,
+            body: [
+              {
+                type: "paragraph",
+                text: "A **good** *long* walk, see [the map](https://example.com/map).",
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const link = screen.getByRole("link", { name: "the map" });
+
+    expect(link).toHaveAttribute("href", "https://example.com/map");
+    expect(link.parentElement).toContainHTML("A <b>good</b> <i>long</i> walk");
   });
 
   it('shows "Post not found." with a link back to /dashboard on a 404', async () => {
