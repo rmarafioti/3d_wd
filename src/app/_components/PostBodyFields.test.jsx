@@ -460,6 +460,50 @@ describe("PostBodyFields formatting", () => {
     expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([2, 2]);
   });
 
+  it.each([
+    ["just after", 7, 5],
+    ["just before", 3, 5],
+  ])(
+    "moves the cursor into an empty pair from %s it, never adding stars",
+    async (_, caret, inside) => {
+      const { user, textarea } = setupText("Hi ****");
+      selectText(textarea, caret, caret);
+
+      await user.click(formatButton("Bold"));
+
+      expect(textarea).toHaveValue("Hi ****");
+      expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([
+        inside,
+        inside,
+      ]);
+    },
+  );
+
+  it("never adds stars against stars it doesn't read as a format, however often it is pressed", async () => {
+    const { user, textarea } = setupText("Hi ** word**");
+    selectText(textarea, 12, 12);
+
+    await user.click(formatButton("Bold"));
+    await user.click(formatButton("Bold"));
+    await user.keyboard("{Control>}b{/Control}");
+    await user.click(formatButton("Italic"));
+
+    expect(textarea).toHaveValue("Hi ** word**");
+  });
+
+  it("never piles up stars when Bold is pressed again and again just after bold words", async () => {
+    const { user, textarea } = setupText("Hi **word**");
+    selectText(textarea, 11, 11);
+    const starCounts = [];
+
+    for (let press = 0; press < 6; press += 1) {
+      await user.click(formatButton("Bold"));
+      starCounts.push((textarea.value.match(/\*/g) ?? []).length);
+    }
+
+    expect(Math.max(...starCounts)).toBeLessThanOrEqual(4);
+  });
+
   it("starts a new pair once a space is typed after a run", async () => {
     const { user, textarea } = setupText("Hi **bold** ");
     selectText(textarea, 12, 12);
