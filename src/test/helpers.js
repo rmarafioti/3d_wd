@@ -95,3 +95,25 @@ export function selectText(textarea, start, end) {
   textarea.setSelectionRange(start, end);
   fireEvent.select(textarea);
 }
+
+// Makes every media query report `matches` (true: the phone width useIsPhone looks for), and
+// returns setMatches(next) to change it the way resizing the window does, firing "change".
+// Restored after each test (restoreMocks in vitest.config.mjs).
+export function stubMatchMedia(matches) {
+  const state = { matches };
+  const listeners = new Set();
+  const query = {
+    get matches() {
+      return state.matches;
+    },
+    addEventListener: (_, listener) => listeners.add(listener),
+    removeEventListener: (_, listener) => listeners.delete(listener),
+  };
+  vi.spyOn(window, "matchMedia").mockReturnValue(query);
+  return {
+    setMatches(next) {
+      state.matches = next;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}

@@ -188,7 +188,7 @@ describe("Post page", () => {
     await user.clear(screen.getByLabelText("Post Name"));
     await user.type(screen.getByLabelText("Post Name"), "Beach day");
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Publish" }));
     await screen.findByText("Post Beach day has been updated");
     await user.click(screen.getByRole("button", { name: "Close" }));
 

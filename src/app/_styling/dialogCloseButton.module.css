@@ -1,6 +1,7 @@
 /* Top right, with the dialog's heading beside it, and sticky so it stays in the corner while a
-   long dialog (Create a Post) scrolls. Resets the global button's 140px width and padding, and
-   gives the icon its own colours. */
+   long dialog scrolls. The Create / Edit Post dialog instead puts it in a header row that never
+   scrolls (postPreview.module.css), where the float and sticky have no effect. Resets the global
+   button's 140px width and padding, and gives the icon its own colours. */
 .closeButton {
   float: right;
   position: sticky;

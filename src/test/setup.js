@@ -1,5 +1,5 @@
 // Test setup, run before every test file: jest-dom matchers, RTL cleanup, and the parts of
-// <dialog> that jsdom doesn't implement.
+// <dialog> and matchMedia that jsdom doesn't implement.
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
@@ -27,4 +27,15 @@ if (typeof HTMLDialogElement !== "undefined") {
     this.removeAttribute("open");
     this.dispatchEvent(new Event("close"));
   };
+}
+
+// jsdom has no matchMedia. Every test starts at desktop width (no media query matches);
+// stubMatchMedia in helpers.js sets a phone width for one test.
+if (typeof window !== "undefined" && !window.matchMedia) {
+  window.matchMedia = (media) => ({
+    matches: false,
+    media,
+    addEventListener() {},
+    removeEventListener() {},
+  });
 }

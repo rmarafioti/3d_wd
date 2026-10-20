@@ -1,0 +1,124 @@
+/* The Create / Edit Post dialog: its header (title and X) stays put, and only the form and
+   preview beneath it scroll. Only while open: a closed <dialog> must keep the browser's
+   display: none. */
+.postDialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* While the preview is open beside the form: wide enough for both columns. The global dialog
+   max-width still keeps it inside the viewport. */
+.withPreview {
+  width: 900px;
+}
+
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+}
+
+/* The form and the preview side by side; this is the part of the dialog that scrolls. Scroll
+   anchoring is off, so opening something in the form (a paragraph's links list) pushes what is
+   below it down instead of scrolling the view and moving what the site owner is looking at. */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-anchor: none;
+}
+
+/* The line between the form and the preview is the form column's right border. The column
+   stretches to the taller of the two, so the line always runs the dialog's full height. */
+.formColumn {
+  flex-shrink: 0;
+  align-self: stretch;
+  padding-right: 1rem;
+  border-right: 1px solid lightgray;
+}
+
+/* The preview column stays in view while the form scrolls, and scrolls on its own when the post
+   is longer than the dialog (the viewport less the dialog's padding and header). */
+.previewColumn {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+}
+
+/* Open, the preview takes the rest of the dialog's width. */
+.open {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Hidden, only its toggle shows; the padding matches the 1rem gap on its left, so the toggle sits
+   evenly between the line and the dialog's edge. */
+.previewColumn:not(.open) {
+  padding-right: 1rem;
+}
+
+/* The hide / reveal toggle, the same look as the Accounts aside toggle. */
+.toggle {
+  display: flex;
+  align-items: center;
+  color: black;
+  background-color: white;
+  font-size: 18px;
+  border-radius: 0px;
+  padding: 0.5rem 0rem 0.5rem 0rem;
+  width: auto;
+  text-align: left;
+}
+
+.preview {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.preview h3,
+.preview p {
+  margin-bottom: 1rem;
+}
+
+/* A photo never runs wider than the preview; its height follows its stored proportions. */
+.preview img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.previewButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* On a phone the form and the preview are separate views, so there is no line between them,
+   and the preview neither sticks nor sits beside anything. */
+@media (max-width: 667px) {
+  /* Full width, so the form's own phone rule (width: 100% in globals.css) spans the viewport
+     again; the global dialog max-width still keeps the 1rem margins. */
+  .postDialog[open] {
+    width: 100%;
+  }
+
+  .formColumn {
+    width: 100%;
+    padding-right: 0rem;
+    border-right: none;
+  }
+
+  .previewColumn {
+    position: static;
+    max-height: none;
+    width: 100%;
+  }
+}

@@ -41,7 +41,7 @@ describe("Dashboard page", () => {
     await user.click(screen.getByRole("button", { name: "Create a Post" }));
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "We went for a walk.");
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Publish" }));
 
     expect(
       await screen.findByText("Post Walk day has been created"),
