@@ -40,7 +40,8 @@ root
 │       │                          MessageDialog.jsx, CreateAccountForm.jsx,
 │       │                          AccountList.jsx, AccountsAside.jsx, LinkWebsiteDialog.jsx,
 │       │                          SubmitErrors.jsx, PostForm.jsx, PostList.jsx, Toggle.jsx,
-│       │                          StatusPill.jsx
+│       │                          StatusPill.jsx, PostPreview.jsx, ParagraphField.jsx,
+│       │                          LinkPanel.jsx
 │       ├── _context/
 │       │   ├── AuthContext.jsx   *signed-in user, filled from GET /api/auth/me
 │       │   └── AdminDataContext.jsx *admin accounts + websites, shared by the admin layout and page
@@ -96,7 +97,7 @@ Each step is its own task: branch from an up-to-date `main`, write a fresh plan 
 5. **Post CRUD** — both. Dashboard list, Create a Post, single post view, Edit a Post, Archive / Make Active.
 6. **Link a Website** — both. Link a new and an existing website to an account from `/admin`.
 
-**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below. The general styling and Feature 2 are merged (PR #15). Feature 4 Post body formatting is committed and pushed on branch `feat/post-body-formatting` (2026-10-19), ready for its PR: bold, italic, bold-italic and links inside paragraphs (links may sit inside the formats) with editor-style Bold / Italic / Link icon buttons and Ctrl / Cmd shortcuts, the shared `_lib/postFormatting.js` parser and `FormattedText` renderer, paragraph link validation with the contract's messages, and `LinkFields` and the post's links list removed. Its backend side is merged (backend PR #20). Since PR #15, new features are styled in Rich's conventions (Anti-Patterns → New styling). Still to bring into `docs/flows.md` in the docs alignment session: the em dashes left in user-facing text (the post page's empty-field "—" and image line, and the two "No new API key or webhook secret were generated — …" messages). Next steps, in order: Rich opens and merges the Feature 4 PR; then Feature 3 Post preview (v1) on its own branch, planned as a live preview beside the Create / Edit Post form, with the format buttons' cursor behaviour streamlined alongside it; then a docs alignment session across the backend docs, these docs and the master doc; then security hardening; then the production deploy. The Stevie The Dog template renders the markup once the contract is final. Four client websites are waiting to onboard after launch.
+**Progress:** steps 1–6 are done and merged (frontend step 3 in PR #3, step 5 in PR #5, step 6 in PR #6), so the MVP Build Order is complete. The code review (PR #7) is merged, and the frontend has a unit test suite (`npm test`). The rules for changing the app after the MVP are in `docs/scaling.md` (PR #9). Nothing is deployed to production yet, so `docs/scaling.md` applies from the first production deploy. The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`. Update this line as each step merges. Feature 1 (post body as elements) is merged in both repos: frontend PR #10, backend PR #13. Post-MVP work is tracked under Features below. The general styling and Feature 2 are merged (PR #15). Feature 4 Post body formatting is merged (frontend PRs #16 and #17, backend PR #20): bold, italic, bold-italic and links inside paragraphs (links may sit inside the formats) with editor-style Bold / Italic / Link icon buttons and Ctrl / Cmd shortcuts, the shared `_lib/postFormatting.js` parser and `FormattedText` renderer, paragraph link validation with the contract's messages, and `LinkFields` and the post's links list removed. Feature 3 Post preview is committed and pushed on branch `feat/post-preview` (2026-10-20), ready for its PR: the live preview beside the Create / Edit Post form (a hide / reveal toggle on desktop, Preview / Back to edit on a phone, the date shown first), a single Publish button, the dialog's fixed title and X, and the paragraph links list (edit and delete icons, a Bold-only Link panel with links bold by default, the toolbar never formatting a link). Since PR #15, new features are styled in Rich's conventions (Anti-Patterns → New styling). Still to bring into `docs/flows.md` in the docs alignment session: the em dashes left in user-facing text (the post page's empty-field "—" and image line, and the two "No new API key or webhook secret were generated — …" messages). Next steps, in order: Rich opens and merges the Feature 3 PR; the backend is building image upload next; then a docs alignment session across the backend docs, these docs and the master doc; then security hardening; then the production deploy. Four client websites are waiting to onboard after launch.
 
 ## Features
 
@@ -118,17 +119,18 @@ New work after the MVP Build Order, numbered and named the same as in the backen
 
    In the `12-styling` PR, not merged.
 
-3. **Post preview (v1)** — frontend only. Not started; it begins after Feature 4.
-   - Before a Create a Post or Edit a Post is saved, the site owner sees the post in a basic styled layout: header, sub header, date, the body elements in order, with their formatting.
-   - Images render with Next.js `<Image>` using their stored `width` and `height`, so the Cloudinary host is added to `images.remotePatterns` in `next.config.mjs`.
-   - "Publish" saves (the existing create or update request); "Back to edit" returns to the form with everything kept. Nothing is saved before that choice.
-   - No API contract change.
+3. **Post preview (v1)** — frontend only. Branch `feat/post-preview`.
+   - The Create / Edit Post form shows the post live as it is typed, with its formatting, as it will read on the client website without that site's own styling: the date first (a reader sees how recent the post is before anything else), then header, sub header and the body in order. An image shows once its fields are complete, with Next.js `<Image>` at its stored `width` and `height`, unoptimized, so no `images.remotePatterns` entry is needed.
+   - The form's one save button reads **Publish** (Create and Edit). Desktop: the preview sits beside the form, open by default, with a hide / reveal toggle like the Accounts aside. Phone width: a **Preview** button swaps the form for the preview, which has **Back to edit** and its own **Publish** (submitting the same, hidden form); the form stays mounted meanwhile so nothing typed is lost.
+   - `PostPreview` renders it; `useIsPhone()` tells the two layouts apart. No API contract change.
+
+   Committed and pushed on `feat/post-preview`, ready for its PR. Rich tested it on desktop and phone.
 
 4. **Post body formatting** — both. Branch `feat/post-body-formatting`. Built before Feature 3.
    - A paragraph's text can hold bold (`**text**`), italic (`*text*`), bold-italic (`***text***`) and links (`[text](https://…)`), and the formats may contain links, specced in `docs/api.md` → Paragraph formatting. The links list leaves `Post`, the create and edit request bodies and `PublicPost`, and the `link` table is dropped. Breaking, made in place under the pre-launch rule (`docs/scaling.md` §0); the test link rows are dropped, not migrated. "Invalid image or link." becomes "Invalid image." The Stevie The Dog client template renders the markup.
    - On the frontend, `LinkFields` and the post's links list go away, each paragraph gets Bold / Italic / Link buttons, `_lib/postFormatting.js` holds the shared parser and link check, and `FormattedText` renders paragraphs on the post page (and later the preview).
 
-   The backend is merged (backend PR #20); the frontend is pushed on its branch, ready for its PR; the Stevie The Dog template comes after.
+   Merged (frontend PRs #16 and #17, backend PR #20). The Stevie The Dog template, in its own repo, renders the markup when Rich schedules it, with its own handoff.
 
 ## Role Ownership Check Rule
 
@@ -170,7 +172,7 @@ No CSS frameworks or UI component libraries. The one approved exception is `reac
 - A short comment on any rule whose reason isn't obvious.
 - Never invent a new visual direction (new colours, fonts, shadows, animation). If a feature seems to need one, leave it plain and flag it for Rich.
 
-The one inline style is functional: `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js`, which the API contract requires so typed line breaks show. It stays until Rich moves it.
+The one inline style is functional: `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js` and `PostPreview.jsx`, which the API contract requires so typed line breaks show. It stays until Rich moves it.
 
 ## Patterns and Preferences
 
@@ -189,6 +191,7 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `usePosts()` \*site owner: creation only (`create`)
 - `useApiResource(path)` \*internal: the shared GET / ignore-stale / 401 / `refetch` logic behind `useAccounts`, `useAllWebsites`, `useWebsites` and `usePost`; never called by components directly
 - `useModalDialog()` \*not a data hook: returns the ref for a `<dialog>` that opens with `showModal()` on mount
+- `useIsPhone()` \*not a data hook: `true` at phone width (`max-width: 667px`), following the window as it resizes
 
 Every data-fetching hook returns the same shape, plus whichever mutations are relevant to that resource: `{ data, loading, error }`. Without a library enforcing this automatically, consistency has to come from discipline — if one hook returns `{ posts, isLoading }` and another returns `{ data, error }`, every component consuming them needs to remember which shape it's dealing with. One shape, everywhere. Mutations return the API's `data` on success and throw the API error on failure. After a successful mutation, refetch the list it affects: list hooks also expose `refetch()` for this, and keep their current `data` while refetching so the list doesn't flash back to "Loading…".
 
@@ -214,7 +217,7 @@ For accessibility, every pop-up (signing in, errors, success messages, the Creat
 `WebsitePicker` is used by Create an Account and Link a Website.
 
 **The post body editor is shared between Create and Edit, not two separate implementations:**
-`PostBodyFields` handles the body as an ordered array of paragraph and image elements: add, move up/down, delete, validation, the one-paragraph rule, the per-post limits (5 paragraphs, 5 images), each paragraph's Bold / Italic / Link buttons, and auto-filling image width/height. Images use `ItemFields` for their labelled inputs. Create a Post and Edit a Post both use it; Edit additionally keeps each existing image's `id` so the backend can reconcile.
+`PostBodyFields` handles the body as an ordered array of paragraph and image elements: add, move up/down, delete, validation, the one-paragraph rule, the per-post limits (5 paragraphs, 5 images), each paragraph (`ParagraphField`: its Bold / Italic / Link buttons, its links list with Edit / Delete, and the `LinkPanel` for adding and editing a link), and auto-filling image width/height. Images use `ItemFields` for their labelled inputs. Create a Post and Edit a Post both use it; Edit additionally keeps each existing image's `id` so the backend can reconcile.
 
 **Paragraph markup is read in one place:**
 `_lib/postFormatting.js` reads the markup in `docs/api.md` → Paragraph formatting: `parseParagraph` for rendering and `findLinks` (a port of the backend's one-pass scan) for validation. `FormattedText` renders through it (the post page, and the preview later) and `_lib/validation.js` checks links through it. Nothing else reads the markup, and nothing ever sets raw HTML. Both scans read each character about once, so a long paragraph of unmatched `[` or `*` can't freeze the editor.
@@ -246,6 +249,7 @@ Ideas Rich has chosen for later. Not scheduled and not to be built yet. Each bec
 - **Add-on catalog.** An "Add to your website" list for site owners, each add-on with a one-line description, Photo Gallery and Business Hours first. A website's add-ons go in a backend `website_feature` table, built together with the first add-on. An add-on moves through available → requested → live: the site owner turns it on and fills it in, the administrator sees it as requested, and Rich wires it into the client website and marks it live. An add-on's optional fields sit behind "More options" so the basic form stays short. On the frontend, the list lives on `/dashboard`, and each add-on's status shows in the Accounts aside for the administrator.
 - **Administrator notifications.** An alert when a site owner requests an add-on, or one is filled in and ready to wire. The backend sends it from a job row written in the same transaction. Until then, the admin dashboard shows "requested".
 - **Site owner collaboration.** Site owners suggest add-ons, or optional fields for existing ones. Rich curates: a suggestion is built when at least two businesses want it. Sharing between owners is opt-in or anonymized. It starts as a shared suggestion board outside the app and moves into the app at roughly 10–20 site owners. Feature creep until live use with the early adopters shows owners want it. Not built before then.
+- **Streamlined post editor.** After the MVP, the Create / Edit Post editor clears its noise: each paragraph and image section collapses (open one to edit it), and "Add a paragraph" / "Add an image" move into a toolbar at the side of the dialog. Frontend only; no contract change. Rich chose it after testing Feature 3 Post preview; the current editor stays as it is for the V1 MVP.
 
 ## Code Style
 

@@ -3,8 +3,10 @@
 // the formats may contain links; everything else is plain text.
 // - findLinks lists every link for validation, matching the backend's scan link for link.
 // - parseParagraph splits the text into the segments a renderer draws, left to right.
-// - formatRunAround, linkAround and formatsAtCaret find the markup around a selection or the
-//   cursor, so the editor's buttons can show it as on and change it.
+// - formatRunAround and formatsAtCaret find the markup around a selection or the cursor, so the
+//   editor's buttons can show it as on and change it.
+// - linksInParagraph lists a paragraph's links for the editor's links list, and linkMarkup
+//   writes one back.
 // Every scan reads each character about once, so a long paragraph of unmatched [ or * can't
 // freeze the editor while the site owner types.
 
@@ -256,31 +258,45 @@ export function formatRunAround(text, start, end) {
   return null;
 }
 
-// The rest of a link after its text: "](url)", with the same URL rule as findLinks.
-const LINK_TAIL = /^\]\([^\s)]*\)/;
-const WHOLE_LINK = /^\[[^\]\n]*\]\([^\s)]*\)$/;
+// A paragraph's links, left to right, for the editor's links list, read as the renderer reads
+// them: { text, url, outerStart, outerEnd, ownLevel, ownOuterStart, ownOuterEnd, aroundLevel }.
+// - ownLevel: the level of a run whose words are exactly this link (**[menu](url)**), the link's
+//   own look; ownOuterStart / ownOuterEnd span that run (or just the link when it has none).
+// - aroundLevel: the level of a larger run the link sits in (**see [map](url) now**), whose look
+//   it takes on but can't change on its own.
+export function linksInParagraph(text) {
+  const links = [];
+  const describe = (link, own, around) => ({
+    text: link.text,
+    url: link.url,
+    outerStart: link.outerStart,
+    outerEnd: link.outerEnd,
+    ownLevel: own ? LEVEL_BY_TYPE[own.type] : 0,
+    ownOuterStart: own ? own.outerStart : link.outerStart,
+    ownOuterEnd: own ? own.outerEnd : link.outerEnd,
+    aroundLevel: around ? LEVEL_BY_TYPE[around.type] : 0,
+  });
+  for (const segment of parseParagraph(text)) {
+    if (segment.type === "link") links.push(describe(segment, null, null));
+    if (!LEVEL_BY_TYPE[segment.type]) continue;
+    const wrapsOneLink =
+      segment.children.length === 1 && segment.children[0].type === "link";
+    for (const child of segment.children) {
+      if (child.type !== "link") continue;
+      links.push(
+        wrapsOneLink
+          ? describe(child, segment, null)
+          : describe(child, null, segment),
+      );
+    }
+  }
+  return links;
+}
 
-// The link whose text, or whole markup, is the selection text[start, end), as
-// { outerStart, outerEnd, innerStart, innerEnd }, or null.
-export function linkAround(text, start, end) {
-  const tail = LINK_TAIL.exec(text.slice(end));
-  if (text[start - 1] === "[" && tail) {
-    return {
-      outerStart: start - 1,
-      outerEnd: end + tail[0].length,
-      innerStart: start,
-      innerEnd: end,
-    };
-  }
-  if (WHOLE_LINK.test(text.slice(start, end))) {
-    return {
-      outerStart: start,
-      outerEnd: end,
-      innerStart: start + 1,
-      innerEnd: text.indexOf("](", start),
-    };
-  }
-  return null;
+// One link's markup at a level (0 none, 1 italic, 2 bold, 3 both): **[text](url)**.
+export function linkMarkup({ text, url, level }) {
+  const marker = "*".repeat(level);
+  return `${marker}[${text}](${url})${marker}`;
 }
 
 function positionsOf({ outerStart, outerEnd, innerStart, innerEnd }) {
@@ -288,7 +304,7 @@ function positionsOf({ outerStart, outerEnd, innerStart, innerEnd }) {
 }
 
 // What the cursor at `caret` is inside, for the editor's buttons: { run, link }, each null or
-// in the shape of formatRunAround / linkAround. Formats are read loosely (see isFormattable).
+// with positions. Formats are read loosely (see isFormattable).
 // - A run is found when the cursor touches it anywhere from its opening marker to its closing
 //   one. run.edge is "start" or "end" when the cursor sits just outside it (before the opening
 //   marker, after the closing one), where typing is plain; inside the markers it is null, so a

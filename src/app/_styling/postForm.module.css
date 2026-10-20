@@ -22,6 +22,7 @@
 }
 
 .bodyHeader,
+.linksHeader,
 .statusHeader {
   font-weight: bold;
 }
@@ -107,6 +108,47 @@
 }
 
 .linkDraftButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Opened under a link's row in the links list, so it needs space from the row's buttons. */
+.linkEdit {
+  margin-top: 1rem;
+}
+
+/* A paragraph's links, under its textarea, in a disclosure: one row per link, each ending in a
+   light grey line. */
+.linksList {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.linksHeader {
+  margin-bottom: 0.5rem;
+}
+
+.linkRow {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid lightgray;
+}
+
+/* The link's text and URL on the left, its edit and delete icon buttons on the right. */
+.linkSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* A long URL wraps rather than pushing the icons out of the dialog. */
+.linkDetails {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.linkActions {
   display: flex;
   gap: 0.5rem;
 }

@@ -8,21 +8,31 @@
 // Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
 // onSuccess. The body, with its formatting, is edited by PostBodyFields. Frontend messages
 // render next to their field once it has been left; backend error.fields render next to their
-// field and error.message below Submit. Nothing typed is cleared on failure.
+// field and error.message below Publish. Nothing typed is cleared on failure.
+//
+// PostPreview shows the post live as it is typed (docs/flows.md → Post preview). On desktop it
+// sits beside the form, open to start with, and its toggle hides or reveals it. On a phone it is
+// a view of its own: Preview switches to it and Back to edit returns to the form, which stays
+// mounted (hidden) meanwhile so nothing typed is lost; that view has its own Publish, which
+// submits the same form.
 
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 import { useModalDialog } from "../_hooks/useModalDialog";
+import { useIsPhone } from "../_hooks/useIsPhone";
 import PostBodyFields, {
   EMPTY_PARAGRAPH,
   isIncompleteElement,
 } from "./PostBodyFields";
+import PostPreview from "./PostPreview";
 import Toggle from "./Toggle";
 import DialogCloseButton from "./DialogCloseButton";
 import { isBlank, validateBody, validatePost } from "../_lib/validation";
 
 import styles from "../_styling/postForm.module.css";
+import previewStyles from "../_styling/postPreview.module.css";
 
 // A new post starts with one empty paragraph, since every body needs at least one.
 const EMPTY_POST = {
@@ -127,6 +137,14 @@ export default function PostForm({
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
 
+  // The preview: open or hidden beside the form on desktop, a separate view on a phone.
+  const formId = useId();
+  const previewId = useId();
+  const isPhone = useIsPhone();
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [phoneView, setPhoneView] = useState("form");
+  const showPreview = isPhone ? phoneView === "preview" : previewOpen;
+
   const errors = validatePost(
     { websiteId, postName, postDate, header, subHeader },
     { requireWebsite: isCreate },
@@ -192,133 +210,205 @@ export default function PostForm({
 
   return (
     // The close event fires for both the X and Esc.
-    <dialog ref={dialogRef} onClose={onClose}>
-      <DialogCloseButton dialogRef={dialogRef} />
-      <h2>{isCreate ? "Create a Post" : "Edit Post"}</h2>
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      className={`${previewStyles.postDialog} ${showPreview && !isPhone ? previewStyles.withPreview : ""}`}
+    >
+      {/* The title and the X stay put above the form and preview, which scroll beneath them, so
+          the X is always in reach and never covers the preview toggle. */}
+      <div className={previewStyles.dialogHeader}>
+        <h2>{isCreate ? "Create a Post" : "Edit Post"}</h2>
+        <DialogCloseButton dialogRef={dialogRef} />
+      </div>
 
-      <form onSubmit={handleSubmit} noValidate>
-        {isCreate ? (
-          <section className={styles.websiteSection}>
-            <label htmlFor="post-website">Website</label>
-            <select
-              id="post-website"
-              value={websiteId}
-              onChange={(e) => setWebsiteId(e.target.value)}
-              onBlur={() => touch("websiteId")}
-              className={styles.websiteDropdown}
-            >
-              <option value="">Choose a website</option>
-              {websites.map((website) => (
-                <option key={website.id} value={website.id}>
-                  {website.websiteName}
-                </option>
-              ))}
-            </select>
-            {messageFor("websiteId") && (
-              <p className="fieldError">{messageFor("websiteId")}</p>
+      <div className={previewStyles.layout}>
+        <div
+          className={previewStyles.formColumn}
+          hidden={isPhone && phoneView === "preview"}
+        >
+          <form id={formId} onSubmit={handleSubmit} noValidate>
+            {isCreate ? (
+              <section className={styles.websiteSection}>
+                <label htmlFor="post-website">Website</label>
+                <select
+                  id="post-website"
+                  value={websiteId}
+                  onChange={(e) => setWebsiteId(e.target.value)}
+                  onBlur={() => touch("websiteId")}
+                  className={styles.websiteDropdown}
+                >
+                  <option value="">Choose a website</option>
+                  {websites.map((website) => (
+                    <option key={website.id} value={website.id}>
+                      {website.websiteName}
+                    </option>
+                  ))}
+                </select>
+                {messageFor("websiteId") && (
+                  <p className="fieldError">{messageFor("websiteId")}</p>
+                )}
+              </section>
+            ) : (
+              <p className={styles.websiteSection}>Website: {websiteName}</p>
             )}
-          </section>
-        ) : (
-          <p className={styles.websiteSection}>Website: {websiteName}</p>
-        )}
 
-        <label htmlFor="post-name">Post Name</label>
-        <p className={styles.message}>
-          <i>
-            *Only you see this, it&apos;s how you find the post on your
-            dashboard.
-          </i>
-        </p>
-
-        <input
-          id="post-name"
-          type="text"
-          maxLength={100}
-          value={postName}
-          onChange={(e) => setPostName(e.target.value)}
-          onBlur={() => touch("postName")}
-        />
-        {messageFor("postName") && (
-          <p className="fieldError">{messageFor("postName")}</p>
-        )}
-
-        <label htmlFor="post-date">Post Date</label>
-        <p className={styles.message}>
-          <i>*Shown on your website so visitors know how recent the post is.</i>
-        </p>
-        <input
-          id="post-date"
-          type="date"
-          value={postDate}
-          onChange={(e) => setPostDate(e.target.value)}
-          onBlur={() => touch("postDate")}
-        />
-        {messageFor("postDate") && (
-          <p className="fieldError">{messageFor("postDate")}</p>
-        )}
-
-        <label htmlFor="post-header">Header</label>
-        <input
-          id="post-header"
-          type="text"
-          maxLength={150}
-          value={header}
-          onChange={(e) => setHeader(e.target.value)}
-          onBlur={() => touch("header")}
-        />
-        {messageFor("header") && (
-          <p className="fieldError">{messageFor("header")}</p>
-        )}
-
-        <label htmlFor="post-sub-header">Sub Header</label>
-        <input
-          id="post-sub-header"
-          type="text"
-          maxLength={200}
-          value={subHeader}
-          onChange={(e) => setSubHeader(e.target.value)}
-          onBlur={() => touch("subHeader")}
-        />
-        {messageFor("subHeader") && (
-          <p className="fieldError">{messageFor("subHeader")}</p>
-        )}
-
-        <PostBodyFields
-          body={body}
-          setBody={setBody}
-          fieldErrors={fieldErrors}
-          onReindex={clearItemErrors}
-        />
-
-        {isCreate && (
-          <>
-            {/* A heading for the section, not the switch's label: the switch is named "Active"
-                so screen readers announce what "on" means. */}
-            <p className={styles.statusHeader}>Status</p>
-            <p className={`${styles.message} ${styles.statusNote}`}>
+            <label htmlFor="post-name">Post Name</label>
+            <p className={styles.message}>
               <i>
-                *Set a post to active for it to be live on your website, or
-                inactive to save it and make it live at a later date.
+                *Only you see this, it&apos;s how you find the post on your
+                dashboard.
               </i>
             </p>
-            <Toggle
-              label="Active"
-              offLabel="inactive"
-              onLabel="active"
-              checked={active}
-              onChange={setActive}
+
+            <input
+              id="post-name"
+              type="text"
+              maxLength={100}
+              value={postName}
+              onChange={(e) => setPostName(e.target.value)}
+              onBlur={() => touch("postName")}
             />
-          </>
-        )}
-        <div className={styles.submitSection}>
-          <div className={styles.buttonRow}>
-            <button type="submit" disabled={!isValid || submitting}>
-              Submit
-            </button>
-          </div>
-          {serverError && <p>{serverError.message}</p>}
+            {messageFor("postName") && (
+              <p className="fieldError">{messageFor("postName")}</p>
+            )}
+
+            <label htmlFor="post-date">Post Date</label>
+            <p className={styles.message}>
+              <i>
+                *Shown on your website so visitors know how recent the post is.
+              </i>
+            </p>
+            <input
+              id="post-date"
+              type="date"
+              value={postDate}
+              onChange={(e) => setPostDate(e.target.value)}
+              onBlur={() => touch("postDate")}
+            />
+            {messageFor("postDate") && (
+              <p className="fieldError">{messageFor("postDate")}</p>
+            )}
+
+            <label htmlFor="post-header">Header</label>
+            <input
+              id="post-header"
+              type="text"
+              maxLength={150}
+              value={header}
+              onChange={(e) => setHeader(e.target.value)}
+              onBlur={() => touch("header")}
+            />
+            {messageFor("header") && (
+              <p className="fieldError">{messageFor("header")}</p>
+            )}
+
+            <label htmlFor="post-sub-header">Sub Header</label>
+            <input
+              id="post-sub-header"
+              type="text"
+              maxLength={200}
+              value={subHeader}
+              onChange={(e) => setSubHeader(e.target.value)}
+              onBlur={() => touch("subHeader")}
+            />
+            {messageFor("subHeader") && (
+              <p className="fieldError">{messageFor("subHeader")}</p>
+            )}
+
+            <PostBodyFields
+              body={body}
+              setBody={setBody}
+              fieldErrors={fieldErrors}
+              onReindex={clearItemErrors}
+            />
+
+            {isCreate && (
+              <>
+                {/* A heading for the section, not the switch's label: the switch is named "Active"
+                so screen readers announce what "on" means. */}
+                <p className={styles.statusHeader}>Status</p>
+                <p className={`${styles.message} ${styles.statusNote}`}>
+                  <i>
+                    *Set a post to active for it to be live on your website, or
+                    inactive to save it and make it live at a later date.
+                  </i>
+                </p>
+                <Toggle
+                  label="Active"
+                  offLabel="inactive"
+                  onLabel="active"
+                  checked={active}
+                  onChange={setActive}
+                />
+              </>
+            )}
+            <div className={styles.submitSection}>
+              <div className={styles.buttonRow}>
+                <button type="submit" disabled={!isValid || submitting}>
+                  Publish
+                </button>
+                {isPhone && (
+                  <button type="button" onClick={() => setPhoneView("preview")}>
+                    Preview
+                  </button>
+                )}
+              </div>
+              {serverError && <p>{serverError.message}</p>}
+            </div>
+          </form>
         </div>
-      </form>
+
+        <div
+          className={`${previewStyles.previewColumn} ${showPreview ? previewStyles.open : ""}`}
+        >
+          {!isPhone && (
+            <button
+              type="button"
+              aria-expanded={previewOpen}
+              aria-controls={previewId}
+              onClick={() => setPreviewOpen((open) => !open)}
+              className={previewStyles.toggle}
+            >
+              {previewOpen ? (
+                <GoTriangleDown aria-hidden="true" />
+              ) : (
+                <GoTriangleRight aria-hidden="true" />
+              )}
+              Preview
+            </button>
+          )}
+          {showPreview && (
+            <div id={previewId}>
+              <PostPreview
+                header={header}
+                subHeader={subHeader}
+                postDate={postDate}
+                body={body}
+              />
+              {/* On a phone the form is hidden behind the preview, so the preview has its own way
+                  back and its own Publish, which submits the same form. */}
+              {isPhone && (
+                <>
+                  <div className={previewStyles.previewButtons}>
+                    <button type="button" onClick={() => setPhoneView("form")}>
+                      Back to edit
+                    </button>
+                    <button
+                      type="submit"
+                      form={formId}
+                      disabled={!isValid || submitting}
+                    >
+                      Publish
+                    </button>
+                  </div>
+                  {serverError && <p>{serverError.message}</p>}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </dialog>
   );
 }
