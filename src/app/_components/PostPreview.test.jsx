@@ -1,6 +1,6 @@
 // Tests for PostPreview (docs/flows.md → Post preview): the header, sub header and date only when
-// set, paragraphs with their formatting, an image only once its fields are complete, and the
-// text shown while nothing has been typed.
+// set, paragraphs with their formatting, an image only once its fields are complete (a picked file
+// shown from its object URL), and the text shown while nothing has been typed.
 
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -11,8 +11,8 @@ const IMAGE = {
   key: "i1",
   type: "image",
   src: "https://res.cloudinary.com/demo/one.jpg",
-  width: "800",
-  height: "600",
+  width: 800,
+  height: 600,
   altText: "Stevie on the beach",
 };
 
@@ -78,6 +78,19 @@ describe("PostPreview", () => {
     expect(
       screen.getByRole("img", { name: "Stevie on the beach" }),
     ).toHaveAttribute("src", "https://res.cloudinary.com/demo/one.jpg");
+  });
+
+  it("shows a picked image from its object URL, before it is uploaded", () => {
+    renderPreview({
+      body: [
+        PARAGRAPH,
+        { ...IMAGE, file: new File(["x"], "a.jpg"), src: "blob:test/1" },
+      ],
+    });
+
+    expect(
+      screen.getByRole("img", { name: "Stevie on the beach" }),
+    ).toHaveAttribute("src", "blob:test/1");
   });
 
   it("says where the post will show while nothing has been typed", () => {

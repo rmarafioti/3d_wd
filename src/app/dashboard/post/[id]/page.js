@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { usePost } from "../../../_hooks/usePost";
@@ -92,17 +93,21 @@ export default function PostPage() {
                 <FormattedText text={element.text} />
               </p>
             ) : (
-              <p key={index}>
-                <a
-                  href={element.image.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {element.image.src}
-                </a>{" "}
-                — {element.image.altText} — {element.image.width} ×{" "}
-                {element.image.height}
-              </p>
+              // Unoptimized, at its stored size: Cloudinary has already scaled it to fit 2500 ×
+              // 2500, and no next.config host list is needed.
+              <figure key={index} className={styles.postImage}>
+                <Image
+                  src={element.image.src}
+                  width={element.image.width}
+                  height={element.image.height}
+                  alt={element.image.altText}
+                  unoptimized
+                />
+                <figcaption>
+                  {element.image.altText}, {element.image.width} ×{" "}
+                  {element.image.height}
+                </figcaption>
+              </figure>
             ),
           )}
         </div>
@@ -123,6 +128,7 @@ export default function PostPage() {
         {editing && (
           <PostForm
             mode="edit"
+            websiteId={post.websiteId}
             websiteName={post.websiteName}
             initialValues={postToFormValues(post)}
             onSubmit={update}

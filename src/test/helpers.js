@@ -14,8 +14,14 @@ import { fireEvent } from "@testing-library/react";
 //   [route, route, ...]     answered in order; the last one repeats
 //   (call) => route         computed per call; may return a Promise to hold the response back
 // Returns { calls }: every request as { method, path, headers, credentials, body }, with body
-// parsed from JSON. An unknown route answers 500 with a message naming it, so a missing route
+// parsed from JSON, or a FormData body (an upload to Cloudinary) as an object of its entries. An unknown route answers 500 with a message naming it, so a missing route
 // shows up in the failing assertion instead of hiding behind the generic error.
+function readBody(body) {
+  if (body === undefined) return undefined;
+  if (body instanceof FormData) return Object.fromEntries(body.entries());
+  return JSON.parse(body);
+}
+
 export function mockFetch(routes) {
   const calls = [];
   const queues = {};
@@ -30,7 +36,7 @@ export function mockFetch(routes) {
         path: url,
         headers: options.headers ?? {},
         credentials: options.credentials,
-        body: options.body === undefined ? undefined : JSON.parse(options.body),
+        body: readBody(options.body),
       };
       calls.push(call);
 
@@ -116,4 +122,48 @@ export function stubMatchMedia(matches) {
       listeners.forEach((listener) => listener());
     },
   };
+}
+
+// Stands in for the browser's Image so a test decides when (and whether) an image "loads".
+// Returns every load started, as { src, load(width, height), fail() }.
+export function stubImageLoading() {
+  const loads = [];
+  class FakeImage {
+    set src(value) {
+      loads.push({
+        src: value,
+        load: (width, height) => {
+          this.naturalWidth = width;
+          this.naturalHeight = height;
+          this.onload();
+        },
+        fail: () => this.onerror(),
+      });
+    }
+  }
+  vi.stubGlobal("Image", FakeImage);
+  return loads;
+}
+
+// jsdom has no URL.createObjectURL / revokeObjectURL. Each file gets "blob:test/1",
+// "blob:test/2", …; returns the revoke spy so a test can check an object URL was let go.
+export function stubObjectUrls() {
+  let count = 0;
+  const revokeObjectURL = vi.fn();
+  class FakeURL extends URL {
+    static createObjectURL() {
+      count += 1;
+      return `blob:test/${count}`;
+    }
+    static revokeObjectURL = revokeObjectURL;
+  }
+  vi.stubGlobal("URL", FakeURL);
+  return { revokeObjectURL };
+}
+
+// A picked file of the given type and size in bytes (the bytes themselves are never read).
+export function imageFile(name, type = "image/jpeg", size = 1024) {
+  const file = new File(["x"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
 }

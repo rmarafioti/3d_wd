@@ -6,7 +6,10 @@ import { findLinks } from "./postFormatting";
 
 // Deliberately loose (something@something.something); the backend has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const HTTPS_MESSAGE = "Must be a valid URL starting with https://";
+// An image file the site owner can pick (docs/api.md → Endpoints, Notes): Cloudinary is signed
+// to accept only these formats, and the frontend checks the size before uploading.
+const IMAGE_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
 // Paragraph link messages, word for word from docs/api.md → Paragraph formatting.
 const LINK_URL_MESSAGE = "Each link must be a valid URL starting with https://";
 const LINK_TEXT_REQUIRED_MESSAGE = "Each link needs link text.";
@@ -43,15 +46,6 @@ export function isValidDate(value) {
   );
 }
 
-// Width and height are held as strings while editing (that's what <input type="number">
-// gives), so this checks the string is a whole number within the range.
-export function isWholeNumberInRange(value, min, max) {
-  const trimmed = String(value ?? "").trim();
-  if (!/^\d+$/.test(trimmed)) return false;
-  const number = Number(trimmed);
-  return number >= min && number <= max;
-}
-
 // Validates a WebsitePicker value. A picked existing website needs nothing more; a new
 // website needs a name and an https:// URL. Returns { fieldName: message } for each failure.
 // These messages are the ones docs/flows.md lists for Create an Account.
@@ -64,17 +58,25 @@ export function validateWebsite({ websiteId, websiteName, websiteUrl }) {
   return errors;
 }
 
-// Messages below match the backend's field messages word for word.
+// Messages below match the backend's field messages word for word, unless noted.
+
+// Checks a picked image file before it is kept: jpg, png or webp, at most 10 MB. Returns the
+// message for a refused file, or null. These messages are the form's own (docs/flows.md).
+export function imageFileError(file) {
+  if (!IMAGE_FILE_TYPES.includes(file.type))
+    return "Choose a jpg, png or webp image.";
+  if (file.size > MAX_IMAGE_FILE_BYTES)
+    return "Images must be 10 MB or smaller.";
+  return null;
+}
 
 // Validates one image element in PostBodyFields. Returns { fieldName: message } for each failure.
-export function validateImage({ src, width, height, altText }) {
+// src is set together with width and height (a picked file's once it loads, or the stored
+// image's), so an image with a src always has its size. The src message is the form's own; the
+// alt text messages match the backend's word for word.
+export function validateImage({ src, altText }) {
   const errors = {};
-  if (isBlank(src)) errors.src = "Image URL is required.";
-  else if (!isHttpsUrl(src)) errors.src = HTTPS_MESSAGE;
-  if (!isWholeNumberInRange(width, 1, 10000))
-    errors.width = "Width must be a whole number between 1 and 10000.";
-  if (!isWholeNumberInRange(height, 1, 10000))
-    errors.height = "Height must be a whole number between 1 and 10000.";
+  if (isBlank(src)) errors.src = "Choose an image.";
   if (isBlank(altText)) errors.altText = "Alt text is required.";
   else if (isTooLong(altText, 200))
     errors.altText = "Alt text must be 200 characters or fewer.";

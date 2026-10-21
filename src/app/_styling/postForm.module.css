@@ -76,6 +76,13 @@
   margin-bottom: 0.5rem;
 }
 
+/* A small copy of the picked or stored image above its file picker, in its own proportions. */
+.thumbnail {
+  max-width: 10rem;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
 /* A paragraph's Bold / Italic / Link icon buttons. */
 .formatButtons {
   display: flex;

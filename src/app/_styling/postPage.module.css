@@ -30,6 +30,16 @@ dl .value,
   width: 600px;
 }
 
+/* A stored photo never runs wider than the body; its height follows its stored proportions. */
+.postImage {
+  margin-bottom: 1rem;
+}
+
+.postImage img {
+  max-width: 100%;
+  height: auto;
+}
+
 .key {
   font-size: 20px;
   font-weight: bold;

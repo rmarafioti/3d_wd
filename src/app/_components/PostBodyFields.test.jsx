@@ -1,8 +1,8 @@
 // Tests for PostBodyFields (docs/flows.md → PostBodyFields): adding paragraphs and images in
 // order and the Add buttons' labels, the one-paragraph rule, the "complete it before adding
 // another" rule and its notes, Move up / Move down / Delete, the 5-paragraph and 5-image limits
-// shown as text, width/height auto-fill (including a late load for an old URL), server messages
-// on the right element, onReindex on every add, move and delete, and each paragraph's Bold /
+// shown as text, each image's file picker (refused files, a picked file shown from memory, object
+// URLs let go of, a late load for a replaced file), server messages on the right element, onReindex on every add, move and delete, and each paragraph's Bold /
 // Italic / Link buttons (docs/flows.md → Paragraph formatting).
 
 import { useState } from "react";
@@ -10,7 +10,12 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostBodyFields from "./PostBodyFields";
-import { selectText } from "../../test/helpers";
+import {
+  imageFile,
+  selectText,
+  stubImageLoading,
+  stubObjectUrls,
+} from "../../test/helpers";
 
 // The Add buttons read "Add a / an …" with none of that type and "Add another …" once there is
 // one; the exact label has its own test below.
@@ -22,9 +27,9 @@ const SECOND = { key: "p2", type: "paragraph", text: "Second." };
 const IMAGE = {
   key: "i1",
   type: "image",
-  src: "https://res.cloudinary.com/demo/one.jpg",
-  width: "800",
-  height: "600",
+  src: "https://res.cloudinary.com/demo/image/upload/v1/3dwd-dev/stevie/one.jpg",
+  width: 800,
+  height: 600,
   altText: "Stevie",
 };
 
@@ -48,25 +53,6 @@ function setup(props = {}) {
   return { user, onReindex };
 }
 
-// Stands in for the browser's Image so a test decides when (and whether) an image "loads".
-function stubImageLoading() {
-  const loads = [];
-  class FakeImage {
-    set src(value) {
-      loads.push({
-        src: value,
-        load: (width, height) => {
-          this.naturalWidth = width;
-          this.naturalHeight = height;
-          this.onload();
-        },
-      });
-    }
-  }
-  vi.stubGlobal("Image", FakeImage);
-  return loads;
-}
-
 function many(element, count) {
   return Array.from({ length: count }, (_, i) => ({
     ...element,
@@ -74,10 +60,10 @@ function many(element, count) {
   }));
 }
 
-// The body as the site owner sees it, top to bottom: each paragraph's text or image's URL.
+// The body as the site owner sees it, top to bottom: each paragraph's text or image's alt text.
 function bodyOrder() {
   return screen
-    .getAllByLabelText(/^(Paragraph|Image URL)$/)
+    .getAllByLabelText(/^(Paragraph|Alt Text)$/)
     .map((input) => input.value);
 }
 
@@ -103,11 +89,11 @@ describe("PostBodyFields", () => {
     const { user, onReindex } = setup();
 
     await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await user.type(screen.getByLabelText("Image URL"), "https://x.com/a.jpg");
+    await user.type(screen.getByLabelText("Alt Text"), "Stevie");
     await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
     await user.type(screen.getAllByLabelText("Paragraph")[1], "Last.");
 
-    expect(bodyOrder()).toEqual(["First.", "https://x.com/a.jpg", "Last."]);
+    expect(bodyOrder()).toEqual(["First.", "Stevie", "Last."]);
     expect(onReindex).toHaveBeenCalledTimes(2);
   });
 
@@ -165,7 +151,7 @@ describe("PostBodyFields", () => {
 
     await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
 
-    expect(bodyOrder()).toEqual([IMAGE.src, "First.", "Second."]);
+    expect(bodyOrder()).toEqual([IMAGE.altText, "First.", "Second."]);
     expect(onReindex).toHaveBeenCalledOnce();
   });
 
@@ -176,7 +162,7 @@ describe("PostBodyFields", () => {
 
     await user.click(screen.getByRole("button", { name: "Move image 1 down" }));
 
-    expect(bodyOrder()).toEqual(["First.", "Second.", IMAGE.src]);
+    expect(bodyOrder()).toEqual(["First.", "Second.", IMAGE.altText]);
     expect(onReindex).toHaveBeenCalledOnce();
   });
 
@@ -185,7 +171,7 @@ describe("PostBodyFields", () => {
 
     await user.click(screen.getByRole("button", { name: "Delete image 1" }));
 
-    expect(screen.queryByLabelText("Image URL")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Alt Text")).not.toBeInTheDocument();
     expect(onReindex).toHaveBeenCalledOnce();
   });
 
@@ -295,41 +281,107 @@ describe("PostBodyFields", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("fills Width and Height from the image once it loads", async () => {
+  it.each([
+    [
+      "a gif",
+      imageFile("dog.gif", "image/gif"),
+      "Choose a jpg, png or webp image.",
+    ],
+    [
+      "a file over 10 MB",
+      imageFile("big.jpg", "image/jpeg", 10 * 1024 * 1024 + 1),
+      "Images must be 10 MB or smaller.",
+    ],
+  ])("refuses %s before keeping it", async (_, file, message) => {
     const loads = stubImageLoading();
-    const { user } = setup();
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await user.click(screen.getByLabelText("Image URL"));
-
-    await user.paste("https://res.cloudinary.com/demo/one.jpg");
-    loads.at(-1).load(1200, 900);
-
-    expect(await screen.findByDisplayValue("1200")).toBe(
-      screen.getByLabelText("Width"),
+    stubObjectUrls();
+    const user = userEvent.setup({ applyAccept: false });
+    render(
+      <Harness initialBody={[PARAGRAPH, { ...IMAGE, src: "", altText: "" }]} />,
     );
-    expect(screen.getByLabelText("Height")).toHaveValue(900);
+
+    await user.upload(screen.getByLabelText("Image"), file);
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(loads).toHaveLength(0);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
-  it("ignores a late load for a URL that has since been changed", async () => {
+  it("shows a picked file from memory once it loads, completing the image", async () => {
     const loads = stubImageLoading();
+    stubObjectUrls();
     const { user } = setup({
-      initialBody: [PARAGRAPH, { ...IMAGE, width: "", height: "" }],
+      initialBody: [
+        PARAGRAPH,
+        { ...IMAGE, src: "", width: null, height: null },
+      ],
     });
-    const urlInput = screen.getByLabelText("Image URL");
+    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeDisabled();
 
-    await user.clear(urlInput);
-    await user.paste("https://res.cloudinary.com/demo/old.jpg");
-    const oldLoad = loads.find(
-      (load) => load.src === "https://res.cloudinary.com/demo/old.jpg",
-    );
-    await user.clear(urlInput);
-    await user.paste("https://res.cloudinary.com/demo/new.jpg");
-    oldLoad.load(111, 222);
+    await user.upload(screen.getByLabelText("Image"), imageFile("dog.jpg"));
+    loads.at(-1).load(1200, 900);
 
-    expect(screen.getByLabelText("Width")).toHaveValue(null);
-    loads.at(-1).load(640, 480);
-    expect(await screen.findByDisplayValue("640")).toBe(
-      screen.getByLabelText("Width"),
+    const thumbnail = await screen.findByRole("img", { name: "Stevie" });
+    expect(thumbnail).toHaveAttribute("src", "blob:test/1");
+    expect(thumbnail).toHaveAttribute("width", "1200");
+    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeEnabled();
+  });
+
+  it("refuses a file that can't be read as an image, and lets go of its object URL", async () => {
+    const loads = stubImageLoading();
+    const { revokeObjectURL } = stubObjectUrls();
+    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
+
+    await user.upload(screen.getByLabelText("Image"), imageFile("broken.jpg"));
+    loads.at(-1).fail();
+
+    expect(
+      await screen.findByText("This file can't be read as an image."),
+    ).toBeInTheDocument();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
+  });
+
+  it("keeps the newer file when an older one finishes loading late", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
+    const input = screen.getByLabelText("Image");
+
+    await user.upload(input, imageFile("old.jpg"));
+    await user.upload(input, imageFile("new.jpg"));
+    loads[1].load(640, 480);
+    loads[0].load(111, 222);
+
+    const thumbnail = await screen.findByRole("img", { name: "Stevie" });
+    expect(thumbnail).toHaveAttribute("src", "blob:test/2");
+    expect(thumbnail).toHaveAttribute("width", "640");
+  });
+
+  it("lets go of the old object URL when a picked file is replaced or deleted", async () => {
+    const loads = stubImageLoading();
+    const { revokeObjectURL } = stubObjectUrls();
+    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
+    const input = screen.getByLabelText("Image");
+    await user.upload(input, imageFile("one.jpg"));
+    loads.at(-1).load(800, 600);
+    await screen.findByRole("img");
+
+    await user.upload(input, imageFile("two.jpg"));
+    loads.at(-1).load(800, 600);
+    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
+
+    expect(revokeObjectURL.mock.calls).toEqual([
+      ["blob:test/1"],
+      ["blob:test/2"],
+    ]);
+  });
+
+  it("shows an existing image from its stored src", () => {
+    setup({ initialBody: [PARAGRAPH, IMAGE] });
+
+    expect(screen.getByRole("img", { name: "Stevie" })).toHaveAttribute(
+      "src",
+      IMAGE.src,
     );
   });
 
