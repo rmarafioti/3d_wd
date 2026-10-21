@@ -89,7 +89,7 @@ export default function AccountsAside() {
       )}
       {linkResult && !linkResult.response.credentials && (
         <MessageDialog
-          message={`${linkResult.response.website.websiteName} linked to ${linkResult.accountName}. No new API key or webhook secret were generated — the website's existing credentials are unchanged.`}
+          message={`${linkResult.response.website.websiteName} linked to ${linkResult.accountName}. No new API key or webhook secret was generated. The website's existing credentials are unchanged.`}
           onClose={() => setLinkResult(null)}
         />
       )}

@@ -75,11 +75,11 @@ export default function PostPage() {
 
         <dl>
           <dt className={styles.key}>Post Date:</dt>
-          <dd className={styles.value}>{post.postDate ?? "—"}</dd>
+          <dd className={styles.value}>{post.postDate ?? "None"}</dd>
           <dt className={styles.key}>Header:</dt>
-          <dd className={styles.value}>{post.header ?? "—"}</dd>
+          <dd className={styles.value}>{post.header ?? "None"}</dd>
           <dt className={styles.key}>Sub Header:</dt>
-          <dd className={styles.value}>{post.subHeader ?? "—"}</dd>
+          <dd className={styles.value}>{post.subHeader ?? "None"}</dd>
         </dl>
 
         <div className={styles.bodySection}>

@@ -113,9 +113,9 @@ The Submit button stays disabled until every required field is filled and valid.
 
 The payload is `{ name, email, websiteId }` for an existing website, or `{ name, email, websiteName, websiteUrl }` for a new one → `POST /api/admin/accounts`.
 
-- **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found."
+- **Backend error:** render `error.message` below the Submit button (and any `error.fields` messages next to their fields). The form keeps everything the administrator typed. Expected messages: "An account with this email already exists." / "A website with this URL already exists. Select it from the dropdown." / "A website with this URL already exists but is inactive. It's named [Website Name]. Reactivate and then try again." / "Website not found."
 - **Success, new website** (`credentials` present in the response): open `CredentialRevealModal` showing the website name, URL, API key and webhook secret, and one "Copy all" button that copies all four as "Label: value" lines (Website Name, Website Url, API KEY, Webhook Secret), plus the warning "Copy these now! They will never be shown again." It closes only with its Close button (no outside click, no Esc). Once closed the values cannot be retrieved. The account list refetches as soon as the request succeeds; on close, clear the form and refetch the website list.
-- **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." The account list refetches as soon as the request succeeds; on close, clear the form.
+- **Success, existing website** (no `credentials`): show a dialog reading "Account created and linked to [Website Name]. No new API key or webhook secret was generated. The website's existing credentials are unchanged." The account list refetches as soon as the request succeeds; on close, clear the form.
 
 ### Link a Website
 
@@ -125,9 +125,9 @@ Gives an existing site owner another website. Clicking "Link a Website" on an ac
 
 Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/accounts/:id/websites`.
 
-- **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists — select it from the dropdown." / "A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again." / "Website not found." / "Account not found."
+- **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists. Select it from the dropdown." / "A website with this URL already exists but is inactive. It's named [Website Name]. Reactivate and then try again." / "Website not found." / "Account not found."
 - **Success, new website** (`credentials` present): close the form dialog and open `CredentialRevealModal` exactly as in Create an Account. The account list refetches as soon as the request succeeds; the website list refetches when the reveal closes.
-- **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret were generated — the website's existing credentials are unchanged." The account list refetches as soon as the request succeeds.
+- **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret was generated. The website's existing credentials are unchanged." The account list refetches as soon as the request succeeds.
 
 ---
 
@@ -228,7 +228,7 @@ The form shows the post live as it is typed, the way it will read on the website
 
 Hook used: `usePost(id)` → `GET /api/siteOwner/posts/:id`
 
-Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line` and its formatting rendered by `FormattedText`, with links opening in a new tab; each image shown at its stored size, unoptimized and scaled to fit the page, with "Alt Text: {altText}" beneath it), plus created and last-updated dates. It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
+Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line` and its formatting rendered by `FormattedText`, with links opening in a new tab; each image shown at its stored size, unoptimized and scaled to fit the page, with "Alt Text: {altText}" beneath it), plus created and last-updated dates. An empty post date, header or sub header shows "None". It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
 
 ### Edit a Post
 

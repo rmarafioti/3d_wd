@@ -148,7 +148,7 @@ export default function CreateAccountForm({
       )}
       {result && !result.credentials && (
         <MessageDialog
-          message={`Account created and linked to ${result.website.websiteName}. No new API key or webhook secret were generated — the website's existing credentials are unchanged.`}
+          message={`Account created and linked to ${result.website.websiteName}. No new API key or webhook secret was generated. The website's existing credentials are unchanged.`}
           onClose={handleLinkedClose}
         />
       )}
