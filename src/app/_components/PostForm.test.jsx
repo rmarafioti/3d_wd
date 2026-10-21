@@ -1,13 +1,22 @@
 // Tests for PostForm, the Create a Post and Edit a Post form (docs/flows.md): the Website
-// pre-select, the request payload (body elements in order, blank → null, numbers as numbers,
-// image ids kept across a move, no client key), the one-paragraph rule, what Edit leaves out,
-// and backend errors including dropped element messages.
+// pre-select, the request payload (body elements in order, blank → null, image ids kept across a
+// move, no client key), the one-paragraph rule, what Edit leaves out, backend errors including
+// dropped element messages, image uploads on Publish (docs/api.md → Endpoints, Notes: one
+// signature, each new file to Cloudinary, nothing saved if one fails, no second upload on a
+// retry) and the 20-hour form timeout.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostForm, { postToFormValues } from "./PostForm";
-import { stubMatchMedia } from "../../test/helpers";
+import {
+  deferred,
+  imageFile,
+  mockFetch,
+  stubImageLoading,
+  stubMatchMedia,
+  stubObjectUrls,
+} from "../../test/helpers";
 
 // The Add buttons read "Add a / an …" with none of that type and "Add another …" once there is
 // one; the exact label is tested on its own in PostBodyFields.test.jsx.
@@ -16,9 +25,11 @@ const ADD_IMAGE = /^Add (an|another) image$/;
 
 const STEVIE = { id: "w1", websiteName: "Stevie The Dog", posts: [] };
 const GOOD_BOYS = { id: "w2", websiteName: "Good Boys", posts: [] };
+const FOLDER_URL =
+  "https://res.cloudinary.com/demo/image/upload/v1792541844/3dwd-dev/steviethedog";
 const IMAGE = {
   id: "i1",
-  src: "https://res.cloudinary.com/demo/one.jpg",
+  src: `${FOLDER_URL}/stored0.jpg`,
   width: 800,
   height: 600,
   altText: "Stevie",
@@ -40,15 +51,54 @@ const POST = {
   ],
 };
 
-// Fills the blank image element that "Add an image" appended.
-async function fillImage(user) {
-  await user.type(
-    screen.getByLabelText("Image URL"),
-    "https://res.cloudinary.com/demo/one.jpg",
+// The UploadSignature the sign endpoint returns (docs/api.md → Shapes), with Cloudinary's own
+// field names.
+const UPLOAD_URL = "https://api.cloudinary.com/v1_1/demo/image/upload";
+const SIGNATURE = {
+  uploadUrl: UPLOAD_URL,
+  fields: {
+    allowed_formats: "jpg,jpeg,png,webp",
+    folder: "3dwd-dev/steviethedog",
+    timestamp: 1792541844,
+    transformation: "c_limit,w_2500,h_2500",
+    signature: "0a1b2c",
+    api_key: "123456",
+  },
+};
+
+// Cloudinary's answer for the nth upload: the stored image (it also sends fields we don't read).
+function stored(n) {
+  return {
+    body: {
+      secure_url: `${FOLDER_URL}/stored${n}.jpg`,
+      width: 2500,
+      height: 1875,
+      public_id: `3dwd-dev/steviethedog/stored${n}`,
+      format: "jpg",
+    },
+  };
+}
+
+// The sign endpoint and Cloudinary, answering uploads in order. Returns mockFetch's calls.
+function mockUploads(uploads = [stored(1), stored(2)]) {
+  return mockFetch({
+    "POST /api/siteOwner/uploads/sign": { body: { data: SIGNATURE } },
+    [`POST ${UPLOAD_URL}`]: uploads,
+  }).calls;
+}
+
+function uploadCalls(calls) {
+  return calls.filter((call) => call.path === UPLOAD_URL);
+}
+
+// Picks a file for the last image element and lets it load, then writes its alt text.
+async function fillImage(user, loads, altText = "Stevie") {
+  await user.upload(
+    screen.getAllByLabelText("Image").at(-1),
+    imageFile(`${altText}.jpg`),
   );
-  await user.type(screen.getByLabelText("Width"), "800");
-  await user.type(screen.getByLabelText("Height"), "600");
-  await user.type(screen.getByLabelText("Alt Text"), "Stevie");
+  loads.at(-1).load(4000, 3000);
+  await user.type(screen.getAllByLabelText("Alt Text").at(-1), altText);
 }
 
 function renderCreate({ websites = [STEVIE], onSubmit = vi.fn() } = {}) {
@@ -72,6 +122,7 @@ function renderEdit({ post = POST, onSubmit = vi.fn() } = {}) {
   render(
     <PostForm
       mode="edit"
+      websiteId={post.websiteId}
       websiteName={post.websiteName}
       initialValues={postToFormValues(post)}
       onSubmit={onSubmit}
@@ -100,7 +151,10 @@ describe("PostForm (create)", () => {
     expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   });
 
-  it("sends the body in order, line breaks kept, blank optional fields as null, sizes as numbers, the Active toggle, and no client key", async () => {
+  it("sends the body in order, line breaks kept, blank optional fields as null, the Active toggle, and no client key", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    mockUploads();
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
     await user.type(screen.getByLabelText("Post Name"), "  Walk day ");
@@ -110,7 +164,7 @@ describe("PostForm (create)", () => {
       "  We went{Enter}for a walk. ",
     );
     await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user);
+    await fillImage(user, loads);
     await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
     await user.type(screen.getAllByLabelText("Paragraph")[1], "The end.");
     await user.click(screen.getByLabelText("Active"));
@@ -130,9 +184,9 @@ describe("PostForm (create)", () => {
         {
           type: "image",
           image: {
-            src: "https://res.cloudinary.com/demo/one.jpg",
-            width: 800,
-            height: 600,
+            src: `${FOLDER_URL}/stored1.jpg`,
+            width: 2500,
+            height: 1875,
             altText: "Stevie",
           },
         },
@@ -142,11 +196,13 @@ describe("PostForm (create)", () => {
   });
 
   it("keeps Publish disabled while the body has no paragraph", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
     const { user } = renderCreate();
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "Hi");
     await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user);
+    await fillImage(user, loads);
     expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
 
     await user.click(
@@ -159,15 +215,17 @@ describe("PostForm (create)", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps Publish disabled while an image is invalid", async () => {
+  it("keeps Publish disabled while an image is incomplete", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
     const { user } = renderCreate();
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "Hi");
     await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user);
+    await fillImage(user, loads);
     expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
 
-    await user.clear(screen.getByLabelText("Width"));
+    await user.clear(screen.getByLabelText("Alt Text"));
 
     expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   });
@@ -206,7 +264,11 @@ describe("PostForm (edit)", () => {
     expect(screen.queryByLabelText("Active")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
     expect(screen.getByLabelText("Sub Header")).toHaveValue("");
-    expect(screen.getByLabelText("Width")).toHaveValue(800);
+    expect(
+      within(screen.getByRole("group", { name: "Body" })).getByRole("img", {
+        name: "Stevie",
+      }),
+    ).toHaveAttribute("src", IMAGE.src);
   });
 
   it("sends the full form: a moved image keeps its id, formatting as typed, no websiteId or active", async () => {
@@ -232,7 +294,7 @@ describe("PostForm (edit)", () => {
           type: "image",
           image: {
             id: "i1",
-            src: "https://res.cloudinary.com/demo/one.jpg",
+            src: IMAGE.src,
             width: 800,
             height: 600,
             altText: "Stevie",
@@ -291,6 +353,307 @@ describe("PostForm (edit)", () => {
     expect(
       screen.getByText("Please fix the highlighted fields."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("PostForm image uploads", () => {
+  async function fillPost(user) {
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+  }
+
+  it("signs once for the post's website, uploads each new image to Cloudinary, then saves Cloudinary's src and size", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const calls = mockUploads();
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user, onSuccess } = renderCreate({ onSubmit });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads, "Stevie");
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads, "Ball");
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    const [sign, ...uploads] = calls;
+    expect(sign).toMatchObject({
+      method: "POST",
+      path: "/api/siteOwner/uploads/sign",
+      credentials: "include",
+      headers: { "X-CSRF-Protection": "1" },
+      body: { websiteId: "w1" },
+    });
+    expect(uploads).toHaveLength(2);
+    for (const upload of uploads) {
+      expect(upload.credentials).toBeUndefined();
+      expect(upload.headers).toEqual({});
+      expect(upload.body).toEqual({
+        ...SIGNATURE.fields,
+        timestamp: "1792541844",
+        file: expect.any(File),
+      });
+    }
+    expect(uploads.map((upload) => upload.body.file.name)).toEqual([
+      "Stevie.jpg",
+      "Ball.jpg",
+    ]);
+    expect(onSubmit.mock.calls[0][0].body.slice(1)).toEqual([
+      {
+        type: "image",
+        image: {
+          src: `${FOLDER_URL}/stored1.jpg`,
+          width: 2500,
+          height: 1875,
+          altText: "Stevie",
+        },
+      },
+      {
+        type: "image",
+        image: {
+          src: `${FOLDER_URL}/stored2.jpg`,
+          width: 2500,
+          height: 1875,
+          altText: "Ball",
+        },
+      },
+    ]);
+  });
+
+  it("shows a picked image in the preview from memory before anything is uploaded", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const calls = mockUploads();
+    const { user } = renderCreate();
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+
+    await fillImage(user, loads);
+
+    const preview = screen.getByRole("region", { name: "Post preview" });
+    expect(
+      within(preview).getByRole("img", { name: "Stevie" }),
+    ).toHaveAttribute("src", "blob:test/1");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("in Edit, uploads only the added image and keeps the existing one's id, src and size", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const calls = mockUploads();
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderEdit({ onSubmit });
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads, "Ball");
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(calls[0].body).toEqual({ websiteId: "w1" });
+    expect(uploadCalls(calls)).toHaveLength(1);
+    expect(onSubmit.mock.calls[0][0].body.slice(1)).toEqual([
+      { type: "image", image: IMAGE },
+      {
+        type: "image",
+        image: {
+          src: `${FOLDER_URL}/stored1.jpg`,
+          width: 2500,
+          height: 1875,
+          altText: "Ball",
+        },
+      },
+    ]);
+  });
+
+  it("sends no request before the save when the body has no new images", async () => {
+    const calls = mockUploads();
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderEdit({ onSubmit });
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(calls).toHaveLength(0);
+  });
+
+  it.each([
+    [
+      "Cloudinary refuses it",
+      {
+        status: 400,
+        body: { error: { message: "Image file format gif not allowed" } },
+      },
+    ],
+    ["Cloudinary can't be reached", { networkError: true }],
+  ])("saves nothing and keeps the form when %s", async (_, failure) => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    mockUploads([failure]);
+    const onSubmit = vi.fn();
+    const { user } = renderCreate({ onSubmit });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(
+      await screen.findByText(
+        "Your images couldn't be uploaded, please try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Image file format gif not allowed"),
+    ).not.toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
+    expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+  });
+
+  it("shows the sign endpoint's error and uploads nothing", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const calls = mockFetch({
+      "POST /api/siteOwner/uploads/sign": {
+        status: 404,
+        body: { error: { message: "Website not found." } },
+      },
+    }).calls;
+    const onSubmit = vi.fn();
+    const { user } = renderCreate({ onSubmit });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(await screen.findByText("Website not found.")).toBeInTheDocument();
+    expect(uploadCalls(calls)).toHaveLength(0);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("doesn't upload an image again when Publish is tried again after a failed save", async () => {
+    const loads = stubImageLoading();
+    const { revokeObjectURL } = stubObjectUrls();
+    const calls = mockUploads();
+    const onSubmit = vi
+      .fn()
+      .mockRejectedValueOnce({
+        message: "Something went wrong, please try again.",
+      })
+      .mockResolvedValue(POST);
+    const { user, onSuccess } = renderCreate({ onSubmit });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await screen.findByText("Something went wrong, please try again.");
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(uploadCalls(calls)).toHaveLength(1);
+    expect(onSubmit.mock.calls[1][0].body[1].image.src).toBe(
+      `${FOLDER_URL}/stored1.jpg`,
+    );
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
+  });
+
+  it('reads "Uploading images…" on Publish while the images upload, then "Publishing…" while the post saves', async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const upload = deferred();
+    mockUploads([() => upload.promise]);
+    const save = deferred();
+    const { user } = renderCreate({
+      onSubmit: vi.fn().mockReturnValue(save.promise),
+    });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Uploading images…" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Uploading images…");
+    await act(async () => upload.resolve(stored(1)));
+    expect(
+      await screen.findByRole("button", { name: "Publishing…" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Publishing…");
+  });
+
+  it('reads "Publishing…" on Publish while a post without images saves, and "Publish" again after a failure', async () => {
+    const save = deferred();
+    const { user } = renderCreate({
+      onSubmit: vi.fn().mockReturnValue(save.promise),
+    });
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Publishing…" }),
+    ).toBeDisabled();
+    await act(async () =>
+      save.reject({ message: "Something went wrong, please try again." }),
+    );
+    expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+    expect(
+      screen.getByText("Something went wrong, please try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("lets go of picked images' object URLs when the form closes", async () => {
+    const loads = stubImageLoading();
+    const { revokeObjectURL } = stubObjectUrls();
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <PostForm
+        mode="create"
+        websites={[STEVIE]}
+        onSubmit={vi.fn()}
+        onSuccess={vi.fn()}
+        onClose={() => {}}
+      />,
+    );
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+
+    unmount();
+
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
+  });
+});
+
+describe("PostForm timeout", () => {
+  const HOUR = 60 * 60 * 1000;
+
+  it("clears the form with the timed-out message once it has been open for 20 hours", () => {
+    vi.useFakeTimers();
+    try {
+      renderCreate();
+
+      act(() => vi.advanceTimersByTime(20 * HOUR - 60 * 1000));
+      expect(screen.getByLabelText("Post Name")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(60 * 1000));
+
+      expect(
+        screen.getByText(
+          "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByLabelText("Post Name")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

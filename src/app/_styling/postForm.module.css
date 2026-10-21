@@ -54,6 +54,16 @@
   width: 100%;
 }
 
+/* For screen readers only: Publish's progress, which the button already shows on screen. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* A row of buttons inside a section. */
 .buttonRow {
   display: flex;
@@ -74,6 +84,15 @@
 
 .input {
   margin-bottom: 0.5rem;
+}
+
+/* A small copy of the picked or stored image above its file picker, in its own proportions.
+   Block, so it starts on its own line at the left edge instead of beside the "Image" label. */
+.thumbnail {
+  display: block;
+  max-width: 10rem;
+  height: auto;
+  margin-bottom: 1rem;
 }
 
 /* A paragraph's Bold / Italic / Link icon buttons. */

@@ -10,7 +10,7 @@ import {
   isTooLong,
   isValidDate,
   isValidEmail,
-  isWholeNumberInRange,
+  imageFileError,
   validateBody,
   validateImage,
   validateParagraph,
@@ -19,9 +19,9 @@ import {
 } from "./validation";
 
 const VALID_IMAGE = {
-  src: "https://res.cloudinary.com/demo/image.jpg",
-  width: "800",
-  height: "600",
+  src: "https://res.cloudinary.com/demo/image/upload/v1/3dwd-dev/stevie/a.jpg",
+  width: 800,
+  height: 600,
   altText: "Stevie on the couch",
 };
 const VALID_POST = { postName: "Walk day" };
@@ -114,19 +114,6 @@ describe("isValidDate", () => {
   });
 });
 
-describe("isWholeNumberInRange", () => {
-  it.each(["1", "10000", " 12 ", 800])("accepts %j in 1–10000", (value) => {
-    expect(isWholeNumberInRange(value, 1, 10000)).toBe(true);
-  });
-
-  it.each(["0", "10001", "1.5", "-5", "abc", "", "1e3"])(
-    "rejects %j",
-    (value) => {
-      expect(isWholeNumberInRange(value, 1, 10000)).toBe(false);
-    },
-  );
-});
-
 describe("validateWebsite", () => {
   it("needs nothing more when an existing website is picked", () => {
     expect(
@@ -149,32 +136,48 @@ describe("validateWebsite", () => {
 });
 
 describe("validateImage", () => {
-  it("accepts a complete image", () => {
+  it("accepts an image with a file and alt text", () => {
     expect(validateImage(VALID_IMAGE)).toEqual({});
   });
 
-  it("reports every missing field with the backend's messages", () => {
-    expect(
-      validateImage({ src: "", width: "", height: "", altText: "  " }),
-    ).toEqual({
-      src: "Image URL is required.",
-      width: "Width must be a whole number between 1 and 10000.",
-      height: "Height must be a whole number between 1 and 10000.",
+  it("asks for an image and alt text when both are missing", () => {
+    expect(validateImage({ src: "", altText: "  " })).toEqual({
+      src: "Choose an image.",
       altText: "Alt text is required.",
     });
   });
 
-  it("rejects a non-https src and alt text over 200 characters", () => {
-    expect(
-      validateImage({
-        ...VALID_IMAGE,
-        src: "http://x.com/a.jpg",
-        altText: "a".repeat(201),
-      }),
-    ).toEqual({
-      src: "Must be a valid URL starting with https://",
-      altText: "Alt text must be 200 characters or fewer.",
-    });
+  it("allows 200 characters of alt text and rejects 201", () => {
+    expect(validateImage({ ...VALID_IMAGE, altText: "a".repeat(200) })).toEqual(
+      {},
+    );
+    expect(validateImage({ ...VALID_IMAGE, altText: "a".repeat(201) })).toEqual(
+      { altText: "Alt text must be 200 characters or fewer." },
+    );
+  });
+});
+
+describe("imageFileError", () => {
+  const MB = 1024 * 1024;
+
+  it.each(["image/jpeg", "image/png", "image/webp"])("accepts %s", (type) => {
+    expect(imageFileError({ type, size: MB })).toBeNull();
+  });
+
+  it.each(["image/gif", "image/svg+xml", "application/pdf", ""])(
+    "refuses %j",
+    (type) => {
+      expect(imageFileError({ type, size: MB })).toBe(
+        "Choose a jpg, png or webp image.",
+      );
+    },
+  );
+
+  it("allows 10 MB and refuses anything larger", () => {
+    expect(imageFileError({ type: "image/png", size: 10 * MB })).toBeNull();
+    expect(imageFileError({ type: "image/png", size: 10 * MB + 1 })).toBe(
+      "Images must be 10 MB or smaller.",
+    );
   });
 });
 

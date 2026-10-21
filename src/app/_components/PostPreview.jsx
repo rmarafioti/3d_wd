@@ -1,10 +1,11 @@
 // PostPreview (site owner): the post as it will read on the client website, drawn live from the
 // Create / Edit Post form's current, unsaved values: the date first (so a reader sees how recent
-// the post is before anything else), then the header, sub header and the body in order. Paragraphs keep their line breaks and formatting (FormattedText, the same renderer as
-// the post page); an image only shows once its fields are complete, so a half-typed URL never
-// shows as a broken image. The client website's own styling isn't applied (Post preview v1).
-// Images use Next.js <Image> with their stored size, unoptimized, so a photo from any https://
-// host shows without a host list: these are the site owner's own unsaved photos.
+// the post is before anything else), then the header, sub header and the body in order.
+// Paragraphs keep their line breaks and formatting (FormattedText, the same renderer as the post
+// page); an image shows once its fields are complete. A picked image shows from memory (its object
+// URL) before it is uploaded. The client website's own styling isn't applied (Post preview v1).
+// Images use Next.js <Image> at their size, unoptimized, so neither an object URL nor a Cloudinary
+// URL needs a next.config host list.
 
 import Image from "next/image";
 import FormattedText from "./FormattedText";

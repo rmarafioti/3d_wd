@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { usePost } from "../../../_hooks/usePost";
@@ -88,21 +89,30 @@ export default function PostPage() {
             element.type === "paragraph" ? (
               // pre-line keeps the line breaks the site owner typed (docs/api.md → Shapes);
               // FormattedText draws its bold, italic and links.
-              <p key={index} style={{ whiteSpace: "pre-line" }}>
+              <p
+                key={index}
+                className={styles.bodyParagraph}
+                style={{ whiteSpace: "pre-line" }}
+              >
                 <FormattedText text={element.text} />
               </p>
             ) : (
-              <p key={index}>
-                <a
-                  href={element.image.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {element.image.src}
-                </a>{" "}
-                — {element.image.altText} — {element.image.width} ×{" "}
-                {element.image.height}
-              </p>
+              // Unoptimized, at its stored size: Cloudinary has already scaled it to fit 2500 ×
+              // 2500, and no next.config host list is needed.
+              <figure key={index} className={styles.postImage}>
+                <Image
+                  src={element.image.src}
+                  width={element.image.width}
+                  height={element.image.height}
+                  alt={element.image.altText}
+                  unoptimized
+                />
+                {/* The image's alt already gives screen readers this text. */}
+                <figcaption aria-hidden="true">
+                  <span className={styles.key}>Alt Text:</span>{" "}
+                  {element.image.altText}
+                </figcaption>
+              </figure>
             ),
           )}
         </div>
@@ -116,13 +126,18 @@ export default function PostPage() {
           </p>
         </div>
 
-        <button type="button" onClick={() => setEditing(true)}>
+        <button
+          type="button"
+          className={styles.editButton}
+          onClick={() => setEditing(true)}
+        >
           Edit Post
         </button>
 
         {editing && (
           <PostForm
             mode="edit"
+            websiteId={post.websiteId}
             websiteName={post.websiteName}
             initialValues={postToFormValues(post)}
             onSubmit={update}

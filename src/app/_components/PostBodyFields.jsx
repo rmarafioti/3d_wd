@@ -1,27 +1,28 @@
 // PostBodyFields: the post body editor shared by Create and Edit a Post. The body is an ordered
 // list of elements, each a paragraph or an image; the site owner adds, moves, and deletes them.
-// Handles validation, the limits (5 paragraphs, 5 images), the one-paragraph rule, the
-// "complete it before adding another" rule and image width/height auto-fill. Each paragraph is a
-// ParagraphField (its format buttons, Link panel and links list). An incomplete element's note
+// Handles validation, the limits (5 paragraphs, 5 images), the one-paragraph rule and the
+// "complete it before adding another" rule. Each paragraph is a ParagraphField (its format
+// buttons, Link panel and links list); each image is an ImageField (its file picker and alt
+// text). An incomplete element's note
 // (including "One paragraph is required…" under a blank paragraph) shows inside that element's
 // section, under its buttons; the limits, and the required message once every paragraph is
 // deleted, show inside the Add buttons' section, above them.
 //
 // Controlled by the parent form, which owns the body array and passes its React state setter
-// (setBody) so every change is a functional update. That matters for auto-fill: an image load
-// finishes later, and must patch the element as it is *then*, not as it was when the URL was
-// typed. Elements are held flat ({ key, type: "paragraph", text } or
-// { key, type: "image", id?, src, width, height, altText }); the client-only `key` is for React
-// lists and is stripped before sending, and images loaded for Edit keep their real `id`.
+// (setBody) so every change is a functional update. That matters for a picked image: its file
+// finishes loading later, and must patch the element as it is *then*, not as it was when the
+// file was picked. Elements are held flat ({ key, type: "paragraph", text } or
+// { key, type: "image", id?, file?, src, width, height, altText }); the client-only `key` is for
+// React lists and is stripped before sending, images loaded for Edit keep their real `id`, and a
+// picked image not yet uploaded holds its `file` (src is then its object URL).
 // fieldErrors is the API's error.fields, keyed by full path ("body.2.image.src").
 
 "use client";
 
-import ItemFields, { serverErrorsFor } from "./ItemFields";
+import ImageField, { releaseObjectUrl, serverErrorsFor } from "./ImageField";
 import ParagraphField from "./ParagraphField";
 import {
   isBlank,
-  isHttpsUrl,
   validateBody,
   validateImage,
   validateParagraph,
@@ -39,57 +40,14 @@ const INCOMPLETE_NOTES = {
 };
 
 export const EMPTY_PARAGRAPH = { type: "paragraph", text: "" };
+// A new image has no file yet; src, width and height are set together once one is picked.
 const EMPTY_IMAGE = {
   type: "image",
   src: "",
-  width: "",
-  height: "",
+  width: null,
+  height: null,
   altText: "",
 };
-
-// The inputs for an image element, in display order (see ItemFields).
-const IMAGE_FIELDS = [
-  { name: "src", label: "Image URL", type: "url" },
-  {
-    name: "width",
-    label: "Width",
-    type: "number",
-    min: 1,
-    max: 10000,
-    step: 1,
-  },
-  {
-    name: "height",
-    label: "Height",
-    type: "number",
-    min: 1,
-    max: 10000,
-    step: 1,
-  },
-  { name: "altText", label: "Alt Text", type: "text", maxLength: 200 },
-];
-
-// Loads the image in the background and reports its natural size. If it fails to load,
-// nothing is reported and Width / Height stay as they are for manual entry.
-function loadDimensions(src, onLoad) {
-  if (!isHttpsUrl(src)) return;
-  const image = new Image();
-  image.onload = () => onLoad(image.naturalWidth, image.naturalHeight);
-  image.src = src.trim();
-}
-
-// Image auto-fill. `apply` updates this same element with a functional update, so the size is
-// only filled in if the URL is still the one that was loaded.
-function autoFillDimensions(patch, apply) {
-  if (patch.src === undefined) return;
-  loadDimensions(patch.src, (width, height) =>
-    apply((image) =>
-      image.src === patch.src
-        ? { ...image, width: String(width), height: String(height) }
-        : image,
-    ),
-  );
-}
 
 // Whether an element fails its own validation (a blank paragraph, an unfinished image).
 export function isIncompleteElement(element) {
@@ -151,20 +109,14 @@ export default function PostBodyFields({
     (element) => `${element.type} ${++typeCounts[element.type]}`,
   );
 
-  // Returns a function that applies a functional update to one element.
-  function applyToElement(key) {
-    return (update) =>
-      setBody((list) =>
-        list.map((element) =>
-          element.key === key ? update(element) : element,
-        ),
-      );
-  }
-
+  // A functional update, so a picked file that finishes loading late patches the element as it
+  // is then.
   function patchElement(element, changes) {
-    const apply = applyToElement(element.key);
-    apply((current) => ({ ...current, ...changes }));
-    if (element.type === "image") autoFillDimensions(changes, apply);
+    setBody((list) =>
+      list.map((item) =>
+        item.key === element.key ? { ...item, ...changes } : item,
+      ),
+    );
   }
 
   function addElement(emptyElement) {
@@ -183,8 +135,9 @@ export default function PostBodyFields({
     onReindex();
   }
 
-  function deleteElement(key) {
-    setBody((list) => list.filter((element) => element.key !== key));
+  function deleteElement(element) {
+    if (element.type === "image") releaseObjectUrl(element.src);
+    setBody((list) => list.filter((item) => item.key !== element.key));
     onReindex();
   }
 
@@ -207,9 +160,7 @@ export default function PostBodyFields({
               requiredNoted={Boolean(paragraphRequired)}
             />
           ) : (
-            <ItemFields
-              fields={IMAGE_FIELDS}
-              validate={validateImage}
+            <ImageField
               value={element}
               onPatch={(changes) => patchElement(element, changes)}
               serverErrors={serverErrorsFor(
@@ -245,7 +196,7 @@ export default function PostBodyFields({
             <button
               type="button"
               aria-label={`Delete ${elementNames[index]}`}
-              onClick={() => deleteElement(element.key)}
+              onClick={() => deleteElement(element)}
               className={styles.bodyButton}
             >
               Delete
