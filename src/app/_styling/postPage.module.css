@@ -30,14 +30,25 @@ dl .value,
   width: 600px;
 }
 
-/* A stored photo never runs wider than the body; its height follows its stored proportions. */
+/* Space under each paragraph, as under each image, so it doesn't sit against the next element. */
+.bodyParagraph {
+  margin-bottom: 1rem;
+}
+
+/* A stored photo shows at most half the body's width, so the post reads without much scrolling;
+its height follows its stored proportions. */
 .postImage {
   margin-bottom: 1rem;
 }
 
 .postImage img {
-  max-width: 100%;
+  max-width: 50%;
   height: auto;
+}
+
+/* Space between Edit Post, the last thing on the page, and the footer. */
+.editButton {
+  margin-bottom: 2rem;
 }
 
 .key {

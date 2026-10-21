@@ -560,13 +560,14 @@ describe("PostForm image uploads", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
   });
 
-  it('shows "Uploading images…" under Publish while the images upload', async () => {
+  it('reads "Uploading images…" on Publish while the images upload, then "Publishing…" while the post saves', async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
     const upload = deferred();
     mockUploads([() => upload.promise]);
+    const save = deferred();
     const { user } = renderCreate({
-      onSubmit: vi.fn().mockResolvedValue(POST),
+      onSubmit: vi.fn().mockReturnValue(save.promise),
     });
     await fillPost(user);
     await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
@@ -574,10 +575,38 @@ describe("PostForm image uploads", () => {
 
     await user.click(screen.getByRole("button", { name: "Publish" }));
 
-    expect(await screen.findByText("Uploading images…")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
+    expect(
+      await screen.findByRole("button", { name: "Uploading images…" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Uploading images…");
     await act(async () => upload.resolve(stored(1)));
-    expect(screen.queryByText("Uploading images…")).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Publishing…" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Publishing…");
+  });
+
+  it('reads "Publishing…" on Publish while a post without images saves, and "Publish" again after a failure', async () => {
+    const save = deferred();
+    const { user } = renderCreate({
+      onSubmit: vi.fn().mockReturnValue(save.promise),
+    });
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Publishing…" }),
+    ).toBeDisabled();
+    await act(async () =>
+      save.reject({ message: "Something went wrong, please try again." }),
+    );
+    expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+    expect(
+      screen.getByText("Something went wrong, please try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("lets go of picked images' object URLs when the form closes", async () => {

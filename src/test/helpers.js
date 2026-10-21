@@ -68,14 +68,16 @@ export function mockFetch(routes) {
   return { calls };
 }
 
-// A promise the test resolves by hand, for holding a response back (stale-response and
-// refetch tests).
+// A promise the test resolves or rejects by hand, for holding a response back (stale-response,
+// refetch and in-progress tests).
 export function deferred() {
   let resolve;
-  const promise = new Promise((done) => {
+  let reject;
+  const promise = new Promise((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 // Replaces window.location with a stub whose assign() is a spy, so the 401 redirect can be

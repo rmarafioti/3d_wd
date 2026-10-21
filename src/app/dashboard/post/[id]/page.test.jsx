@@ -58,7 +58,7 @@ function statusCalls(calls) {
 }
 
 describe("Post page", () => {
-  it("renders the body in order, keeping a paragraph's line breaks and showing each image with its alt text and size", async () => {
+  it("renders the body in order, keeping a paragraph's line breaks and showing each image with its alt text beneath it", async () => {
     await setup();
 
     const paragraph = screen.getByText(/We went/);
@@ -67,7 +67,7 @@ describe("Post page", () => {
       "src",
       "https://res.cloudinary.com/demo/one.jpg",
     );
-    expect(screen.getByText("Stevie, 800 × 600")).toBeInTheDocument();
+    expect(image.closest("figure")).toHaveTextContent(/^Alt Text: Stevie$/);
     const last = screen.getByText("The end.");
     expect(paragraph.textContent).toBe("We went\nfor a walk.");
     expect(paragraph.compareDocumentPosition(image)).toBe(

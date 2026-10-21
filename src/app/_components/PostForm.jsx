@@ -9,7 +9,8 @@
 // Publish first uploads any newly picked images (uploadImages: one signature, then each file to
 // Cloudinary) and swaps their Cloudinary src, width and height into the body, then saves. If an
 // upload fails nothing is saved; images already uploaded keep their Cloudinary src, so trying
-// again doesn't upload them twice. useFormTimeout clears the form after 20 hours.
+// again doesn't upload them twice. While it works, Publish reads "Uploading images…" and then
+// "Publishing…". useFormTimeout clears the form after 20 hours.
 //
 // Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
 // onSuccess. The body, with its formatting, is edited by PostBodyFields. Frontend messages
@@ -190,8 +191,11 @@ export default function PostForm({
     Object.keys(validateBody(body)).length === 0 &&
     !body.some(isIncompleteElement);
   const fieldErrors = serverError?.fields ?? {};
-  // The line under Publish: upload progress, or the backend's message after a failure.
-  const submitMessage = uploading ? "Uploading images…" : serverError?.message;
+  // Publish names the step it is on; the line under it is only for a failure's message.
+  let progress = null;
+  if (uploading) progress = "Uploading images…";
+  else if (submitting) progress = "Publishing…";
+  const errorMessage = serverError?.message;
 
   function touch(field) {
     setTouched((current) => ({ ...current, [field]: true }));
@@ -420,7 +424,7 @@ export default function PostForm({
               <div className={styles.submitSection}>
                 <div className={styles.buttonRow}>
                   <button type="submit" disabled={!isValid || submitting}>
-                    Publish
+                    {progress ?? "Publish"}
                   </button>
                   {isPhone && (
                     <button
@@ -431,7 +435,12 @@ export default function PostForm({
                     </button>
                   )}
                 </div>
-                {submitMessage && <p>{submitMessage}</p>}
+                {/* A disabled button's new label isn't reliably announced, so screen readers
+                  hear the progress from here. */}
+                <p role="status" className={styles.visuallyHidden}>
+                  {progress}
+                </p>
+                {errorMessage && <p>{errorMessage}</p>}
               </div>
             </form>
           </div>
@@ -479,10 +488,13 @@ export default function PostForm({
                         form={formId}
                         disabled={!isValid || submitting}
                       >
-                        Publish
+                        {progress ?? "Publish"}
                       </button>
                     </div>
-                    {submitMessage && <p>{submitMessage}</p>}
+                    <p role="status" className={styles.visuallyHidden}>
+                      {progress}
+                    </p>
+                    {errorMessage && <p>{errorMessage}</p>}
                   </>
                 )}
               </div>

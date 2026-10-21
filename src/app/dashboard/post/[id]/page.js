@@ -89,7 +89,11 @@ export default function PostPage() {
             element.type === "paragraph" ? (
               // pre-line keeps the line breaks the site owner typed (docs/api.md → Shapes);
               // FormattedText draws its bold, italic and links.
-              <p key={index} style={{ whiteSpace: "pre-line" }}>
+              <p
+                key={index}
+                className={styles.bodyParagraph}
+                style={{ whiteSpace: "pre-line" }}
+              >
                 <FormattedText text={element.text} />
               </p>
             ) : (
@@ -103,9 +107,10 @@ export default function PostPage() {
                   alt={element.image.altText}
                   unoptimized
                 />
-                <figcaption>
-                  {element.image.altText}, {element.image.width} ×{" "}
-                  {element.image.height}
+                {/* The image's alt already gives screen readers this text. */}
+                <figcaption aria-hidden="true">
+                  <span className={styles.key}>Alt Text:</span>{" "}
+                  {element.image.altText}
                 </figcaption>
               </figure>
             ),
@@ -121,7 +126,11 @@ export default function PostPage() {
           </p>
         </div>
 
-        <button type="button" onClick={() => setEditing(true)}>
+        <button
+          type="button"
+          className={styles.editButton}
+          onClick={() => setEditing(true)}
+        >
           Edit Post
         </button>
 
