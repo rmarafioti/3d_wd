@@ -119,7 +119,7 @@ describe("AccountsAside", () => {
 
     expect(
       await screen.findByText(
-        "Stevie The Dog linked to Richard Marafioti. No new API key or webhook secret were generated — the website's existing credentials are unchanged.",
+        "Stevie The Dog linked to Richard Marafioti. No new API key or webhook secret was generated. The website's existing credentials are unchanged.",
       ),
     ).toBeInTheDocument();
     expect(

@@ -148,7 +148,7 @@ describe("CreateAccountForm", () => {
 
     expect(
       await screen.findByText(
-        "Account created and linked to Stevie The Dog. No new API key or webhook secret were generated — the website's existing credentials are unchanged.",
+        "Account created and linked to Stevie The Dog. No new API key or webhook secret was generated. The website's existing credentials are unchanged.",
       ),
     ).toBeInTheDocument();
     expect(postBody(calls)).toEqual({

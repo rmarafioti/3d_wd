@@ -58,6 +58,16 @@ function statusCalls(calls) {
 }
 
 describe("Post page", () => {
+  it('shows "None" for an empty post date, header and sub header', async () => {
+    await setup();
+
+    for (const key of ["Post Date:", "Header:", "Sub Header:"]) {
+      expect(screen.getByText(key).nextElementSibling).toHaveTextContent(
+        /^None$/,
+      );
+    }
+  });
+
   it("renders the body in order, keeping a paragraph's line breaks and showing each image with its alt text beneath it", async () => {
     await setup();
 
