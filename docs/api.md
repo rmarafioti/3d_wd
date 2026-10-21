@@ -9,7 +9,7 @@ The single agreement between the frontend and backend repos. The backend copy (`
 ### Conventions
 
 - Every route lives under `/api`.
-- All request and response fields are camelCase. snake_case exists only inside the database (Prisma `@map`).
+- All request and response fields are camelCase. snake_case exists only inside the database (Prisma `@map`). One exception: `fields` in `UploadSignature` keeps Cloudinary's own form-field names (`api_key`, `timestamp`, …), because the frontend sends it to Cloudinary unchanged.
 - Dates and times are ISO 8601 strings. `postDate` is a date only: `YYYY-MM-DD`.
 - Success response: `{ "data": ... }`
 - Error response: `{ "error": { "message": "...", "fields": { "fieldName": "message" } } }` — `fields` is only present on validation errors (400) so the form can show a message next to each field. Each key is the full path to the input, joined with dots: top-level fields use their own name (`email`, `postName`), items in a list use their index (`body.0.text`, `body.1.image.src`), and a list-level error such as too many items uses the list name (`body`).
@@ -19,18 +19,18 @@ The single agreement between the frontend and backend repos. The backend copy (`
 
 ### Status codes
 
-| Code | Meaning                                                                                      |
-| ---- | -------------------------------------------------------------------------------------------- |
-| 200  | OK                                                                                           |
-| 201  | Created                                                                                      |
-| 204  | OK, no body (logout)                                                                         |
-| 400  | Invalid input (validation failed, or an image id that doesn't belong to the post)            |
-| 401  | Not signed in / session expired or invalid / not authorized to log in / bad API key          |
-| 403  | Signed in but wrong role, or missing CSRF header                                             |
-| 404  | Not found **or not yours** — the same answer either way, so ids can't be probed              |
-| 409  | Conflict — duplicate email, duplicate website URL, or account already linked to that website |
-| 413  | Request body over the 256 KB limit                                                           |
-| 500  | Server error — message is always the generic "Something went wrong, please try again."       |
+| Code | Meaning                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 200  | OK                                                                                                                              |
+| 201  | Created                                                                                                                         |
+| 204  | OK, no body (logout)                                                                                                            |
+| 400  | Invalid input (validation failed, an image id that doesn't belong to the post, or an image not uploaded for the post's website) |
+| 401  | Not signed in / session expired or invalid / not authorized to log in / bad API key                                             |
+| 403  | Signed in but wrong role, or missing CSRF header                                                                                |
+| 404  | Not found **or not yours** — the same answer either way, so ids can't be probed                                                 |
+| 409  | Conflict — duplicate email, duplicate website URL, or account already linked to that website                                    |
+| 413  | Request body over the 256 KB limit                                                                                              |
+| 500  | Server error — message is always the generic "Something went wrong, please try again."                                          |
 
 ### Shapes
 
@@ -38,6 +38,7 @@ The single agreement between the frontend and backend repos. The backend copy (`
 Account        { id, name, email, role, active, createdAt }
 WebsiteSummary { id, websiteName, url, active }
 Credentials    { apiKey, webhookSecret }            // plaintext, one-time only
+UploadSignature { uploadUrl, fields }               // fields: Cloudinary form fields, posted as-is
 Image          { id, src, width, height, altText }
 Element        { type: 'paragraph', text } | { type: 'image', image: Image }
 PostSummary    { id, postName, postDate, active, createdAt }
@@ -65,6 +66,7 @@ A post's `body` is its content as an ordered list of elements: each element is a
 | `GET /api/siteOwner/posts/:id`          | site owner                                        | —                                                                                                                                                                    | `200 Post`                                          |
 | `PATCH /api/siteOwner/posts/:id`        | site owner                                        | `{ postName, header, subHeader, postDate, body: [{ type: 'paragraph', text } \| { type: 'image', image: { id?, src, width, height, altText } }] }`                   | `200 Post`                                          |
 | `PATCH /api/siteOwner/posts/:id/status` | site owner                                        | `{ active }`                                                                                                                                                         | `200 Post`                                          |
+| `POST /api/siteOwner/uploads/sign`      | site owner                                        | `{ websiteId }`                                                                                                                                                      | `200 UploadSignature`                               |
 | `GET /api/public/posts`                 | client website (`Authorization: Bearer <apiKey>`) | —                                                                                                                                                                    | `200 PublicPost[]`                                  |
 | `GET /api/health`                       | anyone                                            | —                                                                                                                                                                    | `200 { ok: true }`                                  |
 
@@ -74,24 +76,30 @@ Notes:
 - On `POST /api/admin/accounts` and `POST /api/admin/accounts/:id/websites` the body must contain **either** `websiteId` **or** both `websiteName` and `websiteUrl` — never both, never neither (400).
 - `PATCH /api/siteOwner/posts/:id` is a full submission of the edit form: all fields are sent every time. Send `null` to clear an optional field. `body` is the complete current list, in order. An existing image carries its `image.id`, a new one has none, and any image stored but missing from the body is deleted. Paragraphs carry no id. `websiteId` and `active` cannot be changed here.
 - `PublicPost` is `{ id, header, subHeader, postDate, createdAt, updatedAt, body: [{ type: 'paragraph', text } | { type: 'image', image: { src, width, height, altText } }] }` — `postName` is internal and is **never** returned publicly, and neither are image ids. Only active posts, newest `createdAt` first.
+- Images are uploaded to 3DWD's Cloudinary account from the post form; nobody types or pastes an image URL. A picked image stays in the browser until Publish. On Publish, when the body has new images, the frontend:
+  1. requests one `UploadSignature` for the post's website (`POST /api/siteOwner/uploads/sign`);
+  2. uploads each new image to `uploadUrl` as `multipart/form-data`: every entry of `fields`, plus the image as `file`. One signature covers every upload in that Publish. It expires after one hour, so it is requested at Publish, never when the form opens;
+  3. saves the post with each new image's `src` set to Cloudinary's `secure_url`, and its `width` and `height` from Cloudinary's response.
+
+  If any upload fails, the post is not saved. Before uploading, the frontend checks that each file is jpg, png or webp and at most 10 MB; Cloudinary also refuses any other format. Cloudinary scales a larger image down to fit 2500 × 2500 as it stores it, so the `width` and `height` it returns are the stored size.
 
 ### Error messages the frontend displays
 
-| Situation                                                               | Code | `error.message`                                                                                                    |
-| ----------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
-| Login: no account, inactive account, unverified or invalid Google token | 401  | You are not authorized to log in.                                                                                  |
-| Any session route with no / expired / invalid cookie                    | 401  | Your session expired, please sign in again.                                                                        |
-| Wrong role                                                              | 403  | You do not have access to this page.                                                                               |
-| Missing CSRF header                                                     | 403  | Request blocked.                                                                                                   |
-| Validation failed                                                       | 400  | Please fix the highlighted fields. (+ `fields`)                                                                    |
-| Create account: email already exists                                    | 409  | An account with this email already exists.                                                                         |
-| New website: URL already exists                                         | 409  | A website with this URL already exists — select it from the dropdown.                                              |
-| New website: URL belongs to an inactive website                         | 409  | A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again. |
-| Link: account already linked to that website                            | 409  | This account is already linked to [Website Name].                                                                  |
-| Website / account / post not found or not yours                         | 404  | [Website / Account / Post] not found.                                                                              |
-| Edit: an image id that isn't on this post                               | 400  | Invalid image.                                                                                                     |
-| Public: missing / unknown key, or inactive website                      | 401  | Invalid API key.                                                                                                   |
-| Request body over the 256 KB limit                                      | 413  | Request body is too large.                                                                                         |
+| Situation                                                                                                  | Code | `error.message`                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
+| Login: no account, inactive account, unverified or invalid Google token                                    | 401  | You are not authorized to log in.                                                                                  |
+| Any session route with no / expired / invalid cookie                                                       | 401  | Your session expired, please sign in again.                                                                        |
+| Wrong role                                                                                                 | 403  | You do not have access to this page.                                                                               |
+| Missing CSRF header                                                                                        | 403  | Request blocked.                                                                                                   |
+| Validation failed                                                                                          | 400  | Please fix the highlighted fields. (+ `fields`)                                                                    |
+| Create account: email already exists                                                                       | 409  | An account with this email already exists.                                                                         |
+| New website: URL already exists                                                                            | 409  | A website with this URL already exists — select it from the dropdown.                                              |
+| New website: URL belongs to an inactive website                                                            | 409  | A website with this URL already exists but is inactive — it's named [Website Name]. Reactivate and then try again. |
+| Link: account already linked to that website                                                               | 409  | This account is already linked to [Website Name].                                                                  |
+| Website / account / post not found or not yours                                                            | 404  | [Website / Account / Post] not found.                                                                              |
+| Create / edit: an image id that isn't on this post, or an image `src` outside this website's upload folder | 400  | Invalid image.                                                                                                     |
+| Public: missing / unknown key, or inactive website                                                         | 401  | Invalid API key.                                                                                                   |
+| Request body over the 256 KB limit                                                                         | 413  | Request body is too large.                                                                                         |
 
 ### Validation rules (identical on frontend and backend)
 
@@ -100,6 +108,7 @@ Notes:
 - `email`: required, valid email format, stored lowercase.
 - `websiteName`: required, max 100.
 - `websiteUrl`, image `src`: valid URL starting with `https://`. Website URLs are normalized by the backend (lowercase host, no trailing slash) before the uniqueness check and before saving. The uniqueness check treats `www.example.com` and `example.com` as the same website; the URL is stored as entered (it is also the revalidation target).
+- Image `src` must also be a Cloudinary `secure_url` in the post's website's upload folder: `https://res.cloudinary.com/<cloud name>/image/upload/v<version>/<folder>/<file name>`, where `<folder>` is the `folder` in that website's `UploadSignature`. Checked on create and edit, for every image, new and existing. A `src` outside the folder is `400` "Invalid image." without `fields`, since the site owner can't fix it in the form.
 - `postName`: required, max 100. `header`: optional, max 150. `subHeader`: optional, max 200.
 - `postDate`: optional, valid date `YYYY-MM-DD`.
 - `body`: a list of elements, each with `type` `paragraph` or `image`. At least 1 paragraph, max 5 paragraphs and max 5 images per post. Paragraph `text`: required, max 10000 (trimmed at the ends; line breaks inside are kept). Image element: `image` required, with `src`, `width`, `height`, `altText` all required; `width`/`height` whole numbers 1–10000; `altText` max 200.
