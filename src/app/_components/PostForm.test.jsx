@@ -533,6 +533,32 @@ describe("PostForm image uploads", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("shows the upload-signing rate-limit message, uploads nothing and saves nothing", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const calls = mockFetch({
+      "POST /api/siteOwner/uploads/sign": {
+        status: 429,
+        body: {
+          error: { message: "Too many requests. Please try again later." },
+        },
+      },
+    }).calls;
+    const onSubmit = vi.fn();
+    const { user } = renderCreate({ onSubmit });
+    await fillPost(user);
+    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await fillImage(user, loads);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+
+    expect(
+      await screen.findByText("Too many requests. Please try again later."),
+    ).toBeInTheDocument();
+    expect(uploadCalls(calls)).toHaveLength(0);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("doesn't upload an image again when Publish is tried again after a failed save", async () => {
     const loads = stubImageLoading();
     const { revokeObjectURL } = stubObjectUrls();

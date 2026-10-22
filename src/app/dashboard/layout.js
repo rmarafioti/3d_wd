@@ -1,14 +1,12 @@
-// Site owner layout (client): calls GET /api/auth/me, stores the user in AuthContext,
-// redirects admins to /admin. UX only — the backend enforces access.
+// Site owner layout (server): renders every /dashboard route per request, then hands over to the
+// client DashboardLayout, which role-gates it. Per request because the nonce Content Security
+// Policy (proxy.js) can only be stamped on a page rendered for that request.
 
-"use client";
+import { connection } from "next/server";
+import DashboardLayout from "../_layout/DashboardLayout";
 
-import { useRoleGate } from "../_hooks/useRoleGate";
+export default async function Layout({ children }) {
+  await connection();
 
-export default function DashboardLayout({ children }) {
-  const { loading, error } = useRoleGate("site_owner");
-
-  if (error) return <p>{error.message}</p>;
-  if (loading) return <p>Loading…</p>;
-  return children;
+  return <DashboardLayout>{children}</DashboardLayout>;
 }

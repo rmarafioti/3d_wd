@@ -1,28 +1,13 @@
-// Admin layout (client): calls GET /api/auth/me, stores the user in AuthContext,
-// redirects site owners to /dashboard. UX only — the backend enforces access.
-// Once the role is confirmed, it provides the admin data (AdminDataContext) to every admin route
-// and renders the Accounts aside over the top right of the page, inside the layout's wrapper so it
-// starts below the Navbar.
+// Admin layout (server): renders every /admin route per request, then hands over to the client
+// AdminLayout, which role-gates it and holds the admin data and Accounts aside. Per request
+// because the nonce Content Security Policy (proxy.js) can only be stamped on a page rendered for
+// that request.
 
-"use client";
+import { connection } from "next/server";
+import AdminLayout from "../_layout/AdminLayout";
 
-import { useRoleGate } from "../_hooks/useRoleGate";
-import { AdminDataProvider } from "../_context/AdminDataContext";
-import AccountsAside from "../_components/AccountsAside";
+export default async function Layout({ children }) {
+  await connection();
 
-import styles from "../_styling/accountsAside.module.css";
-
-export default function AdminLayout({ children }) {
-  const { loading, error } = useRoleGate("admin");
-
-  if (error) return <p>{error.message}</p>;
-  if (loading) return <p>Loading…</p>;
-  return (
-    <AdminDataProvider>
-      <div className={styles.adminLayout}>
-        {children}
-        <AccountsAside />
-      </div>
-    </AdminDataProvider>
-  );
+  return <AdminLayout>{children}</AdminLayout>;
 }

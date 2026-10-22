@@ -30,6 +30,7 @@ The single agreement between the frontend and backend repos. The backend copy (`
 | 404  | Not found **or not yours** — the same answer either way, so ids can't be probed                                                 |
 | 409  | Conflict — duplicate email, duplicate website URL, or account already linked to that website                                    |
 | 413  | Request body over the 256 KB limit                                                                                              |
+| 429  | Too many requests: over a rate limit (login, public posts, upload signing)                                                      |
 | 500  | Server error — message is always the generic "Something went wrong, please try again."                                          |
 
 ### Shapes
@@ -55,7 +56,7 @@ A post's `body` is its content as an ordered list of elements: each element is a
 | Method & path                           | Who                                               | Request body                                                                                                                                                         | Success                                             |
 | --------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `POST /api/auth/login`                  | anyone                                            | `{ credential }` (Google ID token)                                                                                                                                   | `200 { role }` + sets session cookie                |
-| `POST /api/auth/logout`                 | anyone                                            | —                                                                                                                                                                    | `204`, clears session cookie                        |
+| `POST /api/auth/logout`                 | anyone                                            | —                                                                                                                                                                    | `204`, ends every session of the account            |
 | `GET /api/auth/me`                      | signed in                                         | —                                                                                                                                                                    | `200 { id, name, email, role }`                     |
 | `GET /api/admin/accounts`               | admin                                             | —                                                                                                                                                                    | `200 [ Account + { websites: WebsiteSummary[] } ]`  |
 | `GET /api/admin/websites`               | admin                                             | —                                                                                                                                                                    | `200 WebsiteSummary[]` (active only)                |
@@ -100,6 +101,7 @@ Notes:
 | Create / edit: an image id that isn't on this post, or an image `src` outside this website's upload folder | 400  | Invalid image.                                                                                                    |
 | Public: missing / unknown key, or inactive website                                                         | 401  | Invalid API key.                                                                                                  |
 | Request body over the 256 KB limit                                                                         | 413  | Request body is too large.                                                                                        |
+| Over a rate limit: login, public posts or upload signing                                                   | 429  | Too many requests. Please try again later.                                                                        |
 
 ### Validation rules (identical on frontend and backend)
 

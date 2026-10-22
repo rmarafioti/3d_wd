@@ -115,6 +115,29 @@ describe("SignInForm", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows the rate-limit message without the contact link", async () => {
+    mockFetch({
+      "POST /api/auth/login": {
+        status: 429,
+        body: {
+          error: { message: "Too many requests. Please try again later." },
+        },
+      },
+    });
+    const { user } = setup();
+
+    await user.click(
+      screen.getByRole("button", { name: "Sign in with Google" }),
+    );
+
+    expect(
+      await screen.findByText("Too many requests. Please try again later."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "contact us" }),
+    ).not.toBeInTheDocument();
+  });
+
   it('still shows the error when "Signing in…" was closed with Esc before the response', async () => {
     const response = deferred();
     mockFetch({ "POST /api/auth/login": () => response.promise });
