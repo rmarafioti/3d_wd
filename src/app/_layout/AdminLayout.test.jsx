@@ -5,8 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "../_context/AuthContext";
-import AdminLayout from "./layout";
-import AdminPage from "./page";
+import AdminLayout from "./AdminLayout";
+import AdminPage from "../admin/page";
 import { mockFetch } from "../../test/helpers";
 
 vi.mock("next/navigation", () => ({

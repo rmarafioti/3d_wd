@@ -2,7 +2,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { apiFetch } from "../_lib/apiFetch";
 import { useAuth } from "../_hooks/useAuth";
 
@@ -26,11 +25,14 @@ export default function AuthButton() {
     }
   }
 
+  // A plain link, not next/link: a Content Security Policy belongs to the document, so a
+  // client-side route from the static landing page would leave /sign-in under the landing page's
+  // policy (no nonce, and the Google sign-in script blocked). A full load gets /sign-in's own.
   if (!user)
     return (
-      <Link href="/sign-in" className={styles.signButton}>
+      <a href="/sign-in" className={styles.signButton}>
         Sign in
-      </Link>
+      </a>
     );
 
   return (
