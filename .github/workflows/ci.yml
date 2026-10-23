@@ -1,0 +1,32 @@
+# CI: the Code Review checklist's tooling checks (item 9) on every pull request and every push to
+# main, so branch protection can require them before a merge. The tests run in jsdom with every
+# request mocked, so no backend or service is needed. The build runs with no env vars: it checks
+# the app compiles; the production build, with the real NEXT_PUBLIC_* values, is Vercel's.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm test
+      - run: npm run build
