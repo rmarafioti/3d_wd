@@ -10,6 +10,8 @@ The backend also serves published post content to each site owner's live website
 
 - Production frontend: `https://3dwebdev.com` (Vercel)
 - Production API: `https://api.3dwebdev.com` (Railway)
+- Staging: `https://staging.3dwebdev.com`, API `https://api-staging.3dwebdev.com`
+- Deployment (Vercel, environments, domains): `docs/deploy.md`
 
 ## Install List
 
@@ -31,12 +33,12 @@ cp .env.example .env
 
 Set:
 
-| Variable                          | Local value                                                   | Production value           |
-| --------------------------------- | ------------------------------------------------------------- | -------------------------- |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id                                    | same                       |
-| `NEXT_PUBLIC_API_BASE_URL`        | leave empty (calls go to `/api` through the dev proxy)        | `https://api.3dwebdev.com` |
-| `API_PROXY_TARGET`                | `http://localhost:4000` (where the dev proxy forwards `/api`) | not set                    |
-| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email                                     | same                       |
+| Variable                          | Local value                                                   | Staging value                      | Production value           |
+| --------------------------------- | ------------------------------------------------------------- | ---------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id                                    | same                               | same                       |
+| `NEXT_PUBLIC_API_BASE_URL`        | leave empty (calls go to `/api` through the dev proxy)        | `https://api-staging.3dwebdev.com` | `https://api.3dwebdev.com` |
+| `API_PROXY_TARGET`                | `http://localhost:4000` (where the dev proxy forwards `/api`) | not set                            | not set                    |
+| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email                                     | same                               | same                       |
 
 ```
 npm run dev           # starts the app on http://localhost:3000
