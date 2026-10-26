@@ -59,7 +59,7 @@ Follow the backend's template (backend → 5). On the frontend side:
 
 ## 9. Environments
 
-- A staging environment is built and tested end to end before the first production deploy: a Railway `staging` environment with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from the `staging` branch (backend → 8). It may be deleted after launch; if so, it is duplicated again from production before the first breaking change. Setup is in `docs/deploy.md`.
+- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from the `staging` branch (backend → 8). It may be deleted after launch; if so, it is duplicated again from production before the first breaking change. Setup is in `docs/deploy.md`.
 - A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
 
 ## 10. Keeping this file in step

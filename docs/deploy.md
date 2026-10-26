@@ -6,7 +6,7 @@ The frontend's side of deploying the Client Portal. The backend repo's `docs/dep
 
 The frontend runs on **Vercel, in a Pro team** ($20/month). Vercel's fair use rules limit the Hobby plan to non-commercial use, and client websites pay a hosting fee, so the frontend and every client website project (Stevie The Dog today) move into the Pro team before launch.
 
-For reference (backend side): the API runs on Railway Hobby, with its own nightly encrypted `pg_dump` to Cloudflare R2 in place of Railway backups. Cloudinary stays on the free tier.
+For reference (backend side): the API runs on Render, in a Hobby workspace with a Starter web service and the smallest paid Postgres 17 per environment, all defined in the backend's `render.yaml` (a Render Blueprint). Backups are Render's 3 days of point-in-time recovery plus the backend's own nightly encrypted `pg_dump` to Cloudflare R2, kept 30 days. Cloudinary stays on the free tier.
 
 ## 2. Environments
 
@@ -16,7 +16,7 @@ For reference (backend side): the API runs on Railway Hobby, with its own nightl
 | Staging     | `https://staging.3dwebdev.com` (Vercel, the `staging` branch) | `https://api-staging.3dwebdev.com`                                    |
 | Production  | `https://3dwebdev.com` (Vercel, `main`)                       | `https://api.3dwebdev.com`                                            |
 
-- Staging comes first and is tested end to end before production. Production is then made by duplicating the Railway staging environment.
+- Staging comes first and is tested end to end before production. Production is then added as its own environment in the backend's `render.yaml`, with its own database and secrets.
 - `www.3dwebdev.com` redirects to the apex. The frontend is always served from the one origin in the backend's `CORS_ORIGIN` for that environment, or the API refuses its requests.
 - **Staging and production share the session cookie** (`session`, `Domain=.3dwebdev.com`). Always test staging in a **separate browser profile**, so a staging sign-in never overwrites a production one. No code change.
 
@@ -61,14 +61,14 @@ Run them on staging first, then on production (backend `docs/security.md` → Fr
 
 ## 8. Every deploy after launch
 
-Merge to `main` through a pull request with CI green (branch protection) → Railway deploys the backend (pre-deploy `prisma migrate deploy`) → Vercel deploys the frontend. For a contract change, the backend deploys first, then the frontend (`docs/scaling.md` §3).
+Merge to `main` through a pull request with CI green (branch protection) → Render deploys the backend once CI has passed on the commit (pre-deploy `prisma migrate deploy`, with the health check `GET /api/health` gating the switch to the new version) → Vercel deploys the frontend. For a contract change, the backend deploys first, then the frontend (`docs/scaling.md` §3).
 
 ## 9. The frontend's steps in the Deployment checklist
 
 Numbered as in the backend's `docs/deploy.md` → Deployment checklist; the steps in between are the backend's.
 
-- **2.** This file.
-- **5.** Move the frontend and client website projects into a Vercel Pro team (Rich).
+- **2.** This file. Done 2026-10-24.
+- **5.** Move the frontend and client website projects into a Vercel Pro team (Rich). Done.
 - **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23.
 - **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich).
 - **17.** The first staging deploy.

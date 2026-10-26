@@ -9,7 +9,7 @@ The frontend serves a public, static landing page and sign-in for two separate a
 The backend also serves published post content to each site owner's live website via their API key, and triggers on-demand revalidation on that site by calling its webhook endpoint whenever a post changes.
 
 - Production frontend: `https://3dwebdev.com` (Vercel)
-- Production API: `https://api.3dwebdev.com` (Railway)
+- Production API: `https://api.3dwebdev.com` (Render)
 - Staging: `https://staging.3dwebdev.com`, API `https://api-staging.3dwebdev.com`
 - Deployment (Vercel, environments, domains): `docs/deploy.md`
 
