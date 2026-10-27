@@ -54,9 +54,9 @@ Turn on Vercel's deployment protection for previews. A preview never points at t
 
 Run them on staging first, then on production (backend `docs/security.md` → Frontend).
 
-1. `curl -I` a static page (`/`) and a dynamic one (`/sign-in`), and check each sends its Content Security Policy (fixed on `/`, with a nonce on `/sign-in`), `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options` and `X-Frame-Options`.
-2. Scan `/` and `/sign-in` with securityheaders.com and Mozilla HTTP Observatory. Expected flags, all decided: `'unsafe-inline'` scripts on the static landing page, `'unsafe-inline'` styles everywhere, no HSTS `preload`.
-3. Add `Cross-Origin-Opener-Policy: same-origin-allow-popups` (Google's recommended value for its sign-in pop-up) to the security headers in `next.config.mjs`, deploy, and re-test Google sign-in. This is a code change on its own branch.
+1. `curl -I` a static page (`/`) and a dynamic one (`/sign-in`), and check each sends its Content Security Policy (fixed on `/`, with a nonce on `/sign-in` whose `connect-src` includes that environment's API origin, `https://api.cloudinary.com` and Google's `gsi`), `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options` and `Cross-Origin-Opener-Policy`. Staging is behind Vercel Deployment Protection, so there a plain `curl` only sees Vercel's 302 to its sign-in page: check them in the browser's DevTools instead, signed in to Vercel (Rich decided 2026-10-27). Network → the document request lists the other headers, but on staging (2026-10-27) it didn't list the Content Security Policy, although both pages enforced it. So check the policy from the Console on each page, loaded from the address bar: `fetch(location.href).then(r => console.log(r.headers.get("content-security-policy")))` prints the header, and `eval("1")` must fail, quoting the page's `script-src`. Vercel's protection bypass secret is never pasted into chat, a commit or a scanner.
+2. Scan `/` and `/sign-in` with securityheaders.com and Mozilla HTTP Observatory. Expected flags, all decided: `'unsafe-inline'` scripts on the static landing page, `'unsafe-inline'` styles everywhere, no HSTS `preload`. The scanners can't reach staging through its protection, so they run on production only, at step 26 (Rich decided 2026-10-27); staging and production run the same config.
+3. Add `Cross-Origin-Opener-Policy: same-origin-allow-popups` (Google's recommended value for its sign-in pop-up) to the security headers in `next.config.mjs`, deploy, and re-test Google sign-in. Done on its own branch (`chore/coop-header`), tested on staging 2026-10-27: the admin and the site owner both sign in. Two Console messages during sign-in are expected and harmless: Google's script logs "Cross-Origin-Opener-Policy policy would block the window.postMessage call" ("would block": a report-only rule, not ours, and sign-in completes), and on staging only, Vercel's preview toolbar is refused a `vercel.live` frame by `frame-src` (the policy working; the toolbar isn't on production).
 4. On production, decide on HSTS `preload` once every subdomain of `3dwebdev.com` is settled on https. Joining the preload list is hard to undo for the whole domain.
 
 ## 8. Every deploy after launch
@@ -70,10 +70,10 @@ Numbered as in the backend's `docs/deploy.md` → Deployment checklist; the step
 - **2.** This file. Done 2026-10-24.
 - **5.** Move the frontend and client website projects into a Vercel Pro team (Rich). Done.
 - **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23.
-- **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich).
-- **17.** The first staging deploy.
-- **18.** The staging test, end to end, in a separate browser profile.
-- **20.** Staging header checks and `Cross-Origin-Opener-Policy` (section 7).
+- **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich). Done.
+- **17.** The first staging deploy. Done.
+- **18.** The staging test, end to end, in a separate browser profile. Done.
+- **20.** Staging header checks and `Cross-Origin-Opener-Policy` (section 7). Done 2026-10-27: headers checked in DevTools (the policy from the Console, see section 7), the scanners moved to step 26, and Google sign-in re-tested as the admin and the site owner with the new header.
 - **23.** Production: the apex and `www` domains, the production env vars, and the production OAuth origin (Rich).
 - **24.** The first production deploy.
-- **26.** Production header checks and the HSTS `preload` decision (section 7).
+- **26.** Production header checks, the scanners moved here from step 20, and the HSTS `preload` decision (section 7).

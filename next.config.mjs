@@ -19,6 +19,9 @@ const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   // The older form of the policies' frame-ancestors 'none', for browsers that don't read it.
   { key: "X-Frame-Options", value: "DENY" },
+  // Keeps other origins' pages out of this window, while still letting the Google sign-in
+  // pop-up this page opens report back to it (Google's recommended value).
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 /** @type {import('next').NextConfig} */
