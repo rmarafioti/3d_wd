@@ -2,10 +2,10 @@
 
 The frontend's rules for changing the app after the MVP is deployed. Imported from `CLAUDE.md` via `@docs/scaling.md`. The shared rules live in the backend repo's `docs/scaling.md`, which is the source of truth for schema and migrations, the expand → migrate → contract process, API contract rules, the new-feature template, performance, running more than one instance, and environments and deployment. This file covers only what the frontend must do to follow them. It restates a backend rule only word for word, with its backend → N reference; references below read "backend → N", meaning section N of the backend's `docs/scaling.md`.
 
-## 0. Before the first production deploy
+## 0. Launched
 
-- Backend → 0, word for word: "Nothing is in production yet. Stevie The Dog is a test site that nobody reads publicly. Until the first production deploy, a breaking change is made in place: no versioned public path, no expand → migrate → contract, and existing test rows may be dropped. Everything else still applies: plan, classify the change (Section 1), update both repos' contract in the same piece of work, and test. The rest of this file applies from the first production deploy, once real clients use the API."
-- On the frontend this means: until then, section 3 (deploy order) doesn't apply. A breaking change lands in both repos' code and docs together, in the same piece of work, and every other section here still applies.
+- Backend → 0, word for word: "Production launched on 2026-10-28, with Stevie The Dog as its first client website (`docs/deploy.md` → Deployment checklist). Before then, breaking changes were made in place, with no versioned public path, no expand → migrate → contract, and test rows dropped; older entries in `CLAUDE.md` that cite §0 refer to that. From launch on, every rule below applies, and a breaking or data-changing change goes through expand → migrate → contract (Section 3)."
+- On the frontend this means: since launch, section 3's deploy order applies to every contract change, and a breaking change goes through expand → migrate → contract (backend → 3).
 
 ## 1. Classify the change first
 
@@ -60,7 +60,7 @@ Follow the backend's template (backend → 5). On the frontend side:
 
 ## 9. Environments
 
-- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from the `staging` branch (backend → 8). It may be deleted after launch; if so, it is duplicated again from production before the first breaking change. Setup is in `docs/deploy.md`.
+- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from the `staging` branch (backend → 8). It is kept after launch and its cost reassessed (backend Deployment checklist step 30); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
 - A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
 
 ## 10. Keeping this file in step
