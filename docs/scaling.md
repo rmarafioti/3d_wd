@@ -21,6 +21,7 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 ## 3. Deploy order for contract changes
 
 - The backend deploys first and accepts both the old and the new shape; then the frontend deploys (backend → 4).
+- A merge to `main` doesn't deploy production: the frontend is released with `git push origin main:production` (`docs/deploy.md` §8), so its release waits until the backend's is live.
 - The frontend never sends a field the deployed backend doesn't accept yet, and never relies on a response field the deployed backend doesn't send yet.
 - A breaking change is split into steps (backend → 3). The frontend's part is the step where reads switch to the new shape and the frontend is updated.
 - Before the backend removes anything (the contract step in backend → 3), the frontend has stopped reading or sending it and that frontend is deployed.
