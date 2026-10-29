@@ -11,6 +11,12 @@
   cursor: pointer;
 }
 
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 @media (max-width: 667px) {
   .signButton {
     width: 88px;

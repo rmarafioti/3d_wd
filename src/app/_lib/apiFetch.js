@@ -1,6 +1,7 @@
 // apiFetch: the only place `fetch` is called. Prefixes NEXT_PUBLIC_API_BASE_URL, sends
-// credentials: 'include', JSON, X-CSRF-Protection on POST/PATCH/DELETE, unwraps { data },
-// throws the { error } envelope, and handles 401 (session expiry).
+// credentials: 'include', JSON, X-CSRF-Protection on POST/PATCH/DELETE, unwraps { data } (or
+// returns { data, nextCursor } for a paginated list), throws the { error } envelope, and handles
+// 401 (session expiry).
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const GENERIC_MESSAGE = "Something went wrong, please try again.";
@@ -16,7 +17,12 @@ class ApiError extends Error {
   }
 }
 
-export async function apiFetch(path, { method = "GET", body } = {}) {
+// paginated: true returns { data, nextCursor } instead of data, for the paginated lists whose
+// success body has nextCursor beside data (docs/api.md → GET /api/admin/auditEvents).
+export async function apiFetch(
+  path,
+  { method = "GET", body, paginated = false } = {},
+) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   // The backend rejects any state-changing request without this header (403).
@@ -42,6 +48,9 @@ export async function apiFetch(path, { method = "GET", body } = {}) {
     json = await response.json();
   } catch {}
 
+  if (response.ok && paginated) {
+    return { data: json?.data ?? [], nextCursor: json?.nextCursor ?? null };
+  }
   if (response.ok) return json?.data ?? null;
 
   const error = new ApiError(

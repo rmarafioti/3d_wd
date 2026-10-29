@@ -15,6 +15,8 @@ All pop-ups below are native `<dialog>` elements with the X close button in the 
 - No user in context → links to `/` (the landing page and sign-in page).
 - Admin → links to `/admin`; site owner → links to `/dashboard` (`HOME_BY_ROLE`), so a signed-in user always has a way back to their dashboard. Only signing out leads back to the landing page.
 
+**Navbar `AuditEventsLink`:** a small client component that reads `useAuth()`: an "Audit Events" link to `/admin/auditEvents`, shown to the admin only. It sits beside `AuthButton`. With no user in context, or a site owner, it shows nothing.
+
 **Navbar `AuthButton`:** a small client component that reads `useAuth()`.
 
 - No user in context → reads "Sign in" and links to `/sign-in` with a plain link (a full page load, not a client-side route), so `/sign-in` arrives with its own Content Security Policy rather than keeping the landing page's (see Proxy).
@@ -76,7 +78,7 @@ If an already signed-in user lands on `/` or `/sign-in` directly, the proxy redi
 
 Hooks used: `useAccounts()`, `useAllWebsites()`, both called once by the admin layout's `AdminDataProvider` and read through `useAdminData()`, so the page and the Accounts aside share the same lists.
 
-The admin dashboard has two parts:
+The admin dashboard has two parts, plus the Audit Events page (below) at `/admin/auditEvents`:
 
 1. **Create an Account** — the page itself: the form described below.
 2. **Accounts aside** — rendered by the admin layout, so it is present on every `/admin` route. It sits at the top right of the admin content, below the Navbar, and is **closed by default** on every page load. Closed, it shows only its toggle: a triangle icon with the text "Accounts", or only the icon at phone width (the button is still named "Accounts" for screen readers, with `aria-expanded`). The triangle points right when closed and down when open, like the marker on each account's "Websites" disclosure. Opening it overlays the page content with the account list (Get All Accounts below); the same toggle closes it. It is a disclosure panel, not a pop-up, so it is not a `<dialog>`.
@@ -137,6 +139,20 @@ Payload `{ websiteId }` or `{ websiteName, websiteUrl }` → `POST /api/admin/ac
 - **Error:** render `error.message` below Submit. Expected: "This account is already linked to [Website Name]." / "A website with this URL already exists. Select it from the dropdown." / "A website with this URL already exists but is inactive. It's named [Website Name]. Reactivate and then try again." / "Website not found." / "Account not found."
 - **Success, new website** (`credentials` present): close the form dialog and open `CredentialRevealModal` exactly as in Create an Account. The account list refetches as soon as the request succeeds; the website list refetches when the reveal closes.
 - **Success, existing website:** the dialog reads "[Website Name] linked to [Account Name]. No new API key or webhook secret was generated. The website's existing credentials are unchanged." The account list refetches as soon as the request succeeds.
+
+### Audit Events (`/admin/auditEvents`)
+
+Hooks used: `useAuditEventMonths()` → `GET /api/admin/auditEvents/months`, and `useAuditEvents(month)` → `GET /api/admin/auditEvents?month=YYYY-MM&cursor=`
+
+The read-only audit log, so the administrator can answer "who did what?" without SQL from the Render Shell. Reached from the Navbar's "Audit Events" link. It is an `/admin` route, so the admin layout role-gates it (a site owner goes to `/dashboard`) and the Accounts aside is there too. Nothing on it edits, deletes or exports an event.
+
+- **Heading:** "Audit Events".
+- **Layout:** centred like the Create an Account page, in a block as wide as the table: the heading at the table's left edge and the month controls at its right on one row, Hide my sign-ins under the heading at the left edge, then the table, then Load more.
+- **Month:** one UTC calendar month at a time, named above the table ("October 2026") between two icon buttons, a left chevron ("Previous month" for screen readers and on hover) and a right chevron ("Next month"). The page first loads the months that have events (`GET /api/admin/auditEvents/months`, newest first), then opens on the newest of them. Each chevron steps only through those months, skipping any month without events, and is disabled at its end of the list. With no events at all, the current month's empty state shows with both chevrons disabled. If the months can't load, the API's `error.message` shows in place of the table. The month sent is `YYYY-MM` in UTC; switching months shows "Loading…" until the new month arrives, and a response for a month already left is never shown.
+- **The table:** a read-only columnar table, like a data set, one row per event, newest first (as returned). Columns: Created at, Actor email, Action, Target type, Target id, IP, Metadata. An event's `id` is a backend key and is never shown; it is used only as the `cursor`. Created at shows in the admin's local time. Metadata shows as compact `key: value` pairs (`websiteId: …`, `reason: no_account`). A field the event doesn't have (`null`) is an empty cell. At phone width the table scrolls sideways inside its own box.
+- **Load more:** while `nextCursor` isn't `null`, a "Load more" button under the table requests the next page of the same month (`cursor` set to `nextCursor`) and adds it to the end of the table. It reads "Loading…" (disabled) meanwhile, and goes once `nextCursor` is `null`. If it fails, the API's `error.message` shows under it, the rows stay, and the button can be pressed again.
+- **Hide my sign-ins:** a `Toggle` (named "Hide my sign-ins") beside the text "Hide my sign-ins", **off by default** on every page load. On, it hides only rows whose `action` is `auth.login_succeeded` or `auth.logout` and whose `actorEmail` is the signed-in admin's own email (from `/me`). Failed logins (`auth.login_failed`) and every change always show. The API always returns every row; the hiding is on the page only. It is off by default because a takeover of the admin's Google account would sign in under the admin's own email, and only the `ip` and time would give it away.
+- **States:** while the month loads, "Loading…". An empty month shows "No audit events this month." (an empty state, not an error). When every row of the month is hidden by Hide my sign-ins, "No audit events to show. Your sign-ins are hidden." Any other error shows the API's `error.message` in place of the table.
 
 ---
 

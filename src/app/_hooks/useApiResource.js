@@ -1,6 +1,7 @@
 // useApiResource(path): internal, shared by the data hooks (useAccounts, useAllWebsites,
-// useWebsites, usePost); components never call it directly. GETs path through apiFetch and
-// returns { data, loading, error, refetch, setData }. Each data hook picks what it exposes.
+// useWebsites, usePost, useAuditEventMonths); components never call it directly. GETs path
+// through apiFetch and returns { data, loading, error, refetch, setData }. Each data hook picks
+// what it exposes.
 
 "use client";
 

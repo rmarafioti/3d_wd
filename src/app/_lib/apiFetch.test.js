@@ -62,6 +62,17 @@ describe("apiFetch", () => {
     await expect(apiFetch("/api/x")).resolves.toEqual([{ id: "1" }]);
   });
 
+  it("returns data with nextCursor beside it for a paginated list", async () => {
+    mockFetch({
+      "GET /api/x": { body: { data: [{ id: "1" }], nextCursor: "1" } },
+    });
+
+    await expect(apiFetch("/api/x", { paginated: true })).resolves.toEqual({
+      data: [{ id: "1" }],
+      nextCursor: "1",
+    });
+  });
+
   it("returns null for a 204 (logout)", async () => {
     mockFetch({ "POST /api/auth/logout": { status: 204 } });
 

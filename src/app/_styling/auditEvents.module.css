@@ -1,0 +1,76 @@
+/* Centred like the Create an Account page (the article's own layout), with a gutter at the sides
+   so the table's box never touches the screen edge on a phone. */
+.auditEvents {
+  padding: 4rem 1rem 1rem 1rem;
+}
+
+/* As wide as the table (never wider than the screen), centred by the article, so the rows above
+   the table line up with its edges. */
+.tableArea {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* The heading at the table's left edge, the month controls at its right. */
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Scrolls sideways inside its own box: the page hides horizontal overflow. */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.5rem;
+  border: 1px solid lightgray;
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Every column but Metadata stays on one line, so each row reads as one record. */
+.table td:nth-child(-n + 6) {
+  white-space: nowrap;
+}
+
+.loadMore {
+  margin-top: 1rem;
+}
+
+.monthRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Square icon buttons like the post editor's format buttons: the global button's width, padding
+   and colours are reset. */
+.monthButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0rem;
+  font-size: 20px;
+  color: black;
+  background-color: white;
+  border: 1px solid lightgray;
+}
