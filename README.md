@@ -10,7 +10,7 @@ The backend also serves published post content to each site owner's live website
 
 - Production frontend: `https://3dwebdev.com` (Vercel)
 - Production API: `https://api.3dwebdev.com` (Render)
-- Staging: `https://staging.3dwebdev.com`, API `https://api-staging.3dwebdev.com`
+- Staging (follows `main`): `https://staging.3dwebdev.com`, API `https://api-staging.3dwebdev.com`
 - Deployment (Vercel, environments, domains): `docs/deploy.md`
 
 ## Install List

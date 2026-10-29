@@ -10,13 +10,14 @@ For reference (backend side): the API runs on Render, in a Hobby workspace with 
 
 ## 2. Environments
 
-| Environment | Frontend                                                      | API                                                                   |
-| ----------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Local       | `http://localhost:3000`                                       | `http://localhost:4000`, through the dev rewrite (`API_PROXY_TARGET`) |
-| Staging     | `https://staging.3dwebdev.com` (Vercel, the `staging` branch) | `https://api-staging.3dwebdev.com`                                    |
-| Production  | `https://3dwebdev.com` (Vercel, the `production` branch)      | `https://api.3dwebdev.com`                                            |
+| Environment | Frontend                                                   | API                                                                   |
+| ----------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| Local       | `http://localhost:3000`                                    | `http://localhost:4000`, through the dev rewrite (`API_PROXY_TARGET`) |
+| Staging     | `https://staging.3dwebdev.com` (Vercel, the `main` branch) | `https://api-staging.3dwebdev.com`                                    |
+| Production  | `https://3dwebdev.com` (Vercel, the `production` branch)   | `https://api.3dwebdev.com`                                            |
 
 - Staging comes first and is tested end to end before production. Production is then added as its own environment in the backend's `render.yaml`, with its own database and secrets.
+- **Releases:** staging deploys every merge to `main`, in both repos (`staging.3dwebdev.com` follows this repo's `main` branch). Production deploys only from each repo's `production` branch, which receives `main` when `npm run release` runs in the backend repo (section 8): the backend first, then the frontend once Render reports the backend live. So a change runs on staging before it reaches production.
 - `www.3dwebdev.com` redirects to the apex. The frontend is always served from the one origin in the backend's `CORS_ORIGIN` for that environment, or the API refuses its requests.
 - **Staging and production share the session cookie** (`session`, `Domain=.3dwebdev.com`). Always test staging in a **separate browser profile**, so a staging sign-in never overwrites a production one. No code change.
 
@@ -24,15 +25,15 @@ For reference (backend side): the API runs on Render, in a Hobby workspace with 
 
 Set per environment in the Vercel project. They must match `.env.example`. The three `NEXT_PUBLIC_*` values are inlined at build time, so they are set before the first build, and changing one needs a redeploy.
 
-| Variable                          | Staging (`staging` branch scope)   | Production                 |
-| --------------------------------- | ---------------------------------- | -------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL`        | `https://api-staging.3dwebdev.com` | `https://api.3dwebdev.com` |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id         | same                       |
-| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email          | same                       |
-| `API_PROXY_TARGET`                | **never set**                      | **never set**              |
+| Variable                          | Staging (Preview, `main` branch scope) | Production                 |
+| --------------------------------- | -------------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL`        | `https://api-staging.3dwebdev.com`     | `https://api.3dwebdev.com` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id             | same                       |
+| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email              | same                       |
+| `API_PROXY_TARGET`                | **never set**                          | **never set**              |
 
 - `NEXT_PUBLIC_API_BASE_URL` is the API origin `apiFetch` calls. It is also the API source in the session pages' Content Security Policy `connect-src` (`src/app/_lib/contentSecurityPolicy.js`). If it is missing, every API call goes to the frontend's own origin and fails.
-- **Each environment's variables are separate entries in Vercel**, added on their own: a variable scoped to Preview (`staging`) does nothing for Production. At step 23 the first production build had none of the three, so Google refused sign-in with "Missing required parameter: client_id" (Error 400 invalid_request). After adding or changing a variable, Redeploy that environment with the build cache off, since the values are inlined at build time.
+- **Each environment's variables are separate entries in Vercel**, added on their own: a variable scoped to Preview does nothing for Production. Staging's Preview variables are scoped to the `main` branch, the branch staging is built from (until 2026-10-29 they were scoped to the `staging` branch, and moved with the domain). At step 23 the first production build had none of the three, so Google refused sign-in with "Missing required parameter: client_id" (Error 400 invalid_request). After adding or changing a variable, Redeploy that environment with the build cache off, since the values are inlined at build time.
 - `API_PROXY_TARGET` is local only. If it is set on Vercel, the dev rewrite in `next.config.mjs` turns on and `/api/*` is proxied through the frontend.
 
 ## 4. Domains
@@ -40,7 +41,7 @@ Set per environment in the Vercel project. They must match `.env.example`. The t
 DNS is at Namecheap.
 
 - **Production:** `3dwebdev.com` (apex) on the Vercel project's Production environment, which tracks the `production` branch (section 8), with `www.3dwebdev.com` added as a redirect to the apex. Vercel's default when the apex was added (step 23) was the reverse, `3dwebdev.com` → `www`, and it had to be flipped by hand: check that `curl -I https://www.3dwebdev.com` answers 308 with `location: https://3dwebdev.com/`.
-- **Staging:** `staging.3dwebdev.com`, assigned to the `staging` branch.
+- **Staging:** `staging.3dwebdev.com`, assigned to the `main` branch, so every merge to `main` shows there by itself (until 2026-10-29 it was the `staging` branch, which was then deleted).
 - Add the records Vercel shows for each domain at Namecheap, then wait for Vercel to verify them and issue the certificates.
 
 ## 5. Google OAuth client
@@ -62,13 +63,14 @@ Run them on staging first, then on production (backend `docs/security.md` → Fr
 
 ## 8. Every deploy after launch
 
-Both repos release production from a `production` branch (Rich decided 2026-10-27 for the frontend, matching the backend), so a merge to `main` never goes live on its own:
+Both repos release production from a `production` branch, so a merge to `main` never goes live on its own, and one command releases both (Rich decided 2026-10-29, matching the backend's `docs/deploy.md` → Every deploy after launch):
 
-1. Merge to `main` through a pull request with CI green (branch protection). Vercel builds it as a protected Preview, not production.
-2. To try it on staging first: `git push origin main:staging` (if Vercel skips an already-built commit, Deployments → Create Deployment → `staging`).
-3. Release, when Rich says so: `git push origin main:production`. Vercel builds and serves it at `https://3dwebdev.com`.
+1. **Merge.** Each PR merges to `main` with CI green (branch protection). Both staging sites deploy by themselves: Vercel builds this repo's `main` at `staging.3dwebdev.com`, and Render deploys the backend's `main` to `https://api-staging.3dwebdev.com`.
+2. **Check staging,** in a separate browser profile (section 2).
+3. **Release:** Rich runs `npm run release` in the backend repo (`npm run release -- --dry-run` shows what it would do). It releases each repo's `origin/main`, never a local working tree. It stops unless the backend's `main` is already live on staging, and asks before releasing new migrations. It pushes the backend's `main` to `production` and waits until Render reports the API live, then pushes this repo's `main` to its `production` branch and waits for Vercel's production deployment. If the backend's CI or deploy fails, it stops before the frontend, and production keeps the previous version. Backend first is what a contract change needs (`docs/scaling.md` §3). The script finds this repo as the sibling folder `../3d_wd`, or at `FRONTEND_DIR`.
+4. **Check production** at `https://3dwebdev.com`.
 
-The backend releases the same way, with `git push origin main:production` in its repo (Render runs `prisma migrate deploy` before the switch, gated by the health check `GET /api/health`). For a contract change, the backend is released first, then the frontend (`docs/scaling.md` §3).
+This repo is never pushed to `staging` or `production` by hand.
 
 ## 9. The frontend's steps in the Deployment checklist
 
@@ -77,7 +79,7 @@ Numbered as in the backend's `docs/deploy.md` → Deployment checklist; the step
 - **2.** This file. Done 2026-10-24.
 - **5.** Move the frontend and client website projects into a Vercel Pro team (Rich). Done.
 - **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23.
-- **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich). Done.
+- **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich). Done. Since 2026-10-29 the domain and the staging env vars follow `main` instead, and the `staging` branch is deleted (section 8).
 - **17.** The first staging deploy. Done.
 - **18.** The staging test, end to end, in a separate browser profile. Done.
 - **20.** Staging header checks and `Cross-Origin-Opener-Policy` (section 7). Done 2026-10-27: headers checked in DevTools (the policy from the Console, see section 7), the scanners moved to step 26, and Google sign-in re-tested as the admin and the site owner with the new header.
