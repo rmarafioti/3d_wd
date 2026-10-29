@@ -21,7 +21,7 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 ## 3. Deploy order for contract changes
 
 - The backend deploys first and accepts both the old and the new shape; then the frontend deploys (backend → 4).
-- A merge to `main` doesn't deploy production: the frontend is released with `git push origin main:production` (`docs/deploy.md` §8), so its release waits until the backend's is live.
+- A merge to `main` doesn't deploy production: both repos are released by `npm run release` in the backend repo (`docs/deploy.md` §8), which releases the backend first and the frontend only once the backend's is live.
 - The frontend never sends a field the deployed backend doesn't accept yet, and never relies on a response field the deployed backend doesn't send yet.
 - A breaking change is split into steps (backend → 3). The frontend's part is the step where reads switch to the new shape and the frontend is updated.
 - Before the backend removes anything (the contract step in backend → 3), the frontend has stopped reading or sending it and that frontend is deployed.
@@ -61,7 +61,7 @@ Follow the backend's template (backend → 5). On the frontend side:
 
 ## 9. Environments
 
-- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from the `staging` branch (backend → 8). It is kept after launch and its cost reassessed (backend Deployment checklist step 30); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
+- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from `main` on every merge (backend → 8). It is kept after launch and its cost reassessed (backend Deployment checklist step 30); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
 - A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
 
 ## 10. Keeping this file in step
