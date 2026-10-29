@@ -43,7 +43,8 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 
 ## 7. Pagination
 
-- No endpoint is paginated yet. The shape is defined in backend → 6: `?limit=&cursor=`, response `{ data: [...], nextCursor }`, `nextCursor` is `null` on the last page, default limit 50, max 100.
+- The shape is defined in backend → 6: `?limit=&cursor=`, response `{ data: [...], nextCursor }`, `nextCursor` is `null` on the last page, default limit 50, max 100.
+- `GET /api/admin/auditEvents` is the first endpoint built this way, paged from day one, with a `month` filter beside the cursor. On the frontend, `apiFetch(path, { paginated: true })` returns `{ data, nextCursor }` instead of `data`, and `useAuditEvents` appends each page ("Load more"). A later paginated list reuses both.
 - The first candidates are the admin accounts list and the post summaries in the site owner websites list. (`GET /api/public/posts` is called only by client websites, never by the frontend; a breaking change to it goes to a new versioned path, backend → 4.)
 - Adding pagination to an existing endpoint is a breaking change, so it arrives through a contract change and a handoff. Build paging into the hooks (`useApiResource` and its callers) only then, not ahead of time.
 
