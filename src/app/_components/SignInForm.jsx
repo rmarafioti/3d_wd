@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { apiFetch } from "../_lib/apiFetch";
 import { HOME_BY_ROLE } from "../_lib/roles";
+import { useIsPhone } from "../_hooks/useIsPhone";
 import DialogCloseButton from "./DialogCloseButton";
 
 import styles from "../_styling/signIn.module.css";
@@ -17,6 +18,7 @@ export default function SignInForm({ expired }) {
   const router = useRouter();
   const dialogRef = useRef(null);
   const [error, setError] = useState(null);
+  const isPhone = useIsPhone();
 
   async function handleGoogleSuccess({ credential }) {
     setError(null);
@@ -44,14 +46,18 @@ export default function SignInForm({ expired }) {
         onSuccess={handleGoogleSuccess}
         onError={() => {}}
         size="large"
-        width="400"
+        // Google draws the button at this pixel width inside its own frame, so CSS can't shrink
+        // it; 280 fits a 320px-wide phone with the page's 1rem gutters.
+        width={isPhone ? "280" : "400"}
         shape="pill"
         theme="outline"
         text="signin_with"
       />
 
       <dialog ref={dialogRef}>
-        <DialogCloseButton dialogRef={dialogRef} />
+        {/* No X while "Signing in…": it ends on its own, by routing away or by becoming the
+            error, which can then be closed. */}
+        {error && <DialogCloseButton dialogRef={dialogRef} />}
         {error ? (
           <p>
             {error.message}

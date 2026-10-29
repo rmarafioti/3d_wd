@@ -3,13 +3,6 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 * {
   box-sizing: border-box;
   padding: 0;
@@ -73,7 +66,10 @@ footer {
   border-top: 1px solid lightgray;
 }
 
+/* font: inherit gives buttons the page's font and size instead of the browser's smaller button
+   font, so a button and the Navbar's "Sign in" link are the same size. */
 button {
+  font: inherit;
   padding: 0.5rem;
   width: 140px;
   text-align: center;
@@ -180,11 +176,5 @@ dialog::backdrop {
 
   dialog {
     padding: 1rem;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
   }
 }

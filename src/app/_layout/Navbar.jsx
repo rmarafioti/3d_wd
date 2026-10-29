@@ -1,15 +1,13 @@
-// Navbar: site navigation; holds DashboardTitle and AuthButton.
+// Navbar: site navigation; holds HomeLink, DashboardTitle and AuthButton.
 
-import Link from "next/link";
+import HomeLink from "../_components/HomeLink";
 import DashboardTitle from "../_components/DashboardTitle";
 import AuthButton from "../_components/AuthButton";
 
 export default function Navbar() {
   return (
     <nav>
-      <Link href="/" aria-label="3D Web Dev home">
-        3D Web Dev
-      </Link>
+      <HomeLink />
       <DashboardTitle />
       <AuthButton />
     </nav>

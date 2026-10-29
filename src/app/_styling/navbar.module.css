@@ -1,4 +1,6 @@
+/* inline-block so the "Sign in" link's padded box is as tall as the "Sign out" button's. */
 .signButton {
+  display: inline-block;
   padding: 0.5rem;
   width: 140px;
   text-align: center;

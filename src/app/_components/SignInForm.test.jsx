@@ -1,5 +1,5 @@
-// Tests for SignInForm (docs/flows.md → Login): the expired message, the "Signing in…" dialog,
-// routing on the returned role, and the not-authorized message with its "contact us" link.
+// Tests for SignInForm (docs/flows.md → Login): the expired message, the "Signing in…" dialog
+// (with no X until it turns into an error), routing on the returned role, and the not-authorized message with its "contact us" link.
 // Google's button is replaced by a plain button that hands back a credential.
 
 import { describe, expect, it, vi } from "vitest";
@@ -56,6 +56,9 @@ describe("SignInForm", () => {
 
     expect(screen.getByRole("dialog")).toHaveAttribute("open");
     expect(screen.getByText("Signing in…")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Close", hidden: true }),
+    ).not.toBeInTheDocument();
     expect(calls[0].body).toEqual({ credential: "google-id-token" });
     response.resolve({ body: { data: { role: "admin" } } });
     await waitFor(() => expect(router.replace).toHaveBeenCalled());

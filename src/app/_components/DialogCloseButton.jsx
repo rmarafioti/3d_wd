@@ -1,5 +1,6 @@
 // DialogCloseButton: the shared X in the top right corner of every dialog, except
-// CredentialRevealModal, which keeps its labelled Close button. It closes through the dialog
+// CredentialRevealModal, which keeps its labelled Close button, and SignInForm's "Signing in…",
+// which shows the X only once it turns into an error. It closes through the dialog
 // itself, so the X and Esc both fire the dialog's close event and reach the same onClose handler.
 // Icon-only, so it is named "Close" for screen readers.
 

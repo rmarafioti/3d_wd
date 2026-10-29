@@ -2,13 +2,18 @@
 
 Full behavioral spec for each frontend flow. `CLAUDE.md` holds the short, always-loaded rules (ownership checks, anti-patterns, patterns); this file holds the specific flow detail those rules apply to. Imported from `CLAUDE.md` via `@docs/flows.md`. Request and response shapes for every call referenced here are in `docs/api.md`.
 
-All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button. They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
+All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, and the sign-in dialog, which has no X while it reads "Signing in…". They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
 
 ---
 
 ## App Shell
 
 **Root layout (`app/layout.js`):** wraps every page in `AuthProvider` (AuthContext, starts empty — it does **not** fetch), `Navbar` and `Footer`. `GoogleOAuthProvider` is **not** here; it wraps the sign-in page only.
+
+**Navbar `HomeLink`:** a small client component that reads `useAuth()`: the "3D Web Dev" link, the navbar's way home from any page.
+
+- No user in context → links to `/` (the landing page and sign-in page).
+- Admin → links to `/admin`; site owner → links to `/dashboard` (`HOME_BY_ROLE`), so a signed-in user always has a way back to their dashboard. Only signing out leads back to the landing page.
 
 **Navbar `AuthButton`:** a small client component that reads `useAuth()`.
 
@@ -50,7 +55,7 @@ On the landing page and sign-in page the context is always empty (signed-in user
 
 On the landing page (`/`) the Navbar's "Sign in" button routes the user to `/sign-in`. The sign-in page holds the Google sign-in button (`GoogleLogin` from `@react-oauth/google`, inside `GoogleOAuthProvider` with `NEXT_PUBLIC_GOOGLE_CLIENT_ID`). When the user clicks "Sign in with Google" they are prompted for their Google credentials — however they have set up their Google sign-in security.
 
-If the Google step succeeds, the returned `credential` (a signed Google ID token) is sent with `POST /api/auth/login`. To compensate for latency, a dialog opens reading "Signing in…" while the request is in flight.
+If the Google step succeeds, the returned `credential` (a signed Google ID token) is sent with `POST /api/auth/login`. To compensate for latency, a dialog opens reading "Signing in…" while the request is in flight. It has no X: it ends on its own, by routing away on success or by changing to the error below, which brings the X.
 
 - **Success:** the backend sets the httpOnly `session` cookie (every later request carries it automatically) and returns `{ role }` in the JSON body, just for that one moment. The frontend reads it once and routes to `/admin` (admin) or `/dashboard` (site_owner). The layout there then calls `/me` and fills AuthContext.
 - **Error (401):** the same dialog changes to the backend's message "You are not authorized to log in." followed by "contact us" — a `mailto:` link to `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL`. The dialog's X closes it, leaving the user on `/sign-in` to try again.
