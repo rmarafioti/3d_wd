@@ -1,9 +1,12 @@
-// Tests for PostForm, the Create a Post and Edit a Post form (docs/flows.md): the Website
-// pre-select, the request payload (body elements in order, blank → null, image ids kept across a
-// move, no client key), the one-paragraph rule, what Edit leaves out, backend errors including
-// dropped element messages, image uploads on Submit (docs/api.md → Endpoints, Notes: one
-// signature, each new file to Cloudinary, nothing saved if one fails, no second upload on a
-// retry) and the 20-hour form timeout.
+// Tests for PostForm, Create a Post and Edit a Post as a run of dialogs (docs/flows.md → Create a
+// Post): the steps (Website only with several websites, Next and Insert disabled until valid), the
+// cancel gate, the review view's Add button limits and its toolbar (moves where an element can
+// move, no Delete on the only paragraph, Add on an empty optional field, edits that only change
+// the post on Insert / Save, a cancelled image edit keeping the post's image), Edit opening on the
+// review view, the request payload (body in order, blank → null, image ids kept across a move, no
+// client key), backend errors on their toolbar rows and dropped once the body shifts, image
+// uploads on Submit (docs/api.md → Endpoints, Notes: one signature, each new file to Cloudinary,
+// nothing saved if one fails, no second upload on a retry) and the 20-hour form timeout.
 
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
@@ -13,15 +16,10 @@ import {
   deferred,
   imageFile,
   mockFetch,
+  pressEscape,
   stubImageLoading,
-  stubMatchMedia,
   stubObjectUrls,
 } from "../../test/helpers";
-
-// The Add buttons read "Add a / an …" with none of that type and "Add another …" once there is
-// one; the exact label is tested on its own in PostBodyFields.test.jsx.
-const ADD_PARAGRAPH = /^Add (a|another) paragraph$/;
-const ADD_IMAGE = /^Add (an|another) image$/;
 
 const STEVIE = { id: "w1", websiteName: "Stevie The Dog", posts: [] };
 const GOOD_BOYS = { id: "w2", websiteName: "Good Boys", posts: [] };
@@ -91,66 +89,249 @@ function uploadCalls(calls) {
   return calls.filter((call) => call.path === UPLOAD_URL);
 }
 
-// Picks a file for the last image element and lets it load, then writes its alt text.
-async function fillImage(user, loads, altText = "Stevie") {
-  await user.upload(
-    screen.getAllByLabelText("Image").at(-1),
-    imageFile(`${altText}.jpg`),
-  );
-  loads.at(-1).load(4000, 3000);
-  await user.type(screen.getAllByLabelText("Alt Text").at(-1), altText);
+function dialog(title) {
+  return screen.getByRole("dialog", { name: title });
+}
+
+function button(name, container = document.body) {
+  return within(container).getByRole("button", { name });
+}
+
+function preview() {
+  return screen.getByRole("region", { name: "Post preview" });
+}
+
+function toolbar() {
+  return screen.getByRole("region", { name: "Post contents" });
+}
+
+// The toolbar rows' text, top to bottom: the post's own fields, then the body list's rows (not an
+// open menu's items).
+function toolbarRows() {
+  const [fields] = within(toolbar()).getAllByRole("list");
+  const body = within(toolbar()).getByRole("list", { name: "Body" });
+  return [...fields.children, ...body.children].map((row) => row.textContent);
+}
+
+// Opens a toolbar row's ⋮ menu and returns the menu's item names.
+async function openMenu(user, rowName) {
+  await user.click(button(`Actions for ${rowName}`));
+  const list = button(`Actions for ${rowName}`).nextElementSibling;
+  return within(list)
+    .getAllByRole("button")
+    .map((item) => item.getAttribute("aria-label") ?? item.textContent);
+}
+
+async function pickFromMenu(user, rowName, item) {
+  await user.click(button(`Actions for ${rowName}`));
+  await user.click(button(item, toolbar()));
 }
 
 function renderCreate({ websites = [STEVIE], onSubmit = vi.fn() } = {}) {
   const onSuccess = vi.fn();
+  const onClose = vi.fn();
   const user = userEvent.setup();
-  render(
+  const view = render(
     <PostForm
       mode="create"
       websites={websites}
       onSubmit={onSubmit}
       onSuccess={onSuccess}
-      onClose={() => {}}
+      onClose={onClose}
     />,
   );
-  return { user, onSubmit, onSuccess };
+  return { user, onSubmit, onSuccess, onClose, unmount: view.unmount };
 }
 
 function renderEdit({ post = POST, onSubmit = vi.fn() } = {}) {
   const onSuccess = vi.fn();
+  const onClose = vi.fn();
   const user = userEvent.setup();
   render(
     <PostForm
       mode="edit"
       websiteId={post.websiteId}
-      websiteName={post.websiteName}
       initialValues={postToFormValues(post)}
       onSubmit={onSubmit}
       onSuccess={onSuccess}
-      onClose={() => {}}
+      onClose={onClose}
     />,
   );
-  return { user, onSubmit, onSuccess };
+  return { user, onSubmit, onSuccess, onClose };
 }
 
-describe("PostForm (create)", () => {
-  it("pre-selects the website when the site owner has exactly one", () => {
-    renderCreate();
+// Walks Create's steps to the review view.
+async function walkSteps(
+  user,
+  { postName = "Walk day", header = "", paragraph = "Hi" } = {},
+) {
+  await user.type(screen.getByLabelText("Post Name"), postName);
+  await user.click(button("Next"));
+  if (header) await user.type(screen.getByLabelText("Header"), header);
+  await user.click(button("Next"));
+  await user.type(screen.getByLabelText("Paragraph"), paragraph);
+  await user.click(button("Insert"));
+}
 
-    expect(screen.getByLabelText("Website")).toHaveDisplayValue(
-      "Stevie The Dog",
+// From the review view: Add Image, pick a file and let it load, write its alt text, Insert.
+async function addImage(user, loads, altText = "Stevie") {
+  await user.click(button("Add Image"));
+  const imageDialog = dialog("Add an image");
+  await user.upload(
+    within(imageDialog).getByLabelText("Image"),
+    imageFile(`${altText}.jpg`),
+  );
+  loads.at(-1).load(4000, 3000);
+  await user.type(within(imageDialog).getByLabelText("Alt Text"), altText);
+  await user.click(button("Insert", imageDialog));
+}
+
+async function addParagraph(user, text) {
+  await user.click(button("Add Paragraph"));
+  const paragraphDialog = dialog("Add a paragraph");
+  await user.type(within(paragraphDialog).getByLabelText("Paragraph"), text);
+  await user.click(button("Insert", paragraphDialog));
+}
+
+describe("PostForm (create) steps", () => {
+  it("starts on the Post Name alone for a site owner with one website, with Next disabled until it is filled", async () => {
+    const { user } = renderCreate();
+    expect(dialog("Name your post")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Website")).not.toBeInTheDocument();
+    expect(button("Next")).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+
+    expect(button("Next")).toBeEnabled();
+    expect(screen.getByLabelText("Post Name")).toHaveAccessibleDescription(
+      "8 / 100",
     );
   });
 
-  it("starts on the placeholder when there are several websites", () => {
-    renderCreate({ websites: [STEVIE, GOOD_BOYS] });
-
+  it("asks for the website above the Post Name when there are several", async () => {
+    const { user } = renderCreate({ websites: [STEVIE, GOOD_BOYS] });
     expect(screen.getByLabelText("Website")).toHaveDisplayValue(
       "Choose a website",
     );
-    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    expect(button("Next")).toBeDisabled();
+
+    await user.selectOptions(screen.getByLabelText("Website"), "Good Boys");
+
+    expect(button("Next")).toBeEnabled();
   });
 
+  it("walks Post Name, the optional details and the first paragraph into the review view", async () => {
+    const { user } = renderCreate();
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.click(button("Next"));
+    expect(dialog("Post details")).toHaveTextContent(
+      "*These fields are optional.",
+    );
+    expect(button("Next")).toBeEnabled();
+    await user.type(screen.getByLabelText("Header"), "A walk");
+    await user.click(button("Next"));
+    expect(dialog("Write your first paragraph")).toHaveTextContent(
+      "*One paragraph is required for a post.",
+    );
+    expect(button("Insert")).toBeDisabled();
+
+    await user.type(
+      screen.getByLabelText("Paragraph"),
+      "We went for a **walk**.",
+    );
+    await user.click(button("Insert"));
+
+    expect(dialog("Create a Post")).toBeInTheDocument();
+    expect(
+      within(preview()).getByRole("heading", { name: "A walk" }),
+    ).toBeInTheDocument();
+    expect(within(preview()).getByText(/We went for a/)).toContainHTML(
+      "We went for a <b>walk</b>.",
+    );
+    expect(toolbarRows()).toEqual([
+      "Walk day",
+      "No date",
+      "A walk",
+      "No sub header",
+      "We went for a walk.",
+    ]);
+  });
+
+  it("has an X only on the review view; its smaller dialogs have Cancel instead", async () => {
+    const { user } = renderCreate();
+    expect(
+      screen.queryByRole("button", { name: "Close" }),
+    ).not.toBeInTheDocument();
+    await walkSteps(user);
+    expect(button("Close", dialog("Create a Post"))).toBeInTheDocument();
+
+    await user.click(button("Add Paragraph"));
+
+    expect(
+      within(dialog("Add a paragraph")).queryByRole("button", {
+        name: "Close",
+      }),
+    ).not.toBeInTheDocument();
+    expect(button("Cancel", dialog("Add a paragraph"))).toBeInTheDocument();
+  });
+
+  it("asks before cancelling when the review view's X is pressed", async () => {
+    const { user, onClose } = renderCreate();
+    await walkSteps(user);
+
+    await user.click(button("Close"));
+
+    expect(
+      screen.getByText("Are you sure you want to cancel this post?"),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes from the first step without asking", async () => {
+    const { user, onClose } = renderCreate();
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+
+    await user.click(button("Cancel"));
+
+    expect(onClose).toHaveBeenCalled();
+    expect(screen.queryByText(/Are you sure/)).not.toBeInTheDocument();
+  });
+
+  it("asks before cancelling from the second step on, and Keep editing keeps everything", async () => {
+    const { user, onClose } = renderCreate();
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.click(button("Next"));
+    await user.type(screen.getByLabelText("Header"), "A walk");
+
+    await user.click(button("Cancel"));
+    expect(
+      screen.getByText("Are you sure you want to cancel this post?"),
+    ).toBeInTheDocument();
+    await user.click(button("Keep editing"));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Header")).toHaveValue("A walk");
+    await user.click(button("Cancel"));
+    await user.click(button("Yes, cancel post"));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("asks before cancelling when Esc is pressed on the review view", async () => {
+    const { user, onClose } = renderCreate();
+    await walkSteps(user);
+
+    pressEscape(dialog("Create a Post"));
+
+    expect(
+      await screen.findByText("Are you sure you want to cancel this post?"),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(dialog("Create a Post")).toHaveAttribute("open");
+  });
+});
+
+describe("PostForm (create) review view", () => {
   it("sends the body in order, line breaks kept, blank optional fields as null, the status from its toggle, and no client key", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
@@ -158,18 +339,19 @@ describe("PostForm (create)", () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
     await user.type(screen.getByLabelText("Post Name"), "  Walk day ");
+    await user.click(button("Next"));
     await user.type(screen.getByLabelText("Header"), "   ");
+    await user.click(button("Next"));
     await user.type(
       screen.getByLabelText("Paragraph"),
       "  We went{Enter}for a walk. ",
     );
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
-    await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
-    await user.type(screen.getAllByLabelText("Paragraph")[1], "The end.");
+    await user.click(button("Insert"));
+    await addImage(user, loads);
+    await addParagraph(user, "The end.");
     await user.click(screen.getByLabelText("Published"));
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(onSubmit).toHaveBeenCalledWith({
@@ -195,93 +377,242 @@ describe("PostForm (create)", () => {
     });
   });
 
-  it("keeps Submit disabled while the body has no paragraph", async () => {
+  it("keeps Insert disabled until an image has a file and alt text", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
     const { user } = renderCreate();
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
-    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+    await walkSteps(user);
+    await user.click(button("Add Image"));
+    const imageDialog = dialog("Add an image");
+    expect(button("Insert", imageDialog)).toBeDisabled();
 
-    await user.click(
-      screen.getByRole("button", { name: "Delete paragraph 1" }),
+    await user.upload(
+      within(imageDialog).getByLabelText("Image"),
+      imageFile("dog.jpg"),
+    );
+    loads.at(-1).load(800, 600);
+    expect(
+      await within(imageDialog).findByText(
+        "*Alt text is required to insert the image.",
+      ),
+    ).toBeInTheDocument();
+    expect(button("Insert", imageDialog)).toBeDisabled();
+    await user.type(within(imageDialog).getByLabelText("Alt Text"), "Stevie");
+
+    expect(button("Insert", imageDialog)).toBeEnabled();
+  });
+
+  it("adds nothing when an Add dialog is cancelled, without asking", async () => {
+    const { user, onClose } = renderCreate();
+    await walkSteps(user);
+    await user.click(button("Add Paragraph"));
+    await user.type(
+      within(dialog("Add a paragraph")).getByLabelText("Paragraph"),
+      "Not this.",
     );
 
-    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
+    await user.click(button("Cancel", dialog("Add a paragraph")));
+
     expect(
-      screen.getByText("One paragraph is required to submit a post."),
-    ).toBeInTheDocument();
+      screen.queryByRole("dialog", { name: "Add a paragraph" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Are you sure/)).not.toBeInTheDocument();
+    expect(toolbarRows()).toHaveLength(5);
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("keeps Submit disabled while an image is incomplete", async () => {
-    const loads = stubImageLoading();
-    stubObjectUrls();
+  it("offers only Add on an empty optional field, and Delete empties a filled one", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await walkSteps(user, { header: "A walk" });
+    expect(await openMenu(user, "sub header")).toEqual(["Add"]);
+    expect(await openMenu(user, "header")).toEqual(["Edit", "Delete"]);
+
+    await user.click(button("Delete", toolbar()));
+    await user.click(button("Submit"));
+
+    expect(toolbarRows()[2]).toBe("No header");
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].header).toBeNull();
+  });
+
+  it("changes a field only on Save, from its own dialog", async () => {
     const { user } = renderCreate();
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
-    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+    await walkSteps(user);
+    await pickFromMenu(user, "sub header", "Add");
+    const subHeaderDialog = dialog("Add sub header");
+    await user.type(
+      within(subHeaderDialog).getByLabelText("Sub Header"),
+      "Sunny",
+    );
+    expect(toolbarRows()[3]).toBe("No sub header");
 
-    await user.clear(screen.getByLabelText("Alt Text"));
+    await user.click(button("Save", subHeaderDialog));
 
-    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
+    expect(toolbarRows()[3]).toBe("Sunny");
+    expect(within(preview()).getByText("Sunny")).toBeInTheDocument();
   });
 
-  it("shows a backend error, its field messages next to fields, and keeps the input", async () => {
-    const onSubmit = vi.fn().mockRejectedValue({
-      message: "Please fix the highlighted fields.",
-      fields: { postName: "Post name must be 100 characters or fewer." },
-    });
-    const { user, onSuccess } = renderCreate({ onSubmit });
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+  it("disables Add Paragraph and Add Image at 5 of each, with the limits as text", () => {
+    const paragraphs = Array.from({ length: 5 }, (_, i) => ({
+      type: "paragraph",
+      text: `Paragraph ${i}`,
+    }));
+    const images = Array.from({ length: 5 }, (_, i) => ({
+      type: "image",
+      image: { ...IMAGE, id: `i${i}` },
+    }));
+    renderEdit({ post: { ...POST, body: [...paragraphs, ...images] } });
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(button("Add Paragraph")).toBeDisabled();
+    expect(button("Add Image")).toBeDisabled();
+    expect(screen.getByText("Maximum of 5 paragraphs")).toBeInTheDocument();
+    expect(screen.getByText("Maximum of 5 images")).toBeInTheDocument();
+  });
+});
 
+describe("PostForm toolbar moves and deletes", () => {
+  it('lists the body under its own "Body" heading, apart from the post\'s fields', () => {
+    renderEdit();
+
+    const body = within(toolbar()).getByRole("list", { name: "Body" });
     expect(
-      await screen.findByText("Please fix the highlighted fields."),
+      within(toolbar()).getByRole("heading", { name: "Body" }),
     ).toBeInTheDocument();
+    expect(Array.from(body.children).map((row) => row.textContent)).toEqual([
+      "We went for a walk.",
+      "Stevie",
+    ]);
+  });
+
+  it("offers a move only where an element can go, and Delete on everything but the only paragraph", async () => {
+    const { user } = renderEdit();
+
+    expect(await openMenu(user, "paragraph 1")).toEqual([
+      "Edit",
+      "Move paragraph 1 down",
+    ]);
+    expect(await openMenu(user, "image 1")).toEqual([
+      "Edit",
+      "Move image 1 up",
+      "Delete",
+    ]);
+  });
+
+  it("moves an element in the toolbar and the preview together, keeping the menu open", async () => {
+    const { user } = renderEdit();
+    await user.click(button("Actions for image 1"));
+
+    await user.click(button("Move image 1 up"));
+
+    // The image's row, still showing its open menu, now comes first.
+    const [imageRow, paragraphRow] = toolbarRows().slice(4);
+    expect(imageRow).toMatch(/^Stevie/);
+    expect(paragraphRow).toBe("We went for a walk.");
+    const previewImage = within(preview()).getByRole("img", { name: "Stevie" });
+    expect(previewImage.nextElementSibling).toHaveTextContent(
+      "We went for a walk.",
+    );
+    expect(button("Actions for image 1")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(button("Move image 1 down")).toBeInTheDocument();
+  });
+
+  it("offers Delete on a paragraph once there is a second one", async () => {
+    const { user } = renderEdit();
+    await addParagraph(user, "The end.");
+
+    expect(await openMenu(user, "paragraph 1")).toContain("Delete");
+  });
+});
+
+describe("PostForm image edits", () => {
+  it("keeps the post's image when an image edit is cancelled, and lets go of it once replaced", async () => {
+    const loads = stubImageLoading();
+    const { revokeObjectURL } = stubObjectUrls();
+    const { user } = renderCreate();
+    await walkSteps(user);
+    await addImage(user, loads);
+
+    await pickFromMenu(user, "image 1", "Edit");
+    await user.upload(
+      within(dialog("Edit image")).getByLabelText("Image"),
+      imageFile("other.jpg"),
+    );
+    loads.at(-1).load(800, 600);
+    await user.click(button("Cancel", dialog("Edit image")));
+
+    expect(revokeObjectURL.mock.calls).toEqual([["blob:test/2"]]);
     expect(
-      screen.getByLabelText("Post Name").nextElementSibling,
-    ).toHaveTextContent("Post name must be 100 characters or fewer.");
-    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
-    expect(onSuccess).not.toHaveBeenCalled();
+      within(preview()).getByRole("img", { name: "Stevie" }),
+    ).toHaveAttribute("src", "blob:test/1");
+
+    await pickFromMenu(user, "image 1", "Edit");
+    await user.upload(
+      within(dialog("Edit image")).getByLabelText("Image"),
+      imageFile("other.jpg"),
+    );
+    loads.at(-1).load(800, 600);
+    await user.click(button("Insert", dialog("Edit image")));
+
+    expect(revokeObjectURL).toHaveBeenLastCalledWith("blob:test/1");
+    expect(
+      within(preview()).getByRole("img", { name: "Stevie" }),
+    ).toHaveAttribute("src", "blob:test/3");
   });
 });
 
 describe("PostForm (edit)", () => {
-  it("pre-fills from the post with no Website select and no Published toggle", () => {
+  it("opens on the review view with the post loaded, and no Website or Published switch", () => {
     renderEdit();
 
-    expect(
-      screen.getByRole("heading", { name: "Edit Post" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Website: Stevie The Dog")).toBeInTheDocument();
+    expect(dialog("Edit Post")).toBeInTheDocument();
     expect(screen.queryByLabelText("Website")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Published")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
-    expect(screen.getByLabelText("Sub Header")).toHaveValue("");
+    expect(toolbarRows()).toEqual([
+      "Walk day",
+      "2026-10-07",
+      "A walk",
+      "No sub header",
+      "We went for a walk.",
+      "Stevie",
+    ]);
     expect(
-      within(screen.getByRole("group", { name: "Body" })).getByRole("img", {
-        name: "Stevie",
-      }),
+      within(preview()).getByRole("img", { name: "Stevie" }),
     ).toHaveAttribute("src", IMAGE.src);
+  });
+
+  it("closes without asking before anything changes, and asks once something has", async () => {
+    const { user, onClose } = renderEdit();
+    await user.click(button("Close"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    await pickFromMenu(user, "header", "Delete");
+    await user.click(button("Close"));
+
+    expect(
+      screen.getByText("Are you sure you want to cancel your changes?"),
+    ).toBeInTheDocument();
+    expect(button("Discard changes")).toBeInTheDocument();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("sends the full form: a moved image keeps its id, formatting as typed, no websiteId or status", async () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
-    await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
-    await user.clear(screen.getByLabelText("Paragraph"));
-    await user.type(
-      screen.getByLabelText("Paragraph"),
-      "We went for a **walk**.",
+    await user.click(button("Actions for image 1"));
+    await user.click(button("Move image 1 up"));
+    await pickFromMenu(user, "paragraph 1", "Edit");
+    const paragraph = within(dialog("Edit paragraph")).getByLabelText(
+      "Paragraph",
     );
+    await user.clear(paragraph);
+    await user.type(paragraph, "We went for a **walk**.");
+    await user.click(button("Insert", dialog("Edit paragraph")));
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit.mock.calls[0][0]).toEqual({
@@ -309,13 +640,38 @@ describe("PostForm (edit)", () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
 
-    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await pickFromMenu(user, "image 1", "Delete");
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit.mock.calls[0][0].body).toEqual([
       { type: "paragraph", text: "We went for a walk." },
     ]);
+  });
+
+  it("shows a backend error under Submit and its field messages under their toolbar rows", async () => {
+    const onSubmit = vi.fn().mockRejectedValue({
+      message: "Please fix the highlighted fields.",
+      fields: {
+        postName: "Post name must be 100 characters or fewer.",
+        "body.1.image.altText": "Alt text must be 200 characters or fewer.",
+      },
+    });
+    const { user, onSuccess } = renderEdit({ onSubmit });
+
+    await user.click(button("Submit"));
+
+    expect(
+      await screen.findByText("Please fix the highlighted fields."),
+    ).toBeInTheDocument();
+    const rows = within(toolbar()).getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent(
+      "Post name must be 100 characters or fewer.",
+    );
+    expect(rows[5]).toHaveTextContent(
+      "Alt text must be 200 characters or fewer.",
+    );
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 
   it("drops the body's list-level server message once the body changes", async () => {
@@ -324,10 +680,10 @@ describe("PostForm (edit)", () => {
       fields: { body: "Add at least one paragraph." },
     });
     const { user } = renderEdit({ onSubmit });
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
     await screen.findByText("Add at least one paragraph.");
 
-    await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
+    await addParagraph(user, "More.");
 
     expect(
       screen.queryByText("Add at least one paragraph."),
@@ -342,10 +698,11 @@ describe("PostForm (edit)", () => {
       },
     });
     const { user } = renderEdit({ onSubmit });
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
     await screen.findByText("Alt text must be 200 characters or fewer.");
 
-    await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
+    await user.click(button("Actions for image 1"));
+    await user.click(button("Move image 1 up"));
 
     expect(
       screen.queryByText("Alt text must be 200 characters or fewer."),
@@ -357,24 +714,17 @@ describe("PostForm (edit)", () => {
 });
 
 describe("PostForm image uploads", () => {
-  async function fillPost(user) {
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
-  }
-
   it("signs once for the post's website, uploads each new image to Cloudinary, then saves Cloudinary's src and size", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
     const calls = mockUploads();
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads, "Stevie");
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads, "Ball");
+    await walkSteps(user);
+    await addImage(user, loads, "Stevie");
+    await addImage(user, loads, "Ball");
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     const [sign, ...uploads] = calls;
@@ -426,14 +776,12 @@ describe("PostForm image uploads", () => {
     stubObjectUrls();
     const calls = mockUploads();
     const { user } = renderCreate();
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
+    await walkSteps(user);
 
-    await fillImage(user, loads);
+    await addImage(user, loads);
 
-    const preview = screen.getByRole("region", { name: "Post preview" });
     expect(
-      within(preview).getByRole("img", { name: "Stevie" }),
+      within(preview()).getByRole("img", { name: "Stevie" }),
     ).toHaveAttribute("src", "blob:test/1");
     expect(calls).toHaveLength(0);
   });
@@ -444,10 +792,9 @@ describe("PostForm image uploads", () => {
     const calls = mockUploads();
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads, "Ball");
+    await addImage(user, loads, "Ball");
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(calls[0].body).toEqual({ websiteId: "w1" });
@@ -471,7 +818,7 @@ describe("PostForm image uploads", () => {
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user } = renderEdit({ onSubmit });
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(calls).toHaveLength(0);
@@ -486,17 +833,16 @@ describe("PostForm image uploads", () => {
       },
     ],
     ["Cloudinary can't be reached", { networkError: true }],
-  ])("saves nothing and keeps the form when %s", async (_, failure) => {
+  ])("saves nothing and keeps the post when %s", async (_, failure) => {
     const loads = stubImageLoading();
     stubObjectUrls();
     mockUploads([failure]);
     const onSubmit = vi.fn();
     const { user } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
+    await walkSteps(user);
+    await addImage(user, loads);
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     expect(
       await screen.findByText(
@@ -507,8 +853,8 @@ describe("PostForm image uploads", () => {
       screen.queryByText("Image file format gif not allowed"),
     ).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
-    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+    expect(toolbarRows()[0]).toBe("Walk day");
+    expect(button("Submit")).toBeEnabled();
   });
 
   it("shows the sign endpoint's error and uploads nothing", async () => {
@@ -522,11 +868,10 @@ describe("PostForm image uploads", () => {
     }).calls;
     const onSubmit = vi.fn();
     const { user } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
+    await walkSteps(user);
+    await addImage(user, loads);
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     expect(await screen.findByText("Website not found.")).toBeInTheDocument();
     expect(uploadCalls(calls)).toHaveLength(0);
@@ -546,11 +891,10 @@ describe("PostForm image uploads", () => {
     }).calls;
     const onSubmit = vi.fn();
     const { user } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
+    await walkSteps(user);
+    await addImage(user, loads);
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     expect(
       await screen.findByText("Too many requests. Please try again later."),
@@ -570,13 +914,12 @@ describe("PostForm image uploads", () => {
       })
       .mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await walkSteps(user);
+    await addImage(user, loads);
+    await user.click(button("Submit"));
     await screen.findByText("Something went wrong, please try again.");
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(uploadCalls(calls)).toHaveLength(1);
@@ -595,11 +938,10 @@ describe("PostForm image uploads", () => {
     const { user } = renderCreate({
       onSubmit: vi.fn().mockReturnValue(save.promise),
     });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
+    await walkSteps(user);
+    await addImage(user, loads);
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     expect(
       await screen.findByRole("button", { name: "Uploading images…" }),
@@ -617,10 +959,9 @@ describe("PostForm image uploads", () => {
     const { user } = renderCreate({
       onSubmit: vi.fn().mockReturnValue(save.promise),
     });
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+    await walkSteps(user);
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(button("Submit"));
 
     expect(
       await screen.findByRole("button", { name: "Submitting…" }),
@@ -628,29 +969,19 @@ describe("PostForm image uploads", () => {
     await act(async () =>
       save.reject({ message: "Something went wrong, please try again." }),
     );
-    expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
+    expect(button("Submit")).toBeEnabled();
     expect(
-      screen.getByText("Something went wrong, please try again."),
-    ).toBeInTheDocument();
+      screen.getAllByText("Something went wrong, please try again."),
+    ).toHaveLength(1);
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("lets go of picked images' object URLs when the form closes", async () => {
     const loads = stubImageLoading();
     const { revokeObjectURL } = stubObjectUrls();
-    const user = userEvent.setup();
-    const { unmount } = render(
-      <PostForm
-        mode="create"
-        websites={[STEVIE]}
-        onSubmit={vi.fn()}
-        onSuccess={vi.fn()}
-        onClose={() => {}}
-      />,
-    );
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await fillImage(user, loads);
+    const { user, unmount } = renderCreate();
+    await walkSteps(user);
+    await addImage(user, loads);
 
     unmount();
 
@@ -676,121 +1007,9 @@ describe("PostForm timeout", () => {
         ),
       ).toBeInTheDocument();
       expect(screen.queryByLabelText("Post Name")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+      expect(button("Close")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
-  });
-});
-
-describe("PostForm preview", () => {
-  function preview() {
-    return screen.queryByRole("region", { name: "Post preview" });
-  }
-
-  async function fillPost(user) {
-    await user.type(screen.getByLabelText("Post Name"), "Walk day");
-    await user.type(screen.getByLabelText("Header"), "A walk");
-    await user.type(
-      screen.getByLabelText("Paragraph"),
-      "We went for a **walk**.",
-    );
-  }
-
-  const EXPECTED_PAYLOAD = {
-    websiteId: "w1",
-    postName: "Walk day",
-    header: "A walk",
-    subHeader: null,
-    postDate: null,
-    status: "published",
-    body: [{ type: "paragraph", text: "We went for a **walk**." }],
-  };
-
-  it("shows the post beside the form, with its formatting, as it is typed", async () => {
-    const { user } = renderCreate();
-
-    await fillPost(user);
-
-    expect(
-      within(preview()).getByRole("heading", { name: "A walk" }),
-    ).toBeInTheDocument();
-    expect(within(preview()).getByText(/We went for a/)).toContainHTML(
-      "We went for a <b>walk</b>.",
-    );
-  });
-
-  it("starts open on desktop, and its toggle hides it and shows it again", async () => {
-    const { user } = renderCreate();
-    const toggle = screen.getByRole("button", { name: "Preview" });
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(preview()).toBeInTheDocument();
-
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(preview()).not.toBeInTheDocument();
-
-    await user.click(toggle);
-    expect(preview()).toBeInTheDocument();
-  });
-
-  it("has a single Submit button on desktop, under the form, with the preview open or hidden", async () => {
-    const onSubmit = vi.fn().mockResolvedValue(POST);
-    const { user, onSuccess } = renderCreate({ onSubmit });
-    await fillPost(user);
-    expect(screen.getAllByRole("button", { name: "Submit" })).toHaveLength(1);
-    await user.click(screen.getByRole("button", { name: "Preview" }));
-    expect(screen.getAllByRole("button", { name: "Submit" })).toHaveLength(1);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
-    expect(onSubmit).toHaveBeenCalledWith(EXPECTED_PAYLOAD);
-  });
-
-  it("shows a backend error once, under Submit, with the preview open", async () => {
-    const onSubmit = vi.fn().mockRejectedValue({
-      message: "Something went wrong, please try again.",
-    });
-    const { user } = renderCreate({ onSubmit });
-    await fillPost(user);
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    expect(
-      await screen.findAllByText("Something went wrong, please try again."),
-    ).toHaveLength(1);
-  });
-
-  it("on a phone, swaps the form for the preview and back, keeping everything typed", async () => {
-    stubMatchMedia(true);
-    const { user } = renderCreate();
-    await fillPost(user);
-    expect(preview()).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Preview" }));
-    expect(
-      within(preview()).getByRole("heading", { name: "A walk" }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Post Name")).not.toBeVisible();
-
-    await user.click(screen.getByRole("button", { name: "Back to edit" }));
-
-    expect(preview()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Post Name")).toBeVisible();
-    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
-  });
-
-  it("on a phone, submits from the preview view", async () => {
-    stubMatchMedia(true);
-    const onSubmit = vi.fn().mockResolvedValue(POST);
-    const { user, onSuccess } = renderCreate({ onSubmit });
-    await fillPost(user);
-    await user.click(screen.getByRole("button", { name: "Preview" }));
-
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-
-    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
-    expect(onSubmit).toHaveBeenCalledWith(EXPECTED_PAYLOAD);
   });
 });

@@ -17,44 +17,77 @@
   margin-bottom: 0.2rem;
 }
 
-.statusNote {
+/* The review view's Published switch, between the toolbar's list and Submit. */
+.statusSection {
   margin-bottom: 1rem;
 }
 
-.bodyHeader,
 .linksHeader,
 .statusHeader {
   font-weight: bold;
 }
 
-.bodyHeader {
-  font-size: 20px;
-  float: left;
+/* Every step of Create / Edit Post, and each dialog the review view opens (PostStepDialog): its
+   title stays put, and only the content beneath it scrolls. Only while open: a closed <dialog>
+   must keep the browser's display: none. */
+.stepDialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* A step's width, unless the dialog brings its own (the review view): it fits the 400px fields,
+   and the global dialog max-width keeps it inside a phone's viewport. */
+.stepWidth {
+  width: 500px;
+}
+
+/* The dialog's title, and the review view's X at the far end, which stay put above the scrolling
+   content. */
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
   margin-bottom: 1rem;
 }
 
-.bodySection {
-  border-top: 1px solid lightgray;
-  padding-top: 1rem;
+/* Scroll anchoring is off, so opening something (a paragraph's links list) pushes what is below
+   it down instead of moving what the site owner is looking at. */
+.dialogContent {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-anchor: none;
 }
 
-/* A section ends in the light grey border; everything that belongs to it, including its
-   messages, sits inside it. */
-.section {
-  border-bottom: 1px solid lightgray;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-  width: 100%;
+/* A field's label with its character count at the far end of the same line (FieldLabel). */
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
-.submitSection {
-  margin-top: 1rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-  width: 100%;
+/* Beside a paragraph's format buttons, the count goes to the row's far end, level with the
+   buttons' foot so it sits just above the textarea. */
+.formatButtons .characterCount {
+  align-self: flex-end;
+  margin-left: auto;
 }
 
-/* For screen readers only: Publish's progress, which the button already shows on screen. */
+/* Under a help note, the count gets a line of its own at the right edge, just above the field
+   (FieldLabel). */
+.countRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* "42 / 100" never breaks onto two lines. */
+.characterCount {
+  color: grey;
+  white-space: nowrap;
+}
+
+/* For screen readers only: Submit's progress, which the button already shows on screen. */
 .visuallyHidden {
   position: absolute;
   width: 1px;
@@ -62,24 +95,6 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-
-/* A row of buttons inside a section. */
-.buttonRow {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.upDownButtons {
-  display: flex;
-  justify-content: space-between;
-  width: 210px;
-}
-
-.bodyButton {
-  width: 100px;
 }
 
 .input {
@@ -176,24 +191,4 @@
 .linkDraft {
   width: 100%;
   margin-bottom: 0.5rem;
-}
-
-/* Every body element spans the fieldset, so each paragraph textarea is the same width. */
-.bodyElement {
-  width: 100%;
-}
-
-@media (max-width: 667px) {
-  .upDownButtons {
-    width: 180px;
-  }
-
-  .buttonRow button {
-    width: 88px;
-  }
-
-  /* Wider than the other row buttons, for the "Add another …" labels. */
-  .buttonRow .addButton {
-    width: 120px;
-  }
 }
