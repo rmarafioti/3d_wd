@@ -14,14 +14,14 @@ const WEBSITE = {
       id: "p2",
       postName: "Beach day",
       postDate: "2026-10-07",
-      active: true,
+      status: "published",
       createdAt: "2026-10-08T00:00:00.000Z",
     },
     {
       id: "p1",
       postName: "Walk day",
       postDate: null,
-      active: false,
+      status: "draft",
       createdAt: "2026-10-06T00:00:00.000Z",
     },
   ],
@@ -74,8 +74,8 @@ describe("PostList", () => {
       new Date("2026-10-08T00:00:00.000Z").toLocaleDateString(),
     );
     expect(beach).not.toHaveTextContent("2026-10-07");
-    expect(within(beach).getByText("active")).toBeInTheDocument();
-    expect(within(walk).getByText("inactive")).toBeInTheDocument();
+    expect(within(beach).getByText("published")).toBeInTheDocument();
+    expect(within(walk).getByText("draft")).toBeInTheDocument();
     expect(
       within(walk).getByRole("button", { name: "Actions for Walk day" }),
     ).toBeInTheDocument();

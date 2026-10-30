@@ -13,6 +13,16 @@
   border: none;
 }
 
+/* The same green and red as StatusPill's active / inactive, so the switch matches the pill beside
+   it. Declared after .toggleContainer so they replace its grey gradient. */
+.statusOn {
+  background: rgb(15, 174, 15);
+}
+
+.statusOff {
+  background: red;
+}
+
 .toggleButton {
   position: absolute;
   background-color: rgba(255, 255, 255, 0.87);

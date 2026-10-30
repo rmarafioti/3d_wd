@@ -1,26 +1,26 @@
 // PostForm (site owner): the Create a Post and Edit a Post form, in a native <dialog>. One
 // component for both so the fields, validation and payload building live in one place.
 //
-// mode "create": Website dropdown (pre-selected when there is exactly one) and an Active toggle,
+// mode "create": Website dropdown (pre-selected when there is exactly one) and a Published toggle,
 // → POST /api/siteOwner/posts. mode "edit": the website name as read-only text (its websiteId is
-// passed in for image uploads), no Active toggle, → PATCH /api/siteOwner/posts/:id with the full
+// passed in for image uploads), no Published toggle, → PATCH /api/siteOwner/posts/:id with the full
 // form.
 //
-// Publish first uploads any newly picked images (uploadImages: one signature, then each file to
+// Submit first uploads any newly picked images (uploadImages: one signature, then each file to
 // Cloudinary) and swaps their Cloudinary src, width and height into the body, then saves. If an
 // upload fails nothing is saved; images already uploaded keep their Cloudinary src, so trying
-// again doesn't upload them twice. While it works, Publish reads "Uploading images…" and then
-// "Publishing…". useFormTimeout clears the form after 20 hours.
+// again doesn't upload them twice. While it works, Submit reads "Uploading images…" and then
+// "Submitting…". useFormTimeout clears the form after 20 hours.
 //
 // Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
 // onSuccess. The body, with its formatting, is edited by PostBodyFields. Frontend messages
 // render next to their field once it has been left; backend error.fields render next to their
-// field and error.message below Publish. Nothing typed is cleared on failure.
+// field and error.message below Submit. Nothing typed is cleared on failure.
 //
 // PostPreview shows the post live as it is typed (docs/flows.md → Post preview). On desktop it
 // sits beside the form, open to start with, and its toggle hides or reveals it. On a phone it is
 // a view of its own: Preview switches to it and Back to edit returns to the form, which stays
-// mounted (hidden) meanwhile so nothing typed is lost; that view has its own Publish, which
+// mounted (hidden) meanwhile so nothing typed is lost; that view has its own Submit, which
 // submits the same form.
 
 "use client";
@@ -150,7 +150,8 @@ export default function PostForm({
   const [header, setHeader] = useState(initialValues.header);
   const [subHeader, setSubHeader] = useState(initialValues.subHeader);
   const [body, setBody] = useState(initialValues.body);
-  const [active, setActive] = useState(true);
+  // A new post is published unless the site owner switches it to draft.
+  const [status, setStatus] = useState("published");
 
   // Fields the site owner has left at least once; only their messages are shown.
   const [touched, setTouched] = useState({});
@@ -191,10 +192,10 @@ export default function PostForm({
     Object.keys(validateBody(body)).length === 0 &&
     !body.some(isIncompleteElement);
   const fieldErrors = serverError?.fields ?? {};
-  // Publish names the step it is on; the line under it is only for a failure's message.
+  // Submit names the step it is on; the line under it is only for a failure's message.
   let progress = null;
   if (uploading) progress = "Uploading images…";
-  else if (submitting) progress = "Publishing…";
+  else if (submitting) progress = "Submitting…";
   const errorMessage = serverError?.message;
 
   function touch(field) {
@@ -271,7 +272,7 @@ export default function PostForm({
         body: await uploadNewImages(),
       });
       const post = await onSubmit(
-        isCreate ? { websiteId, ...payload, active } : payload,
+        isCreate ? { websiteId, ...payload, status } : payload,
       );
       onSuccess(post);
     } catch (err) {
@@ -403,28 +404,32 @@ export default function PostForm({
 
               {isCreate && (
                 <>
-                  {/* A heading for the section, not the switch's label: the switch is named "Active"
-                so screen readers announce what "on" means. */}
+                  {/* A heading for the section, not the switch's label: the switch is named
+                  "Published" so screen readers announce what "on" means. */}
                   <p className={styles.statusHeader}>Status</p>
                   <p className={`${styles.message} ${styles.statusNote}`}>
                     <i>
-                      *Set a post to active for it to be live on your website,
-                      or inactive to save it and make it live at a later date.
+                      *Set a post to published for it to be live on your
+                      website, or draft to save it and publish it at a later
+                      date.
                     </i>
                   </p>
                   <Toggle
-                    label="Active"
-                    offLabel="inactive"
-                    onLabel="active"
-                    checked={active}
-                    onChange={setActive}
+                    label="Published"
+                    statusColors
+                    offLabel="draft"
+                    onLabel="published"
+                    checked={status === "published"}
+                    onChange={(published) =>
+                      setStatus(published ? "published" : "draft")
+                    }
                   />
                 </>
               )}
               <div className={styles.submitSection}>
                 <div className={styles.buttonRow}>
                   <button type="submit" disabled={!isValid || submitting}>
-                    {progress ?? "Publish"}
+                    {progress ?? "Submit"}
                   </button>
                   {isPhone && (
                     <button
@@ -473,7 +478,7 @@ export default function PostForm({
                   body={body}
                 />
                 {/* On a phone the form is hidden behind the preview, so the preview has its own way
-                  back and its own Publish, which submits the same form. */}
+                  back and its own Submit, which submits the same form. */}
                 {isPhone && (
                   <>
                     <div className={previewStyles.previewButtons}>
@@ -488,7 +493,7 @@ export default function PostForm({
                         form={formId}
                         disabled={!isValid || submitting}
                       >
-                        {progress ?? "Publish"}
+                        {progress ?? "Submit"}
                       </button>
                     </div>
                     <p role="status" className={styles.visuallyHidden}>

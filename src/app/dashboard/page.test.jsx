@@ -1,7 +1,8 @@
 // Tests for the site owner dashboard's own wiring (docs/flows.md → Create a Post, Post actions
 // menu): the form opens from "Create a Post", and a create closes it and refetches the list with no
-// success dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled, and
-// shows a failure in a dialog.
+// success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure
+// in a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled,
+// and shows a failure in a dialog.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -19,7 +20,7 @@ const NEW_POST = {
   id: "p1",
   postName: "Walk day",
   postDate: null,
-  active: true,
+  status: "published",
   createdAt: "2026-10-07T00:00:00.000Z",
 };
 
@@ -44,7 +45,7 @@ describe("Dashboard page", () => {
     await user.click(screen.getByRole("button", { name: "Create a Post" }));
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.type(screen.getByLabelText("Paragraph"), "We went for a walk.");
-    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
 
     expect(
       await screen.findByRole("link", { name: "Walk day" }),
@@ -61,6 +62,59 @@ describe("Dashboard page", () => {
     expect(
       screen.getByRole("button", { name: "Create a Post" }),
     ).toBeDisabled();
+  });
+
+  it("moves a post to draft from its ⋮ menu straight away, and the refetched row shows it", async () => {
+    const { calls } = mockFetch({
+      "GET /api/siteOwner/websites": [
+        { body: { data: [{ ...WEBSITE, posts: [NEW_POST] }] } },
+        {
+          body: {
+            data: [{ ...WEBSITE, posts: [{ ...NEW_POST, status: "draft" }] }],
+          },
+        },
+      ],
+      "PATCH /api/siteOwner/posts/p1/status": {
+        body: { data: { ...NEW_POST, status: "draft" } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Walk day" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Status to draft" }));
+
+    expect(await screen.findByText("draft")).toBeInTheDocument();
+    expect(calls.find((call) => call.method === "PATCH").body).toEqual({
+      status: "draft",
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows a failed status change in a dialog and keeps the row as it was", async () => {
+    mockFetch({
+      "GET /api/siteOwner/websites": {
+        body: { data: [{ ...WEBSITE, posts: [NEW_POST] }] },
+      },
+      "PATCH /api/siteOwner/posts/p1/status": {
+        status: 404,
+        body: { error: { message: "Post not found." } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Walk day" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Status to draft" }));
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Post not found.",
+    );
+    expect(screen.getByText("published")).toBeInTheDocument();
   });
 
   async function startDelete(deleteRoute) {

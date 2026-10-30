@@ -1,5 +1,5 @@
-// Tests for usePost(id): fetching one post, update (full-form PATCH) and setStatus (archive /
-// make active), and that both mutations show the server's returned Post.
+// Tests for usePost(id): fetching one post, update (full-form PATCH) and setStatus (draft /
+// published), and that both mutations show the server's returned Post.
 
 import { describe, expect, it } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
@@ -14,7 +14,7 @@ const POST = {
   header: null,
   subHeader: null,
   postDate: null,
-  active: true,
+  status: "published",
   createdAt: "2026-10-01T00:00:00.000Z",
   updatedAt: "2026-10-01T00:00:00.000Z",
   body: [{ type: "paragraph", text: "We went for a walk." }],
@@ -71,22 +71,22 @@ describe("usePost", () => {
     expect(result.current.data).toEqual(edited);
   });
 
-  it("setStatus PATCHes { active } to the status path and replaces data", async () => {
-    const archived = { ...POST, active: false };
+  it("setStatus PATCHes { status } to the status path and replaces data", async () => {
+    const draft = { ...POST, status: "draft" };
     const { calls } = mockFetch({
       "GET /api/siteOwner/posts/p1": { body: { data: POST } },
-      "PATCH /api/siteOwner/posts/p1/status": { body: { data: archived } },
+      "PATCH /api/siteOwner/posts/p1/status": { body: { data: draft } },
     });
     const { result } = await renderLoaded();
 
     await act(async () => {
-      await result.current.setStatus(false);
+      await result.current.setStatus("draft");
     });
 
     expect(calls.find((c) => c.method === "PATCH").body).toEqual({
-      active: false,
+      status: "draft",
     });
-    expect(result.current.data).toEqual(archived);
+    expect(result.current.data).toEqual(draft);
   });
 
   it("keeps the current post when a mutation fails", async () => {
@@ -100,7 +100,7 @@ describe("usePost", () => {
     const { result } = await renderLoaded();
 
     await act(async () => {
-      await expect(result.current.setStatus(false)).rejects.toMatchObject({
+      await expect(result.current.setStatus("draft")).rejects.toMatchObject({
         status: 500,
       });
     });

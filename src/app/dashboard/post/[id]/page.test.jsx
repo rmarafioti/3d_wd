@@ -1,6 +1,6 @@
-// Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Archive / Make
-// Active, Edit a Post): the body in order with line breaks kept, the 404 view, the Active switch
-// (off archives and on activates straight away, with no dialogs, the pill following and the page
+// Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Draft / Publish,
+// Edit a Post): the body in order with line breaks kept, the 404 view, the Published switch
+// (off moves the post to draft and on publishes it straight away, with no dialogs, the pill following and the page
 // staying put), a failed status change leaving the switch as it was, closing the form after an edit with no success dialog, and
 // Delete Post (docs/flows.md → Delete a Post): confirmed, it sends the DELETE and returns to
 // /dashboard; cancelled, it sends nothing; failed, it shows the message and stays. And ?edit=1 (the
@@ -29,7 +29,7 @@ const POST = {
   header: null,
   subHeader: null,
   postDate: null,
-  active: true,
+  status: "published",
   createdAt: "2026-10-07T00:00:00.000Z",
   updatedAt: "2026-10-07T00:00:00.000Z",
   body: [
@@ -141,48 +141,48 @@ describe("Post page", () => {
     ).toHaveAttribute("href", "/dashboard");
   });
 
-  it("archives straight away when the Active switch is turned off: no confirmation, no dialog, and the pill follows", async () => {
+  it("moves the post to draft straight away when the Published switch is turned off: no confirmation, no dialog, and the pill follows", async () => {
     const { user, calls } = await setup({
       "PATCH /api/siteOwner/posts/p1/status": {
-        body: { data: { ...POST, active: false } },
+        body: { data: { ...POST, status: "draft" } },
       },
     });
 
-    await user.click(screen.getByRole("switch", { name: "Active" }));
+    await user.click(screen.getByRole("switch", { name: "Published" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+      expect(screen.getByRole("switch", { name: "Published" })).toHaveAttribute(
         "aria-checked",
         "false",
       ),
     );
-    expect(statusCalls(calls)[0].body).toEqual({ active: false });
-    // The switch's own words always show "inactive" and "active", so the pill is the second
-    // "inactive" and there is no longer an "active" pill.
-    expect(screen.getAllByText("inactive")).toHaveLength(2);
-    expect(screen.getAllByText("active")).toHaveLength(1);
+    expect(statusCalls(calls)[0].body).toEqual({ status: "draft" });
+    // The switch's own words always show "draft" and "published", so the pill is the second
+    // "draft" and there is no longer a "published" pill.
+    expect(screen.getAllByText("draft")).toHaveLength(2);
+    expect(screen.getAllByText("published")).toHaveLength(1);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
   });
 
-  it("makes an inactive post active straight away when the switch is turned on", async () => {
+  it("publishes a draft straight away when the switch is turned on", async () => {
     const { user, calls } = await setup({
       "GET /api/siteOwner/posts/p1": {
-        body: { data: { ...POST, active: false } },
+        body: { data: { ...POST, status: "draft" } },
       },
       "PATCH /api/siteOwner/posts/p1/status": { body: { data: POST } },
     });
 
-    await user.click(screen.getByRole("switch", { name: "Active" }));
+    await user.click(screen.getByRole("switch", { name: "Published" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+      expect(screen.getByRole("switch", { name: "Published" })).toHaveAttribute(
         "aria-checked",
         "true",
       ),
     );
-    expect(statusCalls(calls)[0].body).toEqual({ active: true });
-    expect(screen.getAllByText("active")).toHaveLength(2);
+    expect(statusCalls(calls)[0].body).toEqual({ status: "published" });
+    expect(screen.getAllByText("published")).toHaveLength(2);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
@@ -193,12 +193,12 @@ describe("Post page", () => {
         body: { error: { message: "Something went wrong, please try again." } },
       },
     });
-    await user.click(screen.getByRole("switch", { name: "Active" }));
+    await user.click(screen.getByRole("switch", { name: "Published" }));
 
     await screen.findByText("Something went wrong, please try again.");
     await user.click(screen.getByRole("button", { name: "Close" }));
 
-    expect(screen.getByRole("switch", { name: "Active" })).toHaveAttribute(
+    expect(screen.getByRole("switch", { name: "Published" })).toHaveAttribute(
       "aria-checked",
       "true",
     );
@@ -215,7 +215,7 @@ describe("Post page", () => {
     await user.clear(screen.getByLabelText("Post Name"));
     await user.type(screen.getByLabelText("Post Name"), "Beach day");
 
-    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
 
     expect(
       await screen.findByRole("heading", { name: "Post Name: Beach day" }),
