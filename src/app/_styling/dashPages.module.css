@@ -1,18 +1,7 @@
-.postNameSection {
-  display: flex;
-  flex-direction: row;
-}
-
-.postName {
-  font-size: 18px;
-  margin-right: 1rem;
-}
-
 .accountList,
 .account,
 .createAccounts,
-.siteOwnerAccount,
-.postList {
+.siteOwnerAccount {
   display: flex;
   flex-direction: column;
   text-align: left;
@@ -37,8 +26,7 @@
   font-weight: bold;
 }
 
-.value,
-.websiteHeader {
+.value {
   margin-bottom: 0.5rem;
 }
 

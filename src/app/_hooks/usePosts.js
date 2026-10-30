@@ -1,5 +1,6 @@
-// usePosts (site owner): post creation only. It fetches nothing, so it exposes just create;
-// the post list itself comes from useWebsites, which the dashboard refetches after a create.
+// usePosts (site owner): post creation and deletion. It fetches nothing, so it exposes just
+// create and remove; the post list itself comes from useWebsites, which the dashboard refetches
+// after either.
 
 "use client";
 
@@ -15,5 +16,15 @@ export function usePosts() {
     [],
   );
 
-  return { create };
+  // Deletes a post (a soft delete on the backend). Resolves once the API answers 204; throws the
+  // ApiError on failure. Named remove because delete is a reserved word.
+  const remove = useCallback(
+    (id) =>
+      apiFetch(`/api/siteOwner/posts/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+    [],
+  );
+
+  return { create, remove };
 }

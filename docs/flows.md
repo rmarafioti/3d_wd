@@ -2,7 +2,7 @@
 
 Full behavioral spec for each frontend flow. `CLAUDE.md` holds the short, always-loaded rules (ownership checks, anti-patterns, patterns); this file holds the specific flow detail those rules apply to. Imported from `CLAUDE.md` via `@docs/flows.md`. Request and response shapes for every call referenced here are in `docs/api.md`.
 
-All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, and the sign-in dialog, which has no X while it reads "Signing in…". They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
+All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, `ConfirmDialog`, which has only its confirm button and "Cancel" so the user makes the choice, and the sign-in dialog, which has no X while it reads "Signing in…". They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
 
 ---
 
@@ -162,9 +162,19 @@ The read-only audit log, so the administrator can answer "who did what?" without
 
 Hook used: `useWebsites()` → `GET /api/siteOwner/websites`
 
-Fetches the site owner's active websites, each with summaries of its posts. Rendered under a "Your Posts" heading as a list per website: each website's heading reads "Website: {websiteName}", and under it each post shows a link to `/dashboard/post/{id}` followed by an indicator pill reading "active" or "inactive". The link reads "{postDate} - {postName}" when the post has a date, otherwise just "{postName}". Posts are ordered by `createdAt`, newest first (as returned). A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
+Fetches the site owner's active websites, each with summaries of its posts. Rendered under a "Your Posts" heading as a table per website, like the Audit Events table: each website's heading reads "Website: {websiteName}", and under it a table with one row per post and the columns **Created**, **Post Name**, **Status** and a last column holding the row's ⋮ menu (see Post actions menu; its heading "Actions" is for screen readers only). Created is the post's `createdAt` as a local date: every post has one, while Post Date is optional and is only what the site owner shows on their website (Rich decided 2026-10-30). Post Name links to `/dashboard/post/{id}`; Status is the indicator pill reading "active" or "inactive". The columns keep fixed widths, so every website's table lines up; only the post name wraps, so the table fits a phone's width; it has no sideways-scrolling box, which would clip the ⋮ menus. Posts are ordered by `createdAt`, newest first (as returned). A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
 
 The same data also fills the website dropdown in Create a Post.
+
+### Post actions menu
+
+Each row of the post table ends in a ⋮ button (`PostActionsMenu`), named "Actions for {postName}" for screen readers, with `aria-expanded`: shortcuts to what the post page offers, which keeps its own Edit Post, Delete Post and Active switch.
+
+- Closed by default. Clicking ⋮ opens a short list over the rows below, its top on the row's bottom line and its right edge flush with the table's: **View**, **Edit**, **Delete**, in that order (Feature 8 adds Status between Edit and Delete).
+- It is a disclosure, not an ARIA menu: plain links and a button, each reached with Tab. The item under the pointer, or reached with Tab, is highlighted light gray. It closes on Esc (focus goes back to ⋮), on a click outside it (so opening another row's menu closes this one), and once an item is picked.
+- **View:** goes to `/dashboard/post/{id}`.
+- **Edit:** goes to `/dashboard/post/{id}?edit=1`, where the post page opens its Edit form as soon as the post has loaded, then drops `?edit=1` from the address so a refresh or Back doesn't reopen it. Closing or saving the form leaves the site owner on the post page, as with Edit Post (see Edit a Post).
+- **Delete:** opens the same confirmation as the post page's Delete Post (see Delete a Post), on `/dashboard`. On the `204` the list refetches (keeping its rows meanwhile) and the post leaves its table; the site owner stays on `/dashboard`, with no success dialog. A failure shows the backend's `error.message` in a dialog and the post stays listed.
 
 ### Create a Post
 
@@ -188,7 +198,7 @@ While the post saves, the Publish button reads "Publishing…" (disabled), and r
 
 **Form timeout:** an open Create / Edit Post form times out 20 hours after it opened: the dialog then shows only its title, its X and "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again." The images it held were only in the browser, so nothing is left behind. The time is checked every minute and whenever the site owner returns to the tab, so a computer waking from sleep times out on time. The session can expire first, and the browser can't read when (the cookie is httpOnly), so each return to the tab also calls `GET /api/auth/me`: an expired session's 401 goes to `/sign-in?expired=1` like any other (Session expiry), which clears the form. Publish signs before it uploads, so an expired session never uploads anything.
 
-- **Success:** close the form dialog; a dialog reads "Post {postName} has been created"; on close, refetch `useWebsites()` so the new post appears on `/dashboard`.
+- **Success:** close the form dialog and refetch `useWebsites()`, so the new post appears in its website's table on `/dashboard`. There is no success dialog: the new row shows the post was created (Rich decided 2026-10-30).
 - **Failure:** the backend's `error.message` renders inside the form dialog (and `error.fields` next to their fields). The form keeps everything entered — nothing needs to be retyped.
 
 ### PostBodyFields (shared by Create a Post and Edit a Post)
@@ -253,13 +263,13 @@ The form shows the post live as it is typed, the way it will read on the website
 
 Hook used: `usePost(id)` → `GET /api/siteOwner/posts/:id`
 
-Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line` and its formatting rendered by `FormattedText`, with links opening in a new tab; each image shown at its stored size, unoptimized and scaled to fit the page, with "Alt Text: {altText}" beneath it), plus created and last-updated dates. An empty post date, header or sub header shows "None". It is where the site owner reaches the post's operations: "Edit Post" and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
+Each post on `/dashboard` links to `/dashboard/post/{id}`. This page shows everything about the post: website name, post name, active/inactive pill, post date, header, sub header, the body in order (each paragraph with its line breaks kept via `white-space: pre-line` and its formatting rendered by `FormattedText`, with links opening in a new tab; each image shown at its stored size, unoptimized and scaled to fit the page, with "Alt Text: {altText}" beneath it), plus created and last-updated dates. An empty post date, header or sub header shows "None". It is where the site owner reaches the post's operations: "Edit Post" and "Delete Post" side by side at the end of the page (see Delete a Post), and the Active switch to the right of the pill (see Archive / Make Active). A 404 shows "Post not found." with a link back to `/dashboard`.
 
 ### Edit a Post
 
 Hook used: `usePost(id)` (`update`)
 
-On `/dashboard/post/{id}` an "Edit Post" button opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body), with two differences:
+On `/dashboard/post/{id}` an "Edit Post" button (or, from `/dashboard`, a post's ⋮ menu → Edit, see Post actions menu) opens a dialog with the same form as Create a Post, pre-filled from the post already loaded by `usePost(id)` (including its body), with two differences:
 
 - **No Website field** — a post never moves to another website. The website name is shown as read-only text.
 - **No Active toggle** — status changes only through the Active switch on the post page.
@@ -270,7 +280,7 @@ On Publish → `PATCH /api/siteOwner/posts/:id` with the full form `{ postName, 
 
 New images upload on Publish exactly as in Create a Post; existing images keep their `image.id`, `src`, `width` and `height` and are not uploaded again. The form timeout applies here too.
 
-- **Success:** close the form dialog; a dialog reads "Post {postName} has been updated"; on close, stay on `/dashboard/post/{id}`, which already shows the updated post so the site owner can check the edit landed.
+- **Success:** close the form dialog and stay on `/dashboard/post/{id}`, which already shows the updated post so the site owner can check the edit landed. There is no success dialog (Rich decided 2026-10-30).
 - **Failure:** the backend's `error.message` renders inside the form dialog; entered data stays intact.
 
 ### Archive / Make Active
@@ -284,9 +294,22 @@ On `/dashboard` and `/dashboard/post/{id}` every post shows an "active" or "inac
 - **Switching it off (archive)** sends `{ active: false }` immediately.
 - **Switching it on (make active)** sends `{ active: true }` immediately.
 
-There is no confirmation and no success dialog: archiving is reversible with the same switch, so the change is one motion. `ConfirmDialog` is kept for future destructive actions that can't be undone in one step.
+There is no confirmation and no success dialog: archiving is reversible with the same switch, so the change is one motion. `ConfirmDialog` is for actions that can't be undone in one step, such as Delete a Post.
 
 Request: `PATCH /api/siteOwner/posts/:id/status` with `{ active: false }` or `{ active: true }`.
 
 - **Failure:** render the backend's `error.message` in a dialog; the switch and the pill stay as they were.
 - **Success:** the pill and the switch change to the new status; the site owner stays on `/dashboard/post/{id}`.
+
+### Delete a Post
+
+Hook used: `usePosts()` (`remove`)
+
+Archiving keeps a post on the dashboard; deleting removes a post the site owner no longer wants, from the dashboard and the website. It is a soft delete on the backend (the row stays, with `deleted_at` stamped), but as far as the site owner and the client website can tell the post is gone for good: there is no undelete in the app.
+
+On `/dashboard/post/{id}` a **"Delete Post"** button sits beside "Edit Post", apart from the Active switch. A post's ⋮ menu on `/dashboard` offers the same delete (see Post actions menu). Clicking it opens `ConfirmDialog` reading "Delete {postName}? It will be removed from your dashboard and your website. This can't be undone.", with a "Delete Post" button and "Cancel". It has no X, so the site owner makes the choice. Cancel or Esc close it and send nothing.
+
+Request, on confirm: `DELETE /api/siteOwner/posts/:id`, no body (it carries `X-CSRF-Protection: 1` like every write). The confirm dialog closes, and the page's "Delete Post" button reads "Deleting…", disabled with "Edit Post", while the request is in flight.
+
+- **Success (`204`, no body):** go to `/dashboard`, where the post is no longer listed. Its old URL now shows "Post not found." with the link back to `/dashboard` (Get a Post by ID).
+- **Failure:** render the backend's `error.message` in a dialog (for example "Post not found." if it was already deleted); the site owner stays on the post page and can try again.

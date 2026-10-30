@@ -46,8 +46,10 @@ its height follows its stored proportions. */
   height: auto;
 }
 
-/* Space between Edit Post, the last thing on the page, and the footer. */
-.editButton {
+/* Edit Post and Delete Post, the last thing on the page, with space between them and the footer. */
+.actionRow {
+  display: flex;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 

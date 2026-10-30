@@ -1,0 +1,82 @@
+.postList {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.websiteHeader {
+  margin-bottom: 0.5rem;
+}
+
+/* No sideways-scrolling box as on the Audit Events page: it would clip each row's ⋮ menu. The
+   columns keep fixed widths (set on the header cells, which a fixed layout reads), so every
+   website's table lines up; Post Name takes the rest (14rem on desktop) and wraps. */
+.table {
+  width: 30rem;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.createdColumn {
+  width: 7rem;
+}
+
+.statusColumn {
+  width: 6rem;
+}
+
+.actionsColumn {
+  width: 3rem;
+}
+
+/* The menu's list opens from this cell: flush with the table's right edge and the row's bottom
+   line. The ⋮ button is inline, so it centres in the column. */
+.table .actionsCell {
+  position: relative;
+  text-align: center;
+}
+
+/* The same cells as the audit event table. */
+.table th,
+.table td {
+  padding: 0.5rem;
+  border: 1px solid lightgray;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* The date, the pill and the ⋮ button stay on one line; only the post name (column 2) wraps,
+   breaking even a long unspaced name so it never runs past its column. */
+.table td:not(:nth-child(2)) {
+  white-space: nowrap;
+}
+
+.table td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
+/* For screen readers only: the menu column's heading. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* At phone width the table is the screen's width less a 1rem gutter each side; the fixed columns
+   keep their widths and Post Name shrinks to the space left. */
+@media (max-width: 667px) {
+  .postList {
+    width: calc(100vw - 2rem);
+  }
+
+  .table {
+    width: 100%;
+  }
+}

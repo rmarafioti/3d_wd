@@ -67,7 +67,7 @@ Both repos release production from a `production` branch, so a merge to `main` n
 
 1. **Merge.** Each PR merges to `main` with CI green (branch protection). Both staging sites deploy by themselves: Vercel builds this repo's `main` at `staging.3dwebdev.com`, and Render deploys the backend's `main` to `https://api-staging.3dwebdev.com`.
 2. **Check staging,** in a separate browser profile (section 2).
-3. **Release:** Rich runs `npm run release` in the backend repo (`npm run release -- --dry-run` shows what it would do). It releases each repo's `origin/main`, never a local working tree. It stops unless the backend's `main` is already live on staging, and asks before releasing new migrations. It pushes the backend's `main` to `production` and waits until Render reports the API live, then pushes this repo's `main` to its `production` branch and waits for Vercel's production deployment. If the backend's CI or deploy fails, it stops before the frontend, and production keeps the previous version. Backend first is what a contract change needs (`docs/scaling.md` §3). The script finds this repo as the sibling folder `../3d_wd`, or at `FRONTEND_DIR`.
+3. **Release:** Rich runs `npm run release` in the backend repo (`npm run release -- --dry-run` shows what it would do). It releases each repo's `origin/main`, never a local working tree. It stops unless the backend's `main` is already live on staging, and asks before releasing new migrations. It pushes the backend's `main` to `production` and waits until Render reports the API live, then pushes this repo's `main` to its `production` branch and waits for Vercel's production deployment. If the backend's CI or deploy fails, it stops before the frontend, and production keeps the previous version. Backend first is what a contract change needs (`docs/scaling.md` §3). The script finds this repo as the sibling folder `../3d_wd`, or at `FRONTEND_DIR`. The first release (2026-10-29) went through with no Manual Deploy on Render, and the script saw Vercel's production deploy finish.
 4. **Check production** at `https://3dwebdev.com`.
 
 This repo is never pushed to `staging` or `production` by hand.
@@ -78,7 +78,7 @@ Numbered as in the backend's `docs/deploy.md` → Deployment checklist; the step
 
 - **2.** This file. Done 2026-10-24.
 - **5.** Move the frontend and client website projects into a Vercel Pro team (Rich). Done.
-- **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23.
+- **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23. This repo's `production` branch is protected too (Rich, 2026-10-29): a rule with no "Require…" boxes, so force pushes and deletions are blocked; no pull request or status check is required, since the release push happens outside a pull request.
 - **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich). Done. Since 2026-10-29 the domain and the staging env vars follow `main` instead, and the `staging` branch is deleted (section 8).
 - **17.** The first staging deploy. Done.
 - **18.** The staging test, end to end, in a separate browser profile. Done.

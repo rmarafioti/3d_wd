@@ -1,18 +1,24 @@
 // Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Archive / Make
 // Active, Edit a Post): the body in order with line breaks kept, the 404 view, the Active switch
 // (off archives and on activates straight away, with no dialogs, the pill following and the page
-// staying put), a failed status change leaving the switch as it was, and staying put after an edit.
+// staying put), a failed status change leaving the switch as it was, closing the form after an edit with no success dialog, and
+// Delete Post (docs/flows.md → Delete a Post): confirmed, it sends the DELETE and returns to
+// /dashboard; cancelled, it sends nothing; failed, it shows the message and stays. And ?edit=1 (the
+// dashboard's ⋮ menu → Edit) opening the Edit form, then dropping itself from the address.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostPage from "./page";
 import { mockFetch } from "../../../../test/helpers";
 
 const router = { push: vi.fn(), replace: vi.fn() };
+// The page's query string; a test sets it before rendering.
+let search = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
   useParams: () => ({ id: "p1" }),
+  useSearchParams: () => new URLSearchParams(search),
 }));
 
 const POST = {
@@ -42,7 +48,8 @@ const POST = {
   ],
 };
 
-async function setup(routes) {
+async function setup(routes, query = "") {
+  search = query;
   const { calls } = mockFetch({
     "GET /api/siteOwner/posts/p1": { body: { data: POST } },
     ...routes,
@@ -51,6 +58,13 @@ async function setup(routes) {
   render(<PostPage />);
   await screen.findByRole("heading", { name: "Post Name: Walk day" });
   return { user, calls };
+}
+
+function deleteCalls(calls) {
+  return calls.filter(
+    (call) =>
+      call.method === "DELETE" && call.path === "/api/siteOwner/posts/p1",
+  );
 }
 
 function statusCalls(calls) {
@@ -191,7 +205,7 @@ describe("Post page", () => {
     expect(router.push).not.toHaveBeenCalled();
   });
 
-  it("stays on the page showing the edit after Edit Post succeeds", async () => {
+  it("closes the form and shows the edit after Edit Post succeeds, with no success dialog", async () => {
     const { user } = await setup({
       "PATCH /api/siteOwner/posts/p1": {
         body: { data: { ...POST, postName: "Beach day" } },
@@ -202,12 +216,80 @@ describe("Post page", () => {
     await user.type(screen.getByLabelText("Post Name"), "Beach day");
 
     await user.click(screen.getByRole("button", { name: "Publish" }));
-    await screen.findByText("Post Beach day has been updated");
-    await user.click(screen.getByRole("button", { name: "Close" }));
 
     expect(
-      screen.getByRole("heading", { name: "Post Name: Beach day" }),
+      await screen.findByRole("heading", { name: "Post Name: Beach day" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("deletes the post once it is confirmed and goes back to /dashboard", async () => {
+    const { user, calls } = await setup({
+      "DELETE /api/siteOwner/posts/p1": { status: 204 },
+    });
+    await user.click(screen.getByRole("button", { name: "Delete Post" }));
+    const dialog = screen.getByRole("dialog");
+
+    expect(dialog).toHaveTextContent(
+      "Delete Walk day? It will be removed from your dashboard and your website. This can't be undone.",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Delete Post" }),
+    );
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
+    expect(deleteCalls(calls)).toHaveLength(1);
+    expect(deleteCalls(calls)[0].headers["X-CSRF-Protection"]).toBe("1");
+  });
+
+  it("sends nothing when the delete is cancelled", async () => {
+    const { user, calls } = await setup();
+    await user.click(screen.getByRole("button", { name: "Delete Post" }));
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(deleteCalls(calls)).toHaveLength(0);
+    expect(
+      screen.getByRole("heading", { name: "Post Name: Walk day" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a failed delete in a dialog and stays on the post", async () => {
+    const { user } = await setup({
+      "DELETE /api/siteOwner/posts/p1": {
+        status: 404,
+        body: { error: { message: "Post not found." } },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Delete Post" }));
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Delete Post",
+      }),
+    );
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Post not found.",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Post Name: Walk day" }),
     ).toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("opens the Edit form on load from ?edit=1, then drops it from the address", async () => {
+    await setup({}, "edit=1");
+
+    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
+    expect(router.replace).toHaveBeenCalledWith("/dashboard/post/p1");
+  });
+
+  it("opens no form without ?edit=1", async () => {
+    await setup();
+
+    expect(screen.queryByLabelText("Post Name")).not.toBeInTheDocument();
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });
