@@ -1,5 +1,6 @@
-// Site owner dashboard: websites with their post tables, Create a Post, and the delete shortcut
-// from each row's ⋮ menu (its confirmation, then a refetch so the post leaves the table).
+// Site owner dashboard: websites with their post tables, Create a Post, and the shortcuts from
+// each row's ⋮ menu that save from here: Status (straight away, then a refetch so the row's pill
+// follows) and Delete (its confirmation, then a refetch so the post leaves the table).
 // A Client Component on purpose: per-user data is only ever fetched client-side.
 
 "use client";
@@ -16,18 +17,29 @@ import styles from "../_styling/dashPages.module.css";
 
 export default function DashboardPage() {
   const websites = useWebsites();
-  const { create, remove } = usePosts();
+  const { create, setStatus, remove } = usePosts();
   const [creating, setCreating] = useState(false);
   // The post whose delete is being confirmed, from its ⋮ menu, or null.
   const [deleting, setDeleting] = useState(null);
-  // A failed delete's message, held only while its dialog is open.
-  const [deleteError, setDeleteError] = useState(null);
+  // A failed status change's or delete's message, held only while its dialog is open.
+  const [actionError, setActionError] = useState(null);
 
   // No success dialog: the new post appearing in its table shows it was created (Rich decided
   // 2026-10-30). The list keeps its rows while it refetches.
   function handleCreated() {
     setCreating(false);
     websites.refetch();
+  }
+
+  // No confirmation: a status change is undone the same way. The row's pill changes once the list
+  // has refetched.
+  async function changeStatus(post, status) {
+    try {
+      await setStatus(post.id, status);
+      websites.refetch();
+    } catch (err) {
+      setActionError(err.message);
+    }
   }
 
   // The confirm dialog closes first. On success the list refetches, keeping its rows meanwhile,
@@ -39,7 +51,7 @@ export default function DashboardPage() {
       await remove(post.id);
       websites.refetch();
     } catch (err) {
-      setDeleteError(err.message);
+      setActionError(err.message);
     }
   }
 
@@ -60,6 +72,7 @@ export default function DashboardPage() {
           websites={websites.data}
           loading={websites.loading}
           error={websites.error}
+          onStatusChange={changeStatus}
           onDelete={setDeleting}
         />
 
@@ -80,10 +93,10 @@ export default function DashboardPage() {
             onClose={() => setDeleting(null)}
           />
         )}
-        {deleteError && (
+        {actionError && (
           <MessageDialog
-            message={deleteError}
-            onClose={() => setDeleteError(null)}
+            message={actionError}
+            onClose={() => setActionError(null)}
           />
         )}
       </section>

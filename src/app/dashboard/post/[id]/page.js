@@ -1,5 +1,5 @@
-// Single post view: full post details, Edit Post, Delete Post, and the Active switch next to the
-// status pill. Switching it off (archive) or on (make active) saves straight away, with no
+// Single post view: full post details, Edit Post, Delete Post, and the Published switch next to
+// the status pill. Switching it off (draft) or on (publish) saves straight away, with no
 // confirmation and no success dialog: the pill and the switch change once the request succeeds; a
 // failure shows a dialog. Delete Post can't be undone from the app, so it asks first
 // (ConfirmDialog), then returns to /dashboard once the post is deleted. The dashboard's ⋮ menu
@@ -57,10 +57,10 @@ export default function PostPage() {
   if (loading) return <p>Loading…</p>;
 
   // usePost stores the API's Post on success, which moves the pill and the switch together.
-  async function changeStatus(active) {
+  async function changeStatus(published) {
     setStatusPending(true);
     try {
-      await setStatus(active);
+      await setStatus(published ? "published" : "draft");
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -88,12 +88,18 @@ export default function PostPage() {
         <p>Website: {post.websiteName}</p>
         <h1>Post Name: {post.postName}</h1>
         <div className={styles.statusRow}>
-          <StatusPill active={post.active} className={styles.statusPill} />
+          <StatusPill
+            active={post.status === "published"}
+            onLabel="published"
+            offLabel="draft"
+            className={styles.statusPill}
+          />
           <Toggle
-            label="Active"
-            offLabel="inactive"
-            onLabel="active"
-            checked={post.active}
+            label="Published"
+            statusColors
+            offLabel="draft"
+            onLabel="published"
+            checked={post.status === "published"}
             disabled={statusPending}
             onChange={changeStatus}
           />

@@ -1,6 +1,6 @@
-// usePosts (site owner): post creation and deletion. It fetches nothing, so it exposes just
-// create and remove; the post list itself comes from useWebsites, which the dashboard refetches
-// after either.
+// usePosts (site owner): post creation, status changes from the dashboard's ⋮ menu, and
+// deletion. It fetches nothing, so it exposes just create, setStatus and remove; the post list
+// itself comes from useWebsites, which the dashboard refetches after each.
 
 "use client";
 
@@ -8,11 +8,21 @@ import { useCallback } from "react";
 import { apiFetch } from "../_lib/apiFetch";
 
 export function usePosts() {
-  // payload: { websiteId, postName, header, subHeader, postDate, active, body }.
+  // payload: { websiteId, postName, header, subHeader, postDate, status, body }.
   // Returns the created Post. Throws the ApiError on failure.
   const create = useCallback(
     (payload) =>
       apiFetch("/api/siteOwner/posts", { method: "POST", body: payload }),
+    [],
+  );
+
+  // status: "published" or "draft". Returns the updated Post. Throws the ApiError on failure.
+  const setStatus = useCallback(
+    (id, status) =>
+      apiFetch(`/api/siteOwner/posts/${encodeURIComponent(id)}/status`, {
+        method: "PATCH",
+        body: { status },
+      }),
     [],
   );
 
@@ -26,5 +36,5 @@ export function usePosts() {
     [],
   );
 
-  return { create, remove };
+  return { create, setStatus, remove };
 }

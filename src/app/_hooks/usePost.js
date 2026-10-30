@@ -23,12 +23,12 @@ export function usePost(id) {
     [path, setData],
   );
 
-  // active: true (the Active switch on) or false (off). Returns the updated Post.
+  // status: "published" (the Published switch on) or "draft" (off). Returns the updated Post.
   const setStatus = useCallback(
-    async (active) => {
+    async (status) => {
       const post = await apiFetch(`${path}/status`, {
         method: "PATCH",
-        body: { active },
+        body: { status },
       });
       setData(post);
       return post;

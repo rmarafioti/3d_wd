@@ -1,6 +1,9 @@
 // PostActionsMenu (site owner): the ⋮ button at the end of each post's row on /dashboard, with
-// shortcuts to what the post page offers: View, Edit (the post page with its Edit form open) and
-// Delete (onDelete, whose confirmation the dashboard owns). A disclosure, like the Accounts aside,
+// shortcuts to what the post page offers: View, Edit (the post page with its Edit form open),
+// Status ("Status to publish" on a draft, "Status to draft" on a published post, worded to
+// match the table's Status column: onStatusChange, which saves
+// straight away, since it can be undone) and Delete (onDelete, whose confirmation the dashboard
+// owns). A disclosure, like the Accounts aside,
 // not an ARIA menu: plain links and a button, reached with Tab. Closed by default; it closes on
 // Esc (focus back on ⋮), on a click outside it, and once an item is picked. Its list opens from
 // the nearest positioned ancestor (PostList's actions cell).
@@ -13,7 +16,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 
 import styles from "../_styling/postActionsMenu.module.css";
 
-export default function PostActionsMenu({ post, onDelete }) {
+export default function PostActionsMenu({ post, onStatusChange, onDelete }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
@@ -39,10 +42,17 @@ export default function PostActionsMenu({ post, onDelete }) {
   }, [open]);
 
   const postPath = `/dashboard/post/${post.id}`;
-  // In order; Feature 8 adds Status between Edit and Delete.
+  const isPublished = post.status === "published";
   const items = [
     { label: "View", href: postPath },
     { label: "Edit", href: `${postPath}?edit=1` },
+    {
+      label: isPublished ? "Status to draft" : "Status to publish",
+      onClick: () => {
+        setOpen(false);
+        onStatusChange(post, isPublished ? "draft" : "published");
+      },
+    },
     {
       label: "Delete",
       onClick: () => {
