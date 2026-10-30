@@ -1,7 +1,7 @@
 // Tests for PostActionsMenu (docs/flows.md → Post actions menu): closed by default; open, View and
 // Edit link to the post page (Edit with ?edit=1), the status item reads "Status to draft" or
-// "Status to publish" and hands onStatusChange the other status, and Delete hands the post to onDelete; it closes
-// on Esc (focus back on ⋮), on a click outside it, and once an item is picked.
+// "Status to publish" and hands onStatusChange the other status, and Delete hands the post to
+// onDelete; it closes on Esc (focus back on ⋮), on a click outside it, and once an item is picked.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

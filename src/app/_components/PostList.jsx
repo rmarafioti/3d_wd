@@ -1,9 +1,9 @@
 // PostList (site owner): each of the owner's websites with its posts in a table (published and
 // draft, newest first as the API returns them): Created, Post Name (linking to
 // /dashboard/post/{id}), Status, and each row's PostActionsMenu. Created, not the optional Post
-// Date: every post has one, and Post Date is only what the site owner shows on their website. onStatusChange(post,
-// status) and onDelete(post) are passed to each menu; the dashboard owns the requests and the
-// delete's confirmation.
+// Date: every post has one, and Post Date is only what the site owner shows on their website.
+// onStatusChange(post, status) and onDelete(post) are passed to each menu; the dashboard owns the
+// requests and the delete's confirmation.
 
 import Link from "next/link";
 

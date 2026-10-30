@@ -298,7 +298,7 @@ When Rich asks to save or remember something, write it into the most fitting pro
 - `useAdminData()` \*admin: reads AdminDataContext, `{ accounts, websites }` (the results of `useAccounts()` and `useAllWebsites()`, called once by the admin layout)
 - `useWebsites()` \*site owner: their own websites, each with post summaries
 - `usePost(id)` \*site owner: a single post; also exposes `update` and `setStatus`
-- `usePosts()` \*site owner: creation, the ⋮ menu's status change and deletion (`create`, `setStatus`, `remove`), so the dashboard and the post page delete through one request
+- `usePosts()` \*site owner: creation, status changes and deletion (`create`, `setStatus`, `remove`), so the dashboard and the post page change status and delete through one request each (`usePost`'s `setStatus` sends through it)
 - `useAuditEventMonths()` \*admin: the UTC months (`YYYY-MM`) that have audit events, newest first
 - `useAuditEvents(month)` \*admin: one UTC month (`YYYY-MM`) of audit events, newest first; also exposes `hasMore`, `loadMore`, `loadingMore` and `loadMoreError` (its own fetch, since `useApiResource` can't append pages)
 - `useApiResource(path)` \*internal: the shared GET / ignore-stale / 401 / `refetch` logic behind `useAccounts`, `useAllWebsites`, `useWebsites`, `usePost` and `useAuditEventMonths`; never called by components directly
@@ -416,7 +416,7 @@ Return the findings as a list, most important first. Each finding has: the file 
 
 ### Scope
 
-A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md, `docs/` and `README.md`. A per-step review (the self-review in Workflow Checklist) covers only that step's diff, plus anything the diff duplicates or makes dead elsewhere.
+A full review covers every file under `src/`, plus `next.config.mjs`, CLAUDE.md, `docs/` and `README.md`. A per-step review (the self-review in Workflow Checklist) covers only that step's diff, plus anything the diff duplicates or makes dead elsewhere. The per-step review is mandatory on every code update (Workflow Checklist).
 
 ## Documentation Sync
 
@@ -491,7 +491,7 @@ Work with no issue (a quick fix Rich asks for in the session) follows the same s
   - New styling follows Rich's conventions (Anti-Patterns → New styling), no new visual direction
   - Test: verified in the browser, not just Postman
   - List every record the browser test created (accounts, websites, posts) so Rich can have the backend session delete them. Everything beyond the test baseline is cleared after testing, with its uploads in Cloudinary `3dwd-dev/`. The baseline is the admin, the test site owner `steviethedogchi@gmail.com` linked to Stevie The Dog, and its post "First Post!" (the backend's CLAUDE.md → Local database baseline is the source). Audit rows are never cleared after a test, locally or in production (Rich, 2026-10-29).
-  - Self-review the diff against Code Review → Checklist
+  - Self-review the diff against Code Review → Checklist. **Mandatory on every code update** (Rich, 2026-10-30): the first build, and every change after it, however small (a label, a colour, a fix from a finding). Run it before telling Rich the work is done or asking to commit, sweep for code the change made dead, and report the findings (or that there were none) in the same message. It is never skipped because the tests, lint and build pass.
   - `npm test` green; new or changed logic has tests per Unit Tests
 - Only commit once code is reviewed, approved and all validation and tests are green, and only commit, push and open the PR once Rich says so (Issue Workflow step 6)
 - Progress goes on the branch doing the work, feature or docs sync alike, written as the state after the merge: merging the branch is what completes the step, so progress is never edited on `main` after a merge. Never open a branch only to mark something done: work that finishes outside this repo (the backend, a client website repo, the master doc, Rich's account work) goes into the next branch here that has real work, whose table row and Now / Next pick it up then. Small "mark it done" branches pile up and are a waste (Rich decided 2026-10-22).

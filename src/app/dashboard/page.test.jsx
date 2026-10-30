@@ -1,8 +1,8 @@
 // Tests for the site owner dashboard's own wiring (docs/flows.md → Create a Post, Post actions
 // menu): the form opens from "Create a Post", and a create closes it and refetches the list with no
-// success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure in
-// a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled, and
-// shows a failure in a dialog.
+// success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure
+// in a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled,
+// and shows a failure in a dialog.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";

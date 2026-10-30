@@ -1,12 +1,11 @@
 // PostActionsMenu (site owner): the ⋮ button at the end of each post's row on /dashboard, with
 // shortcuts to what the post page offers: View, Edit (the post page with its Edit form open),
-// Status ("Status to publish" on a draft, "Status to draft" on a published post, worded to
-// match the table's Status column: onStatusChange, which saves
-// straight away, since it can be undone) and Delete (onDelete, whose confirmation the dashboard
-// owns). A disclosure, like the Accounts aside,
-// not an ARIA menu: plain links and a button, reached with Tab. Closed by default; it closes on
-// Esc (focus back on ⋮), on a click outside it, and once an item is picked. Its list opens from
-// the nearest positioned ancestor (PostList's actions cell).
+// Status ("Status to publish" on a draft, "Status to draft" on a published post, worded to match
+// the table's Status column: onStatusChange, which saves straight away, since it can be undone) and
+// Delete (onDelete, whose confirmation the dashboard owns). A disclosure, like the Accounts aside,
+// not an ARIA menu: plain links and a button, reached with Tab. Closed by default; it closes on Esc
+// (focus back on ⋮), on a click outside it, and once an item is picked. Its list opens from the
+// nearest positioned ancestor (PostList's actions cell).
 
 "use client";
 

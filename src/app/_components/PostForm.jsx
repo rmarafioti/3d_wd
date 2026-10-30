@@ -404,8 +404,8 @@ export default function PostForm({
 
               {isCreate && (
                 <>
-                  {/* A heading for the section, not the switch's label: the switch is named "Published"
-                so screen readers announce what "on" means. */}
+                  {/* A heading for the section, not the switch's label: the switch is named
+                  "Published" so screen readers announce what "on" means. */}
                   <p className={styles.statusHeader}>Status</p>
                   <p className={`${styles.message} ${styles.statusNote}`}>
                     <i>
