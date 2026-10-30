@@ -1,0 +1,44 @@
+/* Icon only, black on white like the Accounts aside toggle, not the full-width purple button.
+   Inline, so the cell it sits in can centre it. */
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 0.2rem;
+  color: black;
+  background-color: white;
+}
+
+/* Positioned against the nearest positioned ancestor, the post table's actions cell, so it opens
+   over the rows below, its top border on the row's bottom line and its right border on the
+   table's right edge. -1px lays each border over the table's line rather than beside it. */
+.menuList {
+  position: absolute;
+  top: calc(100% - 1px);
+  right: -1px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+  background-color: white;
+  border: 1px solid lightgray;
+  list-style: none;
+}
+
+/* Links and the Delete button read the same: a full-width row of plain text. */
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  color: black;
+  background-color: white;
+  border-radius: 0px;
+  text-align: left;
+  text-decoration: none;
+}
+
+/* Highlights the item under the pointer, or reached with Tab (Rich, 2026-10-30). */
+.menuItem:hover,
+.menuItem:focus-visible {
+  background-color: lightgray;
+}

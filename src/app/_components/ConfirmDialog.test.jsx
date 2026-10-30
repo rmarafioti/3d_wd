@@ -1,5 +1,5 @@
-// Tests for ConfirmDialog, the shared confirmation gate kept for future destructive actions: it
-// shows its message, the confirm button calls onConfirm, and Cancel, the X or Esc call onClose.
+// Tests for ConfirmDialog, the shared confirmation gate for destructive actions (Delete Post): it
+// shows its message, the confirm button calls onConfirm, Cancel or Esc call onClose, and it has no X.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -47,13 +47,12 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("calls onClose from the X, not onConfirm", async () => {
-    const { user, onConfirm, onClose } = renderDialog();
+  it("has no X, so the choice is Cancel or the confirm button", () => {
+    renderDialog();
 
-    await user.click(screen.getByRole("button", { name: "Close" }));
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(onConfirm).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: "Close" }),
+    ).not.toBeInTheDocument();
   });
 
   it("calls onClose on Esc", () => {

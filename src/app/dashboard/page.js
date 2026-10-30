@@ -1,4 +1,5 @@
-// Site owner dashboard: websites with their post lists, and Create a Post.
+// Site owner dashboard: websites with their post tables, Create a Post, and the delete shortcut
+// from each row's ⋮ menu (its confirmation, then a refetch so the post leaves the table).
 // A Client Component on purpose: per-user data is only ever fetched client-side.
 
 "use client";
@@ -9,25 +10,37 @@ import { usePosts } from "../_hooks/usePosts";
 import PostForm from "../_components/PostForm";
 import PostList from "../_components/PostList";
 import MessageDialog from "../_components/MessageDialog";
+import ConfirmDialog from "../_components/ConfirmDialog";
 
 import styles from "../_styling/dashPages.module.css";
 
 export default function DashboardPage() {
   const websites = useWebsites();
-  const { create } = usePosts();
+  const { create, remove } = usePosts();
   const [creating, setCreating] = useState(false);
-  // The created post's name, held only while the success dialog is open.
-  const [createdName, setCreatedName] = useState(null);
+  // The post whose delete is being confirmed, from its ⋮ menu, or null.
+  const [deleting, setDeleting] = useState(null);
+  // A failed delete's message, held only while its dialog is open.
+  const [deleteError, setDeleteError] = useState(null);
 
-  function handleCreated(post) {
+  // No success dialog: the new post appearing in its table shows it was created (Rich decided
+  // 2026-10-30). The list keeps its rows while it refetches.
+  function handleCreated() {
     setCreating(false);
-    setCreatedName(post.postName);
+    websites.refetch();
   }
 
-  function handleCreatedClose() {
-    setCreatedName(null);
-    // The list refetches only now, as the flow specifies, so the new post appears.
-    websites.refetch();
+  // The confirm dialog closes first. On success the list refetches, keeping its rows meanwhile,
+  // so the post simply leaves its table.
+  async function deletePost() {
+    const post = deleting;
+    setDeleting(null);
+    try {
+      await remove(post.id);
+      websites.refetch();
+    } catch (err) {
+      setDeleteError(err.message);
+    }
   }
 
   return (
@@ -47,6 +60,7 @@ export default function DashboardPage() {
           websites={websites.data}
           loading={websites.loading}
           error={websites.error}
+          onDelete={setDeleting}
         />
 
         {creating && (
@@ -58,10 +72,18 @@ export default function DashboardPage() {
             onClose={() => setCreating(false)}
           />
         )}
-        {createdName && (
+        {deleting && (
+          <ConfirmDialog
+            message={`Delete ${deleting.postName}? It will be removed from your dashboard and your website. This can't be undone.`}
+            confirmLabel="Delete Post"
+            onConfirm={deletePost}
+            onClose={() => setDeleting(null)}
+          />
+        )}
+        {deleteError && (
           <MessageDialog
-            message={`Post ${createdName} has been created`}
-            onClose={handleCreatedClose}
+            message={deleteError}
+            onClose={() => setDeleteError(null)}
           />
         )}
       </section>
