@@ -135,6 +135,16 @@ select {
   margin-bottom: 1rem;
 }
 
+/* Two buttons side by side at the foot of a dialog (ConfirmDialog, PostStepDialog,
+   CredentialRevealModal): pushed to either end, with a gap so they never touch on a narrow
+   screen. */
+.dialogButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 input:has(+ .fieldError),
 select:has(+ .fieldError),
 textarea:has(+ .fieldError) {

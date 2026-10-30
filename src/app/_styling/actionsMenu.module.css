@@ -9,9 +9,10 @@
   background-color: white;
 }
 
-/* Positioned against the nearest positioned ancestor, the post table's actions cell, so it opens
-   over the rows below, its top border on the row's bottom line and its right border on the
-   table's right edge. -1px lays each border over the table's line rather than beside it. */
+/* Positioned against the nearest positioned ancestor (the post table's actions cell, or a post
+   toolbar row), so it opens over the rows below, its top border on the row's bottom line and its
+   right border on the row's right edge. -1px lays each border over that line rather than beside
+   it. */
 .menuList {
   position: absolute;
   top: calc(100% - 1px);
@@ -25,7 +26,8 @@
   list-style: none;
 }
 
-/* Links and the Delete button read the same: a full-width row of plain text. */
+/* Links and buttons read the same: a full-width row of plain text, or of one icon (the toolbar's
+   move arrows). */
 .menuItem {
   display: block;
   width: 100%;

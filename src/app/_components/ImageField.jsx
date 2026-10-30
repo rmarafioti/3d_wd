@@ -1,18 +1,24 @@
-// ImageField: one image element in PostBodyFields. The site owner picks a file (jpg, png or webp,
-// at most 10 MB, checked before it is kept) and writes its alt text. A picked file stays in the
-// browser until Publish (docs/flows.md → PostBodyFields): it is shown from an object URL, and
-// its size is read by loading that URL, so src, width and height are set together once it loads.
-// An existing image (Edit) shows from its stored Cloudinary src until another file is picked.
+// ImageField: one image's fields in the Add / Edit image dialog of Create / Edit Post. The site
+// owner picks a file (jpg, png or webp, at most 10 MB, checked before it is kept) and writes its
+// alt text. A picked file stays in the browser until Submit (docs/flows.md → Post body dialogs):
+// it is shown from an object URL, and its size is read by loading that URL, so src, width and
+// height are set together once it loads. An existing image shows from its src until another file
+// is picked. The image it replaces may still be the post's (the dialog can be cancelled), so this
+// field never lets go of an object URL it didn't load: PostForm does, once the dialog closes.
+// Once a file is picked, blank alt text shows a note saying it is needed to insert the image.
 
 "use client";
 
 import { useId, useRef, useState } from "react";
 import Image from "next/image";
+import CharacterCount from "./CharacterCount";
+import FieldLabel from "./FieldLabel";
 import { imageFileError, isBlank, validateImage } from "../_lib/validation";
 
 import styles from "../_styling/postForm.module.css";
 
 const UNREADABLE_MESSAGE = "This file can't be read as an image.";
+const ALT_TEXT_NOTE = "Alt text is required to insert the image.";
 
 // Picks one image's server messages out of error.fields by its path prefix:
 // ("body.2.image.") turns "body.2.image.src" into { src: "..." }.
@@ -58,7 +64,6 @@ export default function ImageField({ value, onPatch, serverErrors }) {
     image.onload = () => {
       if (loadingUrl.current !== url) return;
       loadingUrl.current = null;
-      releaseObjectUrl(value.src);
       onPatch({
         file,
         src: url,
@@ -76,8 +81,13 @@ export default function ImageField({ value, onPatch, serverErrors }) {
   }
 
   const fileMessage = fileError ?? serverErrors.src;
+  // The note covers blank alt text once there is an image, so the site owner who just picked one
+  // sees what is still missing before leaving the field.
+  const showAltTextNote = !isBlank(value.src) && isBlank(value.altText);
   const altTextMessage =
-    altTextTouched && errors.altText ? errors.altText : serverErrors.altText;
+    altTextTouched && errors.altText && !showAltTextNote
+      ? errors.altText
+      : serverErrors.altText;
 
   return (
     <>
@@ -106,11 +116,23 @@ export default function ImageField({ value, onPatch, serverErrors }) {
       />
       {fileMessage && <p className="fieldError">{fileMessage}</p>}
 
-      <label htmlFor={`${id}-altText`}>Alt Text</label>
+      <FieldLabel
+        htmlFor={`${id}-altText`}
+        label="Alt Text"
+        note={showAltTextNote ? ALT_TEXT_NOTE : undefined}
+        count={
+          <CharacterCount
+            id={`${id}-altTextCount`}
+            value={value.altText}
+            max={200}
+          />
+        }
+      />
       <input
         id={`${id}-altText`}
         type="text"
         maxLength={200}
+        aria-describedby={`${id}-altTextCount`}
         value={value.altText}
         onChange={(e) => onPatch({ altText: e.target.value })}
         onBlur={() => setAltTextTouched(true)}

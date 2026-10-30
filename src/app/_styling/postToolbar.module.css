@@ -1,0 +1,96 @@
+/* The post toolbar in the review view of Create / Edit Post: a list of the post's parts, then
+   PostForm's status and Submit. The toolbar itself has no padding, so each row's line runs its
+   full width; the rows, the heading, the messages and the footer each pad their own content 1rem
+   in from either side. */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  width: 280px;
+}
+
+.rows {
+  width: 100%;
+  margin-bottom: 1rem;
+  list-style: none;
+}
+
+/* The "Body" heading between the post's own fields and its body: bold, on a light grey line like
+   the rows, so it reads as the start of a new list. */
+.separator {
+  width: 100%;
+  padding: 0rem 1rem 0.5rem 1rem;
+  font-size: 18px;
+  border-bottom: 1px solid lightgray;
+}
+
+/* Positioned, so a row's ⋮ menu (actionsMenu.module.css) opens just under it. Each row ends in a
+   light grey line. */
+.row {
+  position: relative;
+  border-bottom: 1px solid lightgray;
+}
+
+/* The ⋮ list's right edge stays on the row's: the post table's list sits 1px past its edge to lay
+   its border over the table's line, but a toolbar row ends at the dialog's edge, where that 1px
+   would make the dialog scroll sideways. Two classes, so it wins over actionsMenu.module.css. */
+.row .menuList {
+  right: 0;
+}
+
+/* The row's name on the left, its ⋮ cell on the right, both the row's full height so the cell's
+   line runs from the row's top to its bottom line. */
+.rowMain {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* The ⋮ in a cell of its own, set apart from the row's name by a light grey line on its left. */
+.menuCell {
+  display: flex;
+  align-items: center;
+  padding: 0rem 0.5rem;
+  border-left: 1px solid lightgray;
+}
+
+/* A row's backend message, and the body's, inset like the rows' content. */
+.row > :global(.fieldError),
+.toolbar > :global(.fieldError) {
+  padding: 0rem 1rem;
+}
+
+/* PostForm's status and Submit, inset like the rows; Submit spans the footer's width. */
+.footer {
+  width: 100%;
+  padding: 0rem 1rem;
+}
+
+.footer > button {
+  width: 100%;
+}
+
+/* A long name is cut off with an ellipsis rather than pushing the ⋮ out of the row. Block, not
+   flex: an ellipsis only applies to text in a block. */
+.rowLabel {
+  align-self: center;
+  min-width: 0;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* A body element's paragraph or image icon, on the line before its words. */
+.rowIcon {
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  font-size: 20px;
+}
+
+@media (max-width: 667px) {
+  .toolbar {
+    order: 2;
+    width: 100%;
+  }
+}

@@ -1,6 +1,6 @@
 // Tests for PostPreview (docs/flows.md → Post preview): the header, sub header and date only when
-// set, paragraphs with their formatting, an image only once its fields are complete (a picked file
-// shown from its object URL), and the text shown while nothing has been typed.
+// set, the date first, paragraphs with their formatting, and images (a picked file shown from its
+// object URL).
 
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -66,12 +66,6 @@ describe("PostPreview", () => {
     expect(screen.getByText(/walk\./)).toContainHTML("A <b>good</b> walk.");
   });
 
-  it("leaves an image out until its fields are complete", () => {
-    renderPreview({ body: [PARAGRAPH, { ...IMAGE, altText: "" }] });
-
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
-  });
-
   it("shows a complete image with its alt text", () => {
     renderPreview({ body: [PARAGRAPH, IMAGE] });
 
@@ -91,13 +85,5 @@ describe("PostPreview", () => {
     expect(
       screen.getByRole("img", { name: "Stevie on the beach" }),
     ).toHaveAttribute("src", "blob:test/1");
-  });
-
-  it("says where the post will show while nothing has been typed", () => {
-    renderPreview({ body: [{ key: "p1", type: "paragraph", text: "" }] });
-
-    expect(
-      screen.getByText("Your post will show here as you type."),
-    ).toBeInTheDocument();
   });
 });

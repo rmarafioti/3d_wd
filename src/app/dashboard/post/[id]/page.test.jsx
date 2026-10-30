@@ -212,8 +212,13 @@ describe("Post page", () => {
       },
     });
     await user.click(screen.getByRole("button", { name: "Edit Post" }));
+    await user.click(
+      screen.getByRole("button", { name: "Actions for post name" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.clear(screen.getByLabelText("Post Name"));
     await user.type(screen.getByLabelText("Post Name"), "Beach day");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
@@ -282,14 +287,16 @@ describe("Post page", () => {
   it("opens the Edit form on load from ?edit=1, then drops it from the address", async () => {
     await setup({}, "edit=1");
 
-    expect(screen.getByLabelText("Post Name")).toHaveValue("Walk day");
+    expect(
+      screen.getByRole("dialog", { name: "Edit Post" }),
+    ).toBeInTheDocument();
     expect(router.replace).toHaveBeenCalledWith("/dashboard/post/p1");
   });
 
   it("opens no form without ?edit=1", async () => {
     await setup();
 
-    expect(screen.queryByLabelText("Post Name")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(router.replace).not.toHaveBeenCalled();
   });
 });

@@ -70,9 +70,9 @@ export function imageFileError(file) {
   return null;
 }
 
-// Validates one image element in PostBodyFields. Returns { fieldName: message } for each failure.
-// src is set together with width and height (a picked file's once it loads, or the stored
-// image's), so an image with a src always has its size. The src message is the form's own; the
+// Validates one image element (the Add / Edit image dialog's Insert). Returns
+// { fieldName: message } for each failure. src is set together with width and height (a picked
+// file's once it loads, or the stored image's), so an image with a src always has its size. The src message is the form's own; the
 // alt text messages match the backend's word for word.
 export function validateImage({ src, altText }) {
   const errors = {};
@@ -105,8 +105,8 @@ function linkErrorIn(text) {
   return null;
 }
 
-// Validates one paragraph element in PostBodyFields. Only the ends are trimmed when sent, so
-// line breaks inside the text, and its formatting markup, count toward the length.
+// Validates one paragraph element (the paragraph dialogs' Insert). Only the ends are trimmed when
+// sent, so line breaks inside the text, and its formatting markup, count toward the length.
 export function validateParagraph({ text }) {
   const errors = {};
   if (isBlank(text)) {
@@ -122,24 +122,9 @@ export function validateParagraph({ text }) {
   return errors;
 }
 
-// Validates the post body as a whole: it needs at least one paragraph with text. A paragraph
-// with text that fails its own check (a bad link, too long) still counts here; its own message
-// says what's wrong. The 5-paragraph and 5-image limits are enforced by PostBodyFields disabling
-// its Add buttons. This message is the form's own (docs/flows.md); the backend's is "Add at
-// least one paragraph."
-export function validateBody(elements) {
-  const errors = {};
-  const hasParagraph = elements.some(
-    (element) => element.type === "paragraph" && !isBlank(element.text),
-  );
-  if (!hasParagraph)
-    errors.body = "One paragraph is required to submit a post.";
-  return errors;
-}
-
-// Validates the top-level fields of the Create / Edit a Post form (the body is checked by
-// validateBody and per element). websiteId is only checked when requireWebsite is set
-// (Create); Edit has no Website field.
+// Validates the top-level fields of the Create / Edit a Post form (each body element is checked
+// by validateParagraph or validateImage before it is inserted). websiteId is only checked when
+// requireWebsite is set (Create); Edit has no Website field.
 export function validatePost(
   { websiteId, postName, postDate, header, subHeader },
   { requireWebsite = false } = {},

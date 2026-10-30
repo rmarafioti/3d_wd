@@ -1,5 +1,6 @@
-// Tests for ConfirmDialog, the shared confirmation gate for destructive actions (Delete Post): it
-// shows its message, the confirm button calls onConfirm, Cancel or Esc call onClose, and it has no X.
+// Tests for ConfirmDialog, the shared confirmation gate for destructive actions (Delete Post,
+// cancelling a post): it shows its message, the confirm button calls onConfirm, Cancel (or its
+// cancelLabel) or Esc call onClose, and it has no X.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -7,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import ConfirmDialog from "./ConfirmDialog";
 import { pressEscape } from "../../test/helpers";
 
-function renderDialog() {
+function renderDialog(props = {}) {
   const onConfirm = vi.fn();
   const onClose = vi.fn();
   const user = userEvent.setup();
@@ -15,6 +16,7 @@ function renderDialog() {
     <ConfirmDialog
       message="Are you sure?"
       confirmLabel="Delete"
+      {...props}
       onConfirm={onConfirm}
       onClose={onClose}
     />,
@@ -45,6 +47,17 @@ describe("ConfirmDialog", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("names its cancel button by cancelLabel when given", async () => {
+    const { user, onClose } = renderDialog({ cancelLabel: "Keep editing" });
+    expect(
+      screen.queryByRole("button", { name: "Cancel" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("has no X, so the choice is Cancel or the confirm button", () => {

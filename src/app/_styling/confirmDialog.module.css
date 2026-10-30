@@ -1,0 +1,7 @@
+/* A confirmation is a short message and two buttons, so it stays narrow and a long message (a long
+   post name) wraps instead of stretching it across the screen: two lines for a typical Delete Post
+   message (Rich, 2026-10-30). The same width as Create / Edit Post's step dialogs. The global
+   dialog max-width still keeps it inside a phone's viewport. */
+.confirmDialog {
+  width: 500px;
+}

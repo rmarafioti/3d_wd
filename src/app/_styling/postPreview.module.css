@@ -1,81 +1,33 @@
-/* The Create / Edit Post dialog: its header (title and X) stays put, and only the form and
-   preview beneath it scroll. Only while open: a closed <dialog> must keep the browser's
-   display: none. */
-.postDialog[open] {
+/* The review view of Create / Edit Post: wide enough for the Add buttons, the preview and the
+   toolbar side by side. The global dialog max-width still keeps it inside the viewport. */
+.reviewDialog {
+  width: 1100px;
+}
+
+/* The Add buttons on the left, the preview in the middle taking the rest of the width, the toolbar
+   on the right. No gap: the toolbar meets the preview's right line, so its rows' lines run from
+   that line to the toolbar's right edge; the Add buttons keep their space from the preview with
+   their own padding. The columns stretch to the tallest one, so the preview's lines run the full
+   height of the view, beside every toolbar row. */
+.reviewLayout {
+  display: flex;
+}
+
+.addButtons {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-/* While the preview is open beside the form: wide enough for both columns. The global dialog
-   max-width still keeps it inside the viewport. */
-.withPreview {
-  width: 900px;
-}
-
-.dialogHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   flex-shrink: 0;
-  margin-bottom: 1rem;
-}
-
-/* The form and the preview side by side, filling the dialog under its header. The layout itself
-   doesn't scroll: each column scrolls on its own, with its scrollbar at its own right edge. */
-.layout {
-  display: flex;
-  gap: 1rem;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* The line between the form and the preview is the form column's right border. The column is
-   always the layout's full height and scrolls inside it, so the line runs the dialog's full
-   height however far the form scrolls. Scroll anchoring is off, so opening something in the form
-   (a paragraph's links list) pushes what is below it down instead of scrolling the view and
-   moving what the site owner is looking at. */
-.formColumn {
-  flex-shrink: 0;
+  gap: 0.5rem;
   padding-right: 1rem;
-  border-right: 1px solid lightgray;
-  overflow-y: auto;
-  overflow-anchor: none;
 }
 
-/* The preview stays in view while the form scrolls, and scrolls on its own when the post is
-   longer than the dialog. */
+/* The lines either side of the preview set it apart from the buttons and the toolbar. */
 .previewColumn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: auto;
-  overflow-anchor: none;
-}
-
-/* Open, the preview takes the rest of the dialog's width. */
-.open {
   flex: 1;
   min-width: 0;
-}
-
-/* Hidden, only its toggle shows; the padding matches the 1rem gap on its left, so the toggle sits
-   evenly between the line and the dialog's edge. */
-.previewColumn:not(.open) {
-  padding-right: 1rem;
-}
-
-/* The hide / reveal toggle, the same look as the Accounts aside toggle. */
-.toggle {
-  display: flex;
-  align-items: center;
-  color: black;
-  background-color: white;
-  font-size: 18px;
-  border-radius: 0px;
-  padding: 0.5rem 0rem 0.5rem 0rem;
-  width: auto;
-  text-align: left;
+  padding: 0rem 1rem;
+  border-left: 1px solid lightgray;
+  border-right: 1px solid lightgray;
 }
 
 .preview {
@@ -95,33 +47,25 @@
   margin-bottom: 1rem;
 }
 
-.previewButtons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* On a phone the form and the preview are separate views, so there is no line between them, and
-   the layout scrolls whichever view is showing instead of each column scrolling on its own. */
+/* On a phone the three stack, top to bottom: the Add buttons, the toolbar with Submit, then the
+   preview, so the site owner's controls come first. */
 @media (max-width: 667px) {
-  /* Full width, so the form's own phone rule (width: 100% in globals.css) spans the viewport
-     again; the global dialog max-width still keeps the 1rem margins. */
-  .postDialog[open] {
-    width: 100%;
+  .reviewLayout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 
-  .layout {
-    overflow-y: auto;
-  }
-
-  .formColumn {
-    width: 100%;
+  .addButtons {
+    order: 1;
     padding-right: 0rem;
-    border-right: none;
-    overflow-y: visible;
   }
 
   .previewColumn {
-    width: 100%;
-    overflow-y: visible;
+    order: 3;
+    padding: 1rem 0rem 0rem 0rem;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid lightgray;
   }
 }

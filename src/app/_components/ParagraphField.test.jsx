@@ -1,422 +1,59 @@
-// Tests for PostBodyFields (docs/flows.md → PostBodyFields): adding paragraphs and images in
-// order and the Add buttons' labels, the one-paragraph rule, the "complete it before adding
-// another" rule and its notes, Move up / Move down / Delete, the 5-paragraph and 5-image limits
-// shown as text, each image's file picker (refused files, a picked file shown from memory, object
-// URLs let go of, a late load for a replaced file), server messages on the right element, onReindex on every add, move and delete, and each paragraph's Bold /
-// Italic / Link buttons (docs/flows.md → Paragraph formatting).
+// Tests for ParagraphField (docs/flows.md → Paragraph formatting): its Bold / Italic / Link
+// buttons and their shortcuts, the Link panel, the links list with its Edit and Delete, and the
+// messages for a bad link. ParagraphField is controlled; the harness owns its value the way
+// PostForm's paragraph dialogs own their draft.
 
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import PostBodyFields from "./PostBodyFields";
-import {
-  imageFile,
-  selectText,
-  stubImageLoading,
-  stubObjectUrls,
-} from "../../test/helpers";
+import ParagraphField from "./ParagraphField";
+import { selectText } from "../../test/helpers";
 
-// The Add buttons read "Add a / an …" with none of that type and "Add another …" once there is
-// one; the exact label has its own test below.
-const ADD_PARAGRAPH = /^Add (a|another) paragraph$/;
-const ADD_IMAGE = /^Add (an|another) image$/;
-
-const PARAGRAPH = { key: "p1", type: "paragraph", text: "First." };
-const SECOND = { key: "p2", type: "paragraph", text: "Second." };
-const IMAGE = {
-  key: "i1",
-  type: "image",
-  src: "https://res.cloudinary.com/demo/image/upload/v1/3dwd-dev/stevie/one.jpg",
-  width: 800,
-  height: 600,
-  altText: "Stevie",
-};
-
-// PostBodyFields is controlled; this owns the array the way PostForm does.
-function Harness({ initialBody = [PARAGRAPH], fieldErrors = {}, onReindex }) {
-  const [body, setBody] = useState(initialBody);
+function Harness({ initialText }) {
+  const [value, setValue] = useState({ type: "paragraph", text: initialText });
   return (
-    <PostBodyFields
-      body={body}
-      setBody={setBody}
-      fieldErrors={fieldErrors}
-      onReindex={onReindex}
+    <ParagraphField
+      name="paragraph 1"
+      value={value}
+      onChange={(changes) =>
+        setValue((current) => ({ ...current, ...changes }))
+      }
     />
   );
 }
 
-function setup(props = {}) {
-  const onReindex = vi.fn();
+function setup(text) {
   const user = userEvent.setup();
-  render(<Harness onReindex={onReindex} {...props} />);
-  return { user, onReindex };
+  render(<Harness initialText={text} />);
+  return { user };
 }
 
-function many(element, count) {
-  return Array.from({ length: count }, (_, i) => ({
-    ...element,
-    key: `${element.key}-${i}`,
-  }));
-}
+describe("ParagraphField", () => {
+  it("counts the paragraph's characters out of 10000 beside its label", async () => {
+    const { user } = setup("");
 
-// The body as the site owner sees it, top to bottom: each paragraph's text or image's alt text.
-function bodyOrder() {
-  return screen
-    .getAllByLabelText(/^(Paragraph|Alt Text)$/)
-    .map((input) => input.value);
-}
+    await user.type(screen.getByLabelText("Paragraph"), "Hello");
 
-describe("PostBodyFields", () => {
-  it('labels the Add buttons "Add a / an …" with none of that type and "Add another …" once there is one', async () => {
-    const { user } = setup();
-
-    expect(
-      screen.getByRole("button", { name: "Add another paragraph" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Add an image" }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Add an image" }));
-
-    expect(
-      screen.getByRole("button", { name: "Add another image" }),
-    ).toBeInTheDocument();
-  });
-
-  it("appends paragraphs and images in the order they are added, and reindexes", async () => {
-    const { user, onReindex } = setup();
-
-    await user.click(screen.getByRole("button", { name: ADD_IMAGE }));
-    await user.type(screen.getByLabelText("Alt Text"), "Stevie");
-    await user.click(screen.getByRole("button", { name: ADD_PARAGRAPH }));
-    await user.type(screen.getAllByLabelText("Paragraph")[1], "Last.");
-
-    expect(bodyOrder()).toEqual(["First.", "Stevie", "Last."]);
-    expect(onReindex).toHaveBeenCalledTimes(2);
-  });
-
-  it('offers only "Add a paragraph", with the required message above it, once every paragraph is deleted', async () => {
-    const { user } = setup({ initialBody: [PARAGRAPH, IMAGE] });
-
-    await user.click(
-      screen.getByRole("button", { name: "Delete paragraph 1" }),
+    expect(screen.getByText("5 / 10000")).toBeInTheDocument();
+    expect(screen.getByLabelText("Paragraph")).toHaveAccessibleDescription(
+      "5 / 10000",
     );
-
-    const addParagraph = screen.getByRole("button", {
-      name: "Add a paragraph",
-    });
-    const note = screen.getByText(
-      "One paragraph is required to submit a post.",
-    );
-    expect(addParagraph).toBeEnabled();
-    expect(note.compareDocumentPosition(addParagraph)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-    expect(
-      screen.queryByRole("button", { name: ADD_IMAGE }),
-    ).not.toBeInTheDocument();
   });
 
-  it("names each element's buttons by its type and position for screen readers", () => {
-    setup({ initialBody: [PARAGRAPH, IMAGE, SECOND] });
-
-    expect(
-      screen.getByRole("button", { name: "Move paragraph 2 up" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Move image 1 down" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Delete paragraph 1" }),
-    ).toBeInTheDocument();
-  });
-
-  it("disables Move up on the first element and Move down on the last", () => {
-    setup({ initialBody: [PARAGRAPH, IMAGE, SECOND] });
-
-    expect(
-      screen.getByRole("button", { name: "Move paragraph 1 up" }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Move paragraph 2 down" }),
-    ).toBeDisabled();
-  });
-
-  it("swaps an element with the one above on Move up, and reindexes", async () => {
-    const { user, onReindex } = setup({
-      initialBody: [PARAGRAPH, IMAGE, SECOND],
-    });
-
-    await user.click(screen.getByRole("button", { name: "Move image 1 up" }));
-
-    expect(bodyOrder()).toEqual([IMAGE.altText, "First.", "Second."]);
-    expect(onReindex).toHaveBeenCalledOnce();
-  });
-
-  it("swaps an element with the one below on Move down, and reindexes", async () => {
-    const { user, onReindex } = setup({
-      initialBody: [PARAGRAPH, IMAGE, SECOND],
-    });
-
-    await user.click(screen.getByRole("button", { name: "Move image 1 down" }));
-
-    expect(bodyOrder()).toEqual(["First.", "Second.", IMAGE.altText]);
-    expect(onReindex).toHaveBeenCalledOnce();
-  });
-
-  it("removes an element with Delete and reindexes", async () => {
-    const { user, onReindex } = setup({ initialBody: [PARAGRAPH, IMAGE] });
-
-    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
-
-    expect(screen.queryByLabelText("Alt Text")).not.toBeInTheDocument();
-    expect(onReindex).toHaveBeenCalledOnce();
-  });
-
-  it("hides both Add buttons, with the required message under that paragraph's buttons, while the only paragraph is blank", () => {
-    setup({ initialBody: [{ ...PARAGRAPH, text: "" }] });
-
-    const note = screen.getByText(
-      "One paragraph is required to submit a post.",
-    );
-    expect(
-      screen
-        .getByRole("button", { name: "Delete paragraph 1" })
-        .compareDocumentPosition(note),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(
-      screen.queryByText("Complete or delete paragraph to submit."),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: ADD_IMAGE }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: ADD_PARAGRAPH }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("shows both Add buttons, enabled, once the paragraph has text", async () => {
-    const { user } = setup({ initialBody: [{ ...PARAGRAPH, text: "" }] });
-
-    await user.type(screen.getByLabelText("Paragraph"), "Hi");
-
-    expect(
-      screen.queryByText("One paragraph is required to submit a post."),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeEnabled();
-    expect(screen.getByRole("button", { name: ADD_PARAGRAPH })).toBeEnabled();
-  });
-
-  it("disables Add image, with a note under that image's buttons, while an image is incomplete", () => {
-    setup({ initialBody: [PARAGRAPH, { ...IMAGE, altText: "" }] });
-
-    const note = screen.getByText("Complete or delete image to submit.");
-    expect(
-      screen
-        .getByRole("button", { name: "Delete image 1" })
-        .compareDocumentPosition(note),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(
-      note.compareDocumentPosition(
-        screen.getByRole("button", { name: ADD_PARAGRAPH }),
-      ),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeDisabled();
-    expect(screen.getByRole("button", { name: ADD_PARAGRAPH })).toBeEnabled();
-  });
-
-  it("disables Add paragraph, with a note under that paragraph's buttons, while a second paragraph is blank", () => {
-    setup({ initialBody: [PARAGRAPH, { ...SECOND, text: "" }] });
-
-    const note = screen.getByText("Complete or delete paragraph to submit.");
-    expect(
-      screen
-        .getByRole("button", { name: "Delete paragraph 2" })
-        .compareDocumentPosition(note),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(screen.getByRole("button", { name: ADD_PARAGRAPH })).toBeDisabled();
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeEnabled();
-  });
-
-  it("keeps the Add labels and shows the limits as text at 5 paragraphs and 5 images", () => {
-    setup({ initialBody: [...many(PARAGRAPH, 5), ...many(IMAGE, 5)] });
-
-    expect(screen.getByText("Maximum of 5 paragraphs")).toBeInTheDocument();
-    expect(screen.getByText("Maximum of 5 images")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: ADD_PARAGRAPH })).toBeDisabled();
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeDisabled();
-  });
-
-  it("allows adding below the limits", () => {
-    setup({ initialBody: [...many(PARAGRAPH, 4), ...many(IMAGE, 4)] });
-
-    expect(screen.getByRole("button", { name: ADD_PARAGRAPH })).toBeEnabled();
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeEnabled();
-  });
-
-  it("shows a later blank paragraph's message once it has been left", async () => {
-    const { user } = setup({
-      initialBody: [PARAGRAPH, { ...SECOND, text: "" }],
-    });
-
-    await user.click(screen.getAllByLabelText("Paragraph")[1]);
-    await user.tab();
-
-    expect(screen.getByText("Paragraph is required.")).toBeInTheDocument();
-  });
-
-  it('shows only "One paragraph is required…", not "Paragraph is required.", while no paragraph has text', async () => {
-    const { user } = setup({ initialBody: [{ ...PARAGRAPH, text: "" }] });
+  it('shows "Paragraph is required." once a blank paragraph has been left', async () => {
+    const { user } = setup("");
 
     await user.click(screen.getByLabelText("Paragraph"));
     await user.tab();
 
-    expect(
-      screen.getByText("One paragraph is required to submit a post."),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Paragraph is required."),
-    ).not.toBeInTheDocument();
-  });
-
-  it.each([
-    [
-      "a gif",
-      imageFile("dog.gif", "image/gif"),
-      "Choose a jpg, png or webp image.",
-    ],
-    [
-      "a file over 10 MB",
-      imageFile("big.jpg", "image/jpeg", 10 * 1024 * 1024 + 1),
-      "Images must be 10 MB or smaller.",
-    ],
-  ])("refuses %s before keeping it", async (_, file, message) => {
-    const loads = stubImageLoading();
-    stubObjectUrls();
-    const user = userEvent.setup({ applyAccept: false });
-    render(
-      <Harness initialBody={[PARAGRAPH, { ...IMAGE, src: "", altText: "" }]} />,
-    );
-
-    await user.upload(screen.getByLabelText("Image"), file);
-
-    expect(screen.getByText(message)).toBeInTheDocument();
-    expect(loads).toHaveLength(0);
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
-  });
-
-  it("shows a picked file from memory once it loads, completing the image", async () => {
-    const loads = stubImageLoading();
-    stubObjectUrls();
-    const { user } = setup({
-      initialBody: [
-        PARAGRAPH,
-        { ...IMAGE, src: "", width: null, height: null },
-      ],
-    });
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeDisabled();
-
-    await user.upload(screen.getByLabelText("Image"), imageFile("dog.jpg"));
-    loads.at(-1).load(1200, 900);
-
-    const thumbnail = await screen.findByRole("img", { name: "Stevie" });
-    expect(thumbnail).toHaveAttribute("src", "blob:test/1");
-    expect(thumbnail).toHaveAttribute("width", "1200");
-    expect(screen.getByRole("button", { name: ADD_IMAGE })).toBeEnabled();
-  });
-
-  it("refuses a file that can't be read as an image, and lets go of its object URL", async () => {
-    const loads = stubImageLoading();
-    const { revokeObjectURL } = stubObjectUrls();
-    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
-
-    await user.upload(screen.getByLabelText("Image"), imageFile("broken.jpg"));
-    loads.at(-1).fail();
-
-    expect(
-      await screen.findByText("This file can't be read as an image."),
-    ).toBeInTheDocument();
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
-  });
-
-  it("keeps the newer file when an older one finishes loading late", async () => {
-    const loads = stubImageLoading();
-    stubObjectUrls();
-    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
-    const input = screen.getByLabelText("Image");
-
-    await user.upload(input, imageFile("old.jpg"));
-    await user.upload(input, imageFile("new.jpg"));
-    loads[1].load(640, 480);
-    loads[0].load(111, 222);
-
-    const thumbnail = await screen.findByRole("img", { name: "Stevie" });
-    expect(thumbnail).toHaveAttribute("src", "blob:test/2");
-    expect(thumbnail).toHaveAttribute("width", "640");
-  });
-
-  it("lets go of the old object URL when a picked file is replaced or deleted", async () => {
-    const loads = stubImageLoading();
-    const { revokeObjectURL } = stubObjectUrls();
-    const { user } = setup({ initialBody: [PARAGRAPH, { ...IMAGE, src: "" }] });
-    const input = screen.getByLabelText("Image");
-    await user.upload(input, imageFile("one.jpg"));
-    loads.at(-1).load(800, 600);
-    await screen.findByRole("img");
-
-    await user.upload(input, imageFile("two.jpg"));
-    loads.at(-1).load(800, 600);
-    await user.click(screen.getByRole("button", { name: "Delete image 1" }));
-
-    expect(revokeObjectURL.mock.calls).toEqual([
-      ["blob:test/1"],
-      ["blob:test/2"],
-    ]);
-  });
-
-  it("shows an existing image from its stored src", () => {
-    setup({ initialBody: [PARAGRAPH, IMAGE] });
-
-    expect(screen.getByRole("img", { name: "Stevie" })).toHaveAttribute(
-      "src",
-      IMAGE.src,
-    );
-  });
-
-  it("shows server messages on the element their path points at", () => {
-    const second = { ...PARAGRAPH, key: "p2" };
-    setup({
-      initialBody: [PARAGRAPH, second, IMAGE],
-      fieldErrors: {
-        "body.0.type": "Element type must be paragraph or image.",
-        "body.1.text": "Paragraph must be 10000 characters or fewer.",
-        "body.2.image.altText": "Alt text must be 200 characters or fewer.",
-      },
-    });
-
-    expect(
-      screen.getAllByLabelText("Paragraph")[1].nextElementSibling,
-    ).toHaveTextContent("Paragraph must be 10000 characters or fewer.");
-    expect(
-      screen.getByLabelText("Alt Text").nextElementSibling,
-    ).toHaveTextContent("Alt text must be 200 characters or fewer.");
-    expect(
-      screen.getAllByLabelText("Paragraph")[0].nextElementSibling,
-    ).toHaveTextContent("Element type must be paragraph or image.");
-  });
-
-  it("shows a list-level server message for the body", () => {
-    setup({ fieldErrors: { body: "Add at least one paragraph." } });
-
-    expect(screen.getByText("Add at least one paragraph.")).toBeInTheDocument();
+    expect(screen.getByText("Paragraph is required.")).toBeInTheDocument();
   });
 });
 
-describe("PostBodyFields formatting", () => {
+describe("ParagraphField formatting", () => {
   function setupText(text) {
-    const result = setup({ initialBody: [{ ...PARAGRAPH, text }] });
+    const result = setup(text);
     return { ...result, textarea: screen.getByLabelText("Paragraph") };
   }
 
@@ -848,9 +485,9 @@ describe("PostBodyFields formatting", () => {
   });
 });
 
-describe("PostBodyFields links list", () => {
+describe("ParagraphField links list", () => {
   function setupText(text) {
-    const result = setup({ initialBody: [{ ...PARAGRAPH, text }] });
+    const result = setup(text);
     return { ...result, textarea: screen.getByLabelText("Paragraph") };
   }
 

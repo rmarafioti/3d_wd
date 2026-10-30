@@ -1,6 +1,6 @@
-// ParagraphField (site owner): one paragraph of the post body in PostBodyFields: its format
-// buttons, the textarea, the Link panel, and the list of the paragraph's links
-// (docs/flows.md → Paragraph formatting).
+// ParagraphField (site owner): one paragraph's fields in the paragraph dialogs of Create / Edit
+// Post: its format buttons, the textarea with its character count, the Link panel, and the list
+// of the paragraph's links (docs/flows.md → Paragraph formatting).
 // The format buttons work like a text editor's:
 // - with words highlighted, Bold / Italic switch their bit of the run around them: **a** with
 //   Italic becomes ***a***, then Bold off leaves *a*, and with no bit left the markers go;
@@ -21,9 +21,7 @@
 // typed, links typed by hand included.
 // The text's own message (a bad link, too long) shows as soon as it applies, since the buttons
 // change the text without leaving the field; "Paragraph is required." shows once it has been
-// left, otherwise the server's message shows. requiredNoted: "One paragraph is required to submit
-// a post." already shows under this paragraph, so "Paragraph is required." would repeat it and is
-// hidden.
+// left, otherwise the server's message shows.
 
 "use client";
 
@@ -36,6 +34,7 @@ import {
   MdLink,
 } from "react-icons/md";
 import LinkPanel from "./LinkPanel";
+import CharacterCount from "./CharacterCount";
 import {
   formatRunAround,
   formatsAtCaret,
@@ -101,13 +100,7 @@ function touchesLink(links, { start, end }) {
   });
 }
 
-export default function ParagraphField({
-  name,
-  value,
-  onChange,
-  serverError,
-  requiredNoted,
-}) {
+export default function ParagraphField({ name, value, onChange, serverError }) {
   const id = useId();
   const textareaRef = useRef(null);
   // Until the site owner first clicks into the paragraph, the buttons act at the end of its text.
@@ -129,9 +122,8 @@ export default function ParagraphField({
   const [linksOpen, setLinksOpen] = useState(false);
 
   const error = validateParagraph(value).text;
-  const repeatsNote = requiredNoted && isBlank(value.text);
   const showError = touched || !isBlank(value.text);
-  const message = showError && error && !repeatsNote ? error : serverError;
+  const message = showError && error ? error : serverError;
   const links = linksInParagraph(value.text);
   const formatState = selection && formatStateAt(value.text, selection);
   const buttonsDisabled = !selection || touchesLink(links, selection);
@@ -349,6 +341,8 @@ export default function ParagraphField({
             </button>
           );
         })}
+        {/* At the row's far end, so the count sits right above the textarea. */}
+        <CharacterCount id={`${id}-count`} value={value.text} max={10000} />
       </div>
       {linkPanel?.mode === "add" && (
         <LinkPanel
@@ -365,6 +359,7 @@ export default function ParagraphField({
         ref={textareaRef}
         id={id}
         maxLength={10000}
+        aria-describedby={`${id}-count`}
         value={value.text}
         onChange={handleTextChange}
         onFocus={() => {

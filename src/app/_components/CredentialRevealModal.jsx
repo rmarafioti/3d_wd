@@ -66,7 +66,7 @@ export default function CredentialRevealModal({
           </div>
         ))}
       </dl>
-      <div className={styles.buttonContainer}>
+      <div className="dialogButtons">
         <button type="button" onClick={copyAll}>
           {copied ? "Copied" : "Copy all"}
         </button>

@@ -179,7 +179,6 @@ export default function PostPage() {
           <PostForm
             mode="edit"
             websiteId={post.websiteId}
-            websiteName={post.websiteName}
             initialValues={postToFormValues(post)}
             onSubmit={update}
             // No success dialog: usePost already holds the API's updated copy, so the page shows
