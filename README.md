@@ -42,7 +42,7 @@ Set:
 
 ```
 npm run dev           # starts the app on http://localhost:3000
-npm test              # runs the unit test suite once (npm run test:watch to re-run on save)
+npm test              # runs the unit test suite once, then the guard hook's tests (npm run test:watch to re-run on save)
 npm run lint          # ESLint
 npm run format        # Prettier (run before every commit)
 npm run format:check  # Prettier check only, no changes (what CI runs)
