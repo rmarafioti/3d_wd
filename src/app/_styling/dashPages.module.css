@@ -1,5 +1,6 @@
 .accountList,
 .account,
+.gallerySummary,
 .createAccounts,
 .siteOwnerAccount {
   display: flex;
@@ -8,7 +9,9 @@
   align-items: flex-start;
 }
 
-.account {
+/* A website's galleries in the Accounts aside are set apart like the accounts themselves. */
+.account,
+.gallerySummary {
   margin-top: 1rem;
   border-bottom: 1px solid lightgray;
 }
@@ -34,8 +37,19 @@
   margin: 0rem 0rem 1rem 0rem;
 }
 
+.noGalleries {
+  margin: 1rem 0rem;
+}
+
 .submitButton,
 .createAPost {
+  width: 100%;
+}
+
+/* Create a Post and Create a Gallery side by side, sharing the row's width. */
+.createButtons {
+  display: flex;
+  gap: 1rem;
   width: 100%;
 }
 

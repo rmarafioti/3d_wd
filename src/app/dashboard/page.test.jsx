@@ -2,7 +2,8 @@
 // menu): the form opens from "Create a Post", and a create closes it and refetches the list with no
 // success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure
 // in a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled,
-// and shows a failure in a dialog.
+// and shows a failure in a dialog. A gallery row's ⋮ (docs/flows.md → Gallery actions menu) saves
+// its status and deletes through the gallery routes; Create a Gallery opens its form.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -15,6 +16,15 @@ const WEBSITE = {
   websiteName: "Stevie The Dog",
   url: "https://www.steviethedog.com",
   active: true,
+  posts: [],
+  galleries: [],
+};
+const GALLERY = {
+  id: "g1",
+  galleryName: "Our Interior",
+  slug: "our-interior",
+  status: "published",
+  createdAt: "2026-10-31T00:00:00.000Z",
 };
 const NEW_POST = {
   id: "p1",
@@ -180,5 +190,80 @@ describe("Dashboard page", () => {
       "Post not found.",
     );
     expect(screen.getByRole("link", { name: "Walk day" })).toBeInTheDocument();
+  });
+
+  it("opens Create a Gallery's first step once the websites have loaded", async () => {
+    mockFetch({
+      "GET /api/siteOwner/websites": { body: { data: [WEBSITE] } },
+    });
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Create a Gallery" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "Name your gallery" }),
+    ).toBeInTheDocument();
+  });
+
+  it("moves a gallery to draft from its ⋮ menu through the gallery status route", async () => {
+    const { calls } = mockFetch({
+      "GET /api/siteOwner/websites": [
+        { body: { data: [{ ...WEBSITE, galleries: [GALLERY] }] } },
+        {
+          body: {
+            data: [
+              { ...WEBSITE, galleries: [{ ...GALLERY, status: "draft" }] },
+            ],
+          },
+        },
+      ],
+      "PATCH /api/siteOwner/galleries/g1/status": {
+        body: { data: { ...GALLERY, status: "draft" } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Our Interior" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Status to draft" }));
+
+    expect(await screen.findByText("draft")).toBeInTheDocument();
+    expect(calls.find((call) => call.method === "PATCH").body).toEqual({
+      status: "draft",
+    });
+  });
+
+  it("deletes a gallery from its ⋮ menu once confirmed, and the list refetches without it", async () => {
+    const { calls } = mockFetch({
+      "GET /api/siteOwner/websites": [
+        { body: { data: [{ ...WEBSITE, galleries: [GALLERY] }] } },
+        { body: { data: [WEBSITE] } },
+      ],
+      "DELETE /api/siteOwner/galleries/g1": { status: 204 },
+    });
+    const user = userEvent.setup();
+    render(<DashboardPage />);
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Our Interior" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    const dialog = screen.getByRole("dialog");
+
+    expect(dialog).toHaveTextContent(
+      "Delete Our Interior? It will be removed from your dashboard and your website. This can't be undone.",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Delete Gallery" }),
+    );
+
+    expect(await screen.findByText("No galleries yet.")).toBeInTheDocument();
+    expect(
+      calls.filter((call) => call.method === "DELETE").map((call) => call.path),
+    ).toEqual(["/api/siteOwner/galleries/g1"]);
   });
 });

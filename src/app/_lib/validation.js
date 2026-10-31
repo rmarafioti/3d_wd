@@ -14,6 +14,10 @@ const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
 const LINK_URL_MESSAGE = "Each link must be a valid URL starting with https://";
 const LINK_TEXT_REQUIRED_MESSAGE = "Each link needs link text.";
 const LINK_TEXT_TOO_LONG_MESSAGE = "Link text must be 100 characters or fewer.";
+// The backend's 409 for a taken gallery name, word for word (docs/api.md → Error messages), which
+// the form also shows before submit. Exported so GalleryForm can show it without waiting for blur.
+export const GALLERY_NAME_TAKEN_MESSAGE =
+  "A gallery with this name already exists.";
 
 export function isBlank(value) {
   return (value ?? "").trim() === "";
@@ -141,5 +145,48 @@ export function validatePost(
     errors.header = "Header must be 150 characters or fewer.";
   if (isTooLong(subHeader, 200))
     errors.subHeader = "Sub header must be 200 characters or fewer.";
+  return errors;
+}
+
+// The names a gallery can't take (docs/api.md → Validation rules): the website's other
+// galleries' names, trimmed and lowercased, since names are unique ignoring case. ownId leaves
+// out the gallery being edited, so it can keep its own name. website: a website from
+// GET /api/siteOwner/websites, or undefined before one is chosen.
+export function takenGalleryNames(website, ownId) {
+  return (website?.galleries ?? [])
+    .filter((gallery) => gallery.id !== ownId)
+    .map((gallery) => gallery.galleryName.trim().toLowerCase());
+}
+
+// Validates the top-level fields of the Create / Edit a Gallery form (each image is checked by
+// validateGalleryImage before it is inserted). websiteId is only checked when requireWebsite is
+// set (Create). takenNames is takenGalleryNames' list: a taken name is refused before submit, with
+// the backend's 409 message, word for word, and the 409 stays the backend's fallback.
+export function validateGallery(
+  { websiteId, galleryName, title, copy },
+  { requireWebsite = false, takenNames = [] } = {},
+) {
+  const errors = {};
+  if (requireWebsite && isBlank(websiteId))
+    errors.websiteId = "Website is required.";
+  if (isBlank(galleryName)) errors.galleryName = "Gallery name is required.";
+  else if (isTooLong(galleryName, 100))
+    errors.galleryName = "Gallery name must be 100 characters or fewer.";
+  else if (takenNames.includes(galleryName.trim().toLowerCase()))
+    errors.galleryName = GALLERY_NAME_TAKEN_MESSAGE;
+  if (isTooLong(title, 150))
+    errors.title = "Title must be 150 characters or fewer.";
+  if (isTooLong(copy, 2000))
+    errors.copy = "Copy must be 2000 characters or fewer.";
+  return errors;
+}
+
+// Validates one gallery image (the Add / Edit image dialog's Insert): a post image's checks, plus
+// its optional caption. Its crops are made by the crop tool in the shape the backend needs, so
+// they need no check here.
+export function validateGalleryImage(image) {
+  const errors = validateImage(image);
+  if (isTooLong(image.caption, 300))
+    errors.caption = "Caption must be 300 characters or fewer.";
   return errors;
 }

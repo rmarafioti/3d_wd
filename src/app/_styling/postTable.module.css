@@ -11,6 +11,11 @@
   margin-bottom: 0.5rem;
 }
 
+/* "Posts" and "Galleries", each over its table, with space from the table above. */
+.tableHeader {
+  margin: 0.5rem 0rem;
+}
+
 /* No sideways-scrolling box as on the Audit Events page: it would clip each row's ⋮ menu. The
    columns keep fixed widths (set on the header cells, which a fixed layout reads), so every
    website's table lines up; Post Name takes the rest (14rem on desktop) and wraps. */
@@ -27,6 +32,11 @@
 
 .statusColumn {
   width: 6rem;
+}
+
+/* The gallery table's slug, beside the gallery name, which takes the rest. */
+.slugColumn {
+  width: 8rem;
 }
 
 .actionsColumn {
@@ -56,6 +66,12 @@
 }
 
 .table td:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
+/* The gallery table's name and slug both wrap, since the name is its first column. */
+.table td.wrapCell {
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 

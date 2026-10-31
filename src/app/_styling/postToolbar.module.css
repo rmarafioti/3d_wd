@@ -16,6 +16,12 @@
   list-style: none;
 }
 
+/* A list another list continues straight on from (the gallery's images, with its Mobile Shape row
+   under them), so there's no gap between them. */
+.joinedRows {
+  margin-bottom: 0rem;
+}
+
 /* The "Body" heading between the post's own fields and its body: bold, on a light grey line like
    the rows, so it reads as the start of a new list. */
 .separator {

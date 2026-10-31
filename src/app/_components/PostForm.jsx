@@ -17,7 +17,7 @@
 // asks first ("Are you sure…?"), except on the first step, where only a name is lost, and in Edit
 // before anything has changed.
 //
-// Submit first uploads any newly picked images (uploadImages: one signature, then each file to
+// Submit first uploads any newly picked images (uploadPicked: one signature, then each file to
 // Cloudinary) and swaps their Cloudinary src, width and height into the body, then saves:
 // POST /api/siteOwner/posts with the status, or PATCH /api/siteOwner/posts/:id with the full form.
 // If an upload fails nothing is saved; images already uploaded keep their Cloudinary src, so
@@ -45,7 +45,7 @@ import {
   validateParagraph,
   validatePost,
 } from "../_lib/validation";
-import { uploadImages } from "../_lib/uploadImages";
+import { uploadPicked } from "../_lib/uploadImages";
 import { elementNames, OPTIONAL_FIELDS, POST_FIELDS } from "../_lib/postFields";
 
 import styles from "../_styling/postForm.module.css";
@@ -404,19 +404,13 @@ export default function PostForm({
     if (newImages.length === 0) return body;
 
     setUploading(true);
-    let stored;
+    let storedBySrc;
     try {
-      stored = await uploadImages(
-        websiteId,
-        newImages.map((element) => element.file),
-      );
+      storedBySrc = await uploadPicked(websiteId, newImages);
     } finally {
       setUploading(false);
     }
 
-    const storedBySrc = new Map(
-      newImages.map((element, index) => [element.src, stored[index]]),
-    );
     function swap(element) {
       const image = storedBySrc.get(element.src);
       if (!image) return element;

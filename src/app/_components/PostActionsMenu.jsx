@@ -3,7 +3,7 @@
 // Edit form open), Status ("Status to publish" on a draft, "Status to draft" on a published post,
 // worded to match the table's Status column: onStatusChange, which saves straight away, since it
 // can be undone) and Delete (onDelete, whose confirmation the dashboard owns). Its list opens from
-// PostList's actions cell.
+// PostTable's actions cell.
 
 "use client";
 

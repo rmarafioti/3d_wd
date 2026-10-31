@@ -1,9 +1,10 @@
 // Tests for AccountList (docs/flows.md → Get All Accounts): loading, error and empty states,
 // each account with its status and its Websites disclosure (websites, indicators and
-// "Link a Website", which passes the account up).
+// "Link a Website", which passes the account up), and each website's gallery summaries (name,
+// status, photo count, crop flags) or "No galleries yet."
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AccountList from "./AccountList";
 
@@ -18,6 +19,16 @@ const ACCOUNT = {
       websiteName: "Stevie The Dog",
       url: "https://www.steviethedog.com",
       active: false,
+      galleries: [
+        {
+          id: "g1",
+          galleryName: "Our Interior",
+          status: "published",
+          imageCount: 12,
+          hasThumbnails: true,
+          hasMobileCrops: false,
+        },
+      ],
     },
   ],
 };
@@ -134,5 +145,45 @@ describe("AccountList", () => {
     expect(
       screen.getByRole("button", { name: "Link a Website" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows each website's galleries: name, status, photo count and whether they have thumbnail and mobile crops", () => {
+    render(
+      <AccountList
+        accounts={[ACCOUNT]}
+        loading={false}
+        error={null}
+        onLink={() => {}}
+      />,
+    );
+
+    const gallery = within(screen.getByText("Our Interior").closest("li"));
+    expect(gallery.getByText("Gallery Name:")).toBeInTheDocument();
+    expect(gallery.getByText("published")).toBeInTheDocument();
+    expect(gallery.getByText("Photos:").nextSibling).toHaveTextContent("12");
+    expect(gallery.getByText("Thumbnails:").nextSibling).toHaveTextContent(
+      "Yes",
+    );
+    expect(gallery.getByText("Mobile crop:").nextSibling).toHaveTextContent(
+      "No",
+    );
+  });
+
+  it('shows "No galleries yet." for a website without galleries', () => {
+    render(
+      <AccountList
+        accounts={[
+          {
+            ...ACCOUNT,
+            websites: [{ ...ACCOUNT.websites[0], galleries: [] }],
+          },
+        ]}
+        loading={false}
+        error={null}
+        onLink={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("No galleries yet.")).toBeInTheDocument();
   });
 });

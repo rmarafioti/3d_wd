@@ -1,6 +1,6 @@
 // Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with
 // messages checked word for word (docs/flows.md for Create an Account, the backend's field
-// messages for posts, paragraphs and images). Paragraph links use docs/api.md → Paragraph
+// messages for posts, paragraphs, images and galleries). Paragraph links use docs/api.md → Paragraph
 // formatting → Rejected examples, row for row.
 
 import { describe, expect, it } from "vitest";
@@ -11,6 +11,9 @@ import {
   isValidDate,
   isValidEmail,
   imageFileError,
+  takenGalleryNames,
+  validateGallery,
+  validateGalleryImage,
   validateImage,
   validateParagraph,
   validatePost,
@@ -290,6 +293,95 @@ describe("validatePost", () => {
     expect(validatePost({ ...VALID_POST, postDate: "" })).toEqual({});
     expect(validatePost({ ...VALID_POST, postDate: "2026-02-30" })).toEqual({
       postDate: "Enter a valid date (YYYY-MM-DD).",
+    });
+  });
+});
+
+describe("takenGalleryNames", () => {
+  const WEBSITE = {
+    id: "w1",
+    galleries: [
+      { id: "g1", galleryName: " Our Interior " },
+      { id: "g2", galleryName: "Artwork" },
+    ],
+  };
+
+  it("lists the website's gallery names, trimmed and lowercased", () => {
+    expect(takenGalleryNames(WEBSITE)).toEqual(["our interior", "artwork"]);
+  });
+
+  it("leaves out the gallery being edited, so it can keep its own name", () => {
+    expect(takenGalleryNames(WEBSITE, "g1")).toEqual(["artwork"]);
+  });
+
+  it("is empty before a website is chosen", () => {
+    expect(takenGalleryNames(undefined)).toEqual([]);
+  });
+});
+
+describe("validateGallery", () => {
+  const VALID_GALLERY = { galleryName: "Our Interior", title: "", copy: "" };
+
+  it("passes a gallery with only its name", () => {
+    expect(validateGallery(VALID_GALLERY)).toEqual({});
+  });
+
+  it("requires a website only when asked (Create)", () => {
+    expect(
+      validateGallery(
+        { ...VALID_GALLERY, websiteId: "" },
+        { requireWebsite: true },
+      ),
+    ).toEqual({ websiteId: "Website is required." });
+  });
+
+  it("requires a gallery name that isn't blank", () => {
+    expect(validateGallery({ ...VALID_GALLERY, galleryName: "  " })).toEqual({
+      galleryName: "Gallery name is required.",
+    });
+  });
+
+  it("refuses a name the website already has, in any case, with the backend's 409 message", () => {
+    expect(
+      validateGallery(
+        { ...VALID_GALLERY, galleryName: " OUR interior " },
+        { takenNames: ["our interior"] },
+      ),
+    ).toEqual({ galleryName: "A gallery with this name already exists." });
+  });
+
+  it("refuses every field one past its max length, and allows it at the max", () => {
+    expect(
+      validateGallery({
+        galleryName: "a".repeat(101),
+        title: "a".repeat(151),
+        copy: "a".repeat(2001),
+      }),
+    ).toEqual({
+      galleryName: "Gallery name must be 100 characters or fewer.",
+      title: "Title must be 150 characters or fewer.",
+      copy: "Copy must be 2000 characters or fewer.",
+    });
+    expect(
+      validateGallery({
+        galleryName: "a".repeat(100),
+        title: "a".repeat(150),
+        copy: "a".repeat(2000),
+      }),
+    ).toEqual({});
+  });
+});
+
+describe("validateGalleryImage", () => {
+  it("checks an image as a post image, plus a caption of at most 300 characters", () => {
+    expect(
+      validateGalleryImage({ ...VALID_IMAGE, caption: "a".repeat(300) }),
+    ).toEqual({});
+    expect(
+      validateGalleryImage({ ...VALID_IMAGE, caption: "a".repeat(301) }),
+    ).toEqual({ caption: "Caption must be 300 characters or fewer." });
+    expect(validateGalleryImage({ ...VALID_IMAGE, altText: "" })).toEqual({
+      altText: "Alt text is required.",
     });
   });
 });

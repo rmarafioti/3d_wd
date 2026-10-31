@@ -7,6 +7,8 @@
 // - Each body element, in order, shown by its icon and its first words (a paragraph) or its alt
 //   text (an image): Edit, a Move up and a Move down arrow where it can move that way (they keep
 //   the menu open, so it can move several places), and Delete, except on the only paragraph.
+// Each of the post's own fields names itself before its value ("Header: A walk"), unless it is
+// empty, where its row's words ("No header") already do.
 // Holds no post state: every action is a callback to PostForm. A backend field message shows under
 // the row it belongs to.
 
@@ -15,7 +17,7 @@
 import { useId } from "react";
 import { GoChevronDown, GoChevronUp } from "react-icons/go";
 import { MdImage, MdNotes } from "react-icons/md";
-import ActionsMenu from "./ActionsMenu";
+import ToolbarRow from "./ToolbarRow";
 import { serverErrorsFor } from "./ImageField";
 import { parseParagraph } from "../_lib/postFormatting";
 import { isBlank } from "../_lib/validation";
@@ -32,23 +34,6 @@ function plainText(segments) {
         : plainText(segment.children),
     )
     .join("");
-}
-
-function Row({ menuLabel, items, error, children }) {
-  return (
-    <li className={styles.row}>
-      <div className={styles.rowMain}>
-        <span className={styles.rowLabel}>{children}</span>
-        <ActionsMenu
-          label={menuLabel}
-          items={items}
-          className={styles.menuCell}
-          listClassName={styles.menuList}
-        />
-      </div>
-      {error && <p className="fieldError">{error}</p>}
-    </li>
-  );
 }
 
 export default function PostToolbar({
@@ -111,15 +96,16 @@ export default function PostToolbar({
   return (
     <section aria-label="Post contents" className={styles.toolbar}>
       <ul className={styles.rows}>
-        <Row
+        <ToolbarRow
+          label={POST_FIELDS.postName.label}
           menuLabel={`Actions for ${POST_FIELDS.postName.name}`}
           items={[{ label: "Edit", onClick: () => onEditField("postName") }]}
           error={fieldErrors.postName}
         >
           {values.postName.trim()}
-        </Row>
+        </ToolbarRow>
         {OPTIONAL_FIELDS.map((field) => {
-          const { name, empty } = POST_FIELDS[field];
+          const { label, name, empty } = POST_FIELDS[field];
           const isEmpty = isBlank(values[field]);
           const items = isEmpty
             ? [{ label: "Add", onClick: () => onEditField(field) }]
@@ -128,14 +114,16 @@ export default function PostToolbar({
                 { label: "Delete", onClick: () => onDeleteField(field) },
               ];
           return (
-            <Row
+            <ToolbarRow
               key={field}
+              // While empty, the row's own words ("No header") already name the field.
+              label={isEmpty ? undefined : label}
               menuLabel={`Actions for ${name}`}
               items={items}
               error={fieldErrors[field]}
             >
               {isEmpty ? empty : values[field].trim()}
-            </Row>
+            </ToolbarRow>
           );
         })}
       </ul>
@@ -147,7 +135,7 @@ export default function PostToolbar({
       {fieldErrors.body && <p className="fieldError">{fieldErrors.body}</p>}
       <ul aria-labelledby={bodyHeadingId} className={styles.rows}>
         {body.map((element, index) => (
-          <Row
+          <ToolbarRow
             key={element.key}
             menuLabel={`Actions for ${names[index]}`}
             items={elementItems(element, index)}
@@ -161,7 +149,7 @@ export default function PostToolbar({
             {element.type === "paragraph"
               ? plainText(parseParagraph(element.text.trim()))
               : element.altText.trim()}
-          </Row>
+          </ToolbarRow>
         ))}
       </ul>
 
