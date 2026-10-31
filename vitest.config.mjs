@@ -24,6 +24,9 @@ export default defineConfig({
   plugins: [jsxInJs, react()],
   test: {
     environment: "jsdom",
+    // Only the app's tests: .claude/hooks/guard.test.js is a node:test file, run by `node --test`
+    // in npm test.
+    include: ["src/**/*.test.{js,jsx}"],
     setupFiles: ["./src/test/setup.js"],
     clearMocks: true,
     restoreMocks: true,
