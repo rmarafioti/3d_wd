@@ -250,9 +250,9 @@ describe("PostForm (create) steps", () => {
       "We went for a <b>walk</b>.",
     );
     expect(toolbarRows()).toEqual([
-      "Walk day",
+      "Post Name: Walk day",
       "No date",
-      "A walk",
+      "Header: A walk",
       "No sub header",
       "We went for a walk.",
     ]);
@@ -449,7 +449,7 @@ describe("PostForm (create) review view", () => {
 
     await user.click(button("Save", subHeaderDialog));
 
-    expect(toolbarRows()[3]).toBe("Sunny");
+    expect(toolbarRows()[3]).toBe("Sub Header: Sunny");
     expect(within(preview()).getByText("Sunny")).toBeInTheDocument();
   });
 
@@ -572,9 +572,9 @@ describe("PostForm (edit)", () => {
     expect(screen.queryByLabelText("Website")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Published")).not.toBeInTheDocument();
     expect(toolbarRows()).toEqual([
-      "Walk day",
-      "2026-10-07",
-      "A walk",
+      "Post Name: Walk day",
+      "Post Date: 2026-10-07",
+      "Header: A walk",
       "No sub header",
       "We went for a walk.",
       "Stevie",
@@ -853,7 +853,7 @@ describe("PostForm image uploads", () => {
       screen.queryByText("Image file format gif not allowed"),
     ).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(toolbarRows()[0]).toBe("Walk day");
+    expect(toolbarRows()[0]).toBe("Post Name: Walk day");
     expect(button("Submit")).toBeEnabled();
   });
 

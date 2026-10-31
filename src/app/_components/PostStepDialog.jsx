@@ -1,7 +1,8 @@
 // PostStepDialog (site owner): the dialog every part of Create / Edit Post opens in: the steps
 // (Post Name, the optional details, the first paragraph), the review view, and each dialog the
 // review view opens on top of itself to add or edit one part of the post (docs/flows.md → Create a
-// Post). Opens when mounted; the parent unmounts it.
+// Post). Create / Edit a Gallery uses it the same way, and for its crop dialogs. Opens when
+// mounted; the parent unmounts it.
 //
 // Its title stays put while its content scrolls beneath it. With a primaryLabel ("Next",
 // "Insert", "Save") it ends in a Cancel and primary button row, and has no X: an X beside Cancel

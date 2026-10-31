@@ -1,9 +1,10 @@
-// ActionsMenu: the shared ⋮ menu, used by each post's row on /dashboard (PostActionsMenu) and by
-// each row of the post toolbar in Create / Edit Post (PostToolbar). A disclosure, like the
-// Accounts aside, not an ARIA menu: plain links and buttons, reached with Tab. Closed by default;
-// it closes on Esc (focus back on ⋮), on a click outside it, and once an item is picked, unless the
-// item is marked keepOpen (the toolbar's move arrows, so an element can be moved several places).
-// Its list opens from the nearest positioned ancestor.
+// ActionsMenu: the shared ⋮ menu, used by each post's and gallery's row on /dashboard
+// (PostActionsMenu, GalleryActionsMenu) and by each row of the toolbar in Create / Edit Post and
+// Create / Edit a Gallery (ToolbarRow). A disclosure, like the Accounts aside, not an ARIA menu:
+// plain links and buttons, reached with Tab. Closed by default; it closes on Esc (focus back on
+// ⋮), on a click outside it, and once an item is picked, unless the item is marked keepOpen (the
+// toolbars' move arrows, so an element or image can be moved several places). Its list opens from
+// the nearest positioned ancestor.
 //
 // label names the ⋮ button for screen readers ("Actions for First Post!"). className and
 // listClassName add a class to the menu itself (the ⋮ and its list) and to the open list, for a

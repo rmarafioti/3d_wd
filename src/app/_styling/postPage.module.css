@@ -58,6 +58,68 @@ its height follows its stored proportions. */
   font-weight: bold;
 }
 
+/* The gallery page: like a post page, and a long slug or caption wraps rather than running past
+   the screen's edge. */
+.galleryPage {
+  overflow-wrap: anywhere;
+}
+
+/* The gallery page's help text under the slug. */
+.note {
+  color: grey;
+}
+
+/* The gallery page's images take the page's full width, so two fit side by side. */
+.imagesSection {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Two images per row on desktop (one on a phone), so a 30-image gallery doesn't need much
+   scrolling. minmax(0, 1fr) keeps the two columns equal however wide their pictures are. */
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+}
+
+/* The gallery page's "Images" heading, with room before the first image. */
+.imagesHeader {
+  margin-bottom: 2rem;
+}
+
+/* One gallery image: its row of pictures, then its caption and alt text, with a light grey line
+   between images. */
+.galleryImage {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid lightgray;
+}
+
+/* The main image, its thumbnail crop and its mobile crop side by side, each a labelled column, so
+   an image doesn't take three pictures' height. They wrap on a narrow screen. */
+.imageRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.imageColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Smaller than a post's photo, since its crops sit beside it and two images share a row; its
+   height follows its stored proportions. */
+.mainImage {
+  width: 9rem;
+  max-width: 100%;
+  height: auto;
+}
+
 @media (max-width: 667px) {
   .postPage {
     width: 100vw;
@@ -65,5 +127,21 @@ its height follows its stored proportions. */
   }
   .statusRow {
     width: 90%;
+  }
+
+  /* At least 0.5rem from either edge of the screen: the article centres the page, so it is the
+     screen's width less 1rem, without the post page's 2rem shift. */
+  .galleryPage {
+    width: calc(100vw - 1rem);
+    margin-left: 0rem;
+  }
+
+  .imageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Smaller on a phone, so the main image and its two crops fit on one line. */
+  .mainImage {
+    width: 8rem;
   }
 }

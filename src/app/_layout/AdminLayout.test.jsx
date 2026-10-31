@@ -40,7 +40,13 @@ describe("Admin layout", () => {
       "GET /api/auth/me": { body: { data: ADMIN } },
       "GET /api/admin/accounts": [
         { body: { data: [] } },
-        { body: { data: [{ ...NEW_ACCOUNT, websites: [STEVIE] }] } },
+        {
+          body: {
+            data: [
+              { ...NEW_ACCOUNT, websites: [{ ...STEVIE, galleries: [] }] },
+            ],
+          },
+        },
       ],
       "GET /api/admin/websites": { body: { data: [STEVIE] } },
       "POST /api/admin/accounts": {

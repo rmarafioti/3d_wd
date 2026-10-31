@@ -1,0 +1,133 @@
+/* The pieces of Create / Edit a Gallery that posts don't have: an image's Crops section, the crop
+   dialog, a crop's small preview and the preview's captions. Everything else reuses postForm,
+   postPreview and postToolbar. */
+
+/* The Crops section, under the caption in an image's dialog, set apart by a light grey line. */
+.crops {
+  width: 100%;
+  margin: 1rem 0rem;
+  padding-top: 1rem;
+  border-top: 1px solid lightgray;
+}
+
+.cropsHeader,
+.cropLabel {
+  font-weight: bold;
+}
+
+.cropsHeader {
+  margin-bottom: 1rem;
+}
+
+/* What a crop is for, under its label. */
+.cropNote {
+  color: grey;
+  margin-bottom: 0.5rem;
+}
+
+/* "*Optional" on the Crops heading's line, in the notes' grey rather than the heading's bold. */
+.optional {
+  font-weight: normal;
+  color: grey;
+}
+
+.cropRow {
+  margin-bottom: 1rem;
+}
+
+.cropButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* A crop's small picture (CropPreview): a box in the crop's proportions that hides the rest of the
+   image. Its size and position inside the box are set inline, from the crop. */
+.cropPreview {
+  position: relative;
+  width: 6rem;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  border: 1px solid lightgray;
+}
+
+/* The image is placed inside the box by its inline size and position (CropPreview, which also
+   sets max-width inline, so no page's image rule can shrink it). */
+.cropPreview img {
+  position: absolute;
+}
+
+/* Wide enough to see the image while cropping; the global dialog max-width keeps it inside a
+   phone's viewport. */
+.cropDialog {
+  width: 600px;
+}
+
+/* react-easy-crop fills the nearest positioned box, so it needs a set height. */
+.cropArea {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  margin-bottom: 1rem;
+  background-color: lightgray;
+}
+
+.shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border: none;
+  padding: 0rem;
+}
+
+.shapeOption {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.zoom {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* The preview's images side by side, as many to a row as fit, wrapping onto the next row. */
+.previewImages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* An image in the preview, at a fixed width so several share a row, its caption under it (a
+   long word in it wraps rather than running past the figure). */
+.previewFigure {
+  width: 15rem;
+  overflow-wrap: anywhere;
+}
+
+/* Fills its figure, its height following its proportions. Two classes, so it outranks the
+   preview's own image rule (.preview img) whatever order the stylesheets load in. */
+.previewImages .previewFigure img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.2rem;
+}
+
+@media (max-width: 667px) {
+  .cropArea {
+    height: 300px;
+  }
+
+  /* Two to a row on a phone: half the preview, less half the gap between them. */
+  .previewFigure {
+    width: calc(50% - 0.5rem);
+  }
+
+  /* Smaller on a phone, so a gallery image's main picture and both crops fit on one line on its
+     page. */
+  .cropPreview {
+    width: 5rem;
+  }
+}

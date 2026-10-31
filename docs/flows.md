@@ -2,7 +2,7 @@
 
 Full behavioral spec for each frontend flow. `CLAUDE.md` holds the short, always-loaded rules (ownership checks, anti-patterns, patterns); this file holds the specific flow detail those rules apply to. Imported from `CLAUDE.md` via `@docs/flows.md`. Request and response shapes for every call referenced here are in `docs/api.md`.
 
-All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, `ConfirmDialog`, which has only its confirm button and a cancel button ("Cancel", or "Keep editing" when cancelling a post) so the user makes the choice, Create / Edit Post's smaller dialogs (the steps, and Add / Edit from the toolbar), which have a Cancel button instead, and the sign-in dialog, which has no X while it reads "Signing in…". They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
+All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, `ConfirmDialog`, which has only its confirm button and a cancel button ("Cancel", or "Keep editing" when cancelling a post or gallery) so the user makes the choice, Create / Edit Post's and Create / Edit a Gallery's smaller dialogs (the steps, Add / Edit from the toolbar, and the crop dialogs), which have a Cancel button instead, and the sign-in dialog, which has no X while it reads "Signing in…". They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
 
 ---
 
@@ -87,7 +87,7 @@ The admin dashboard has two parts, plus the Audit Events page (below) at `/admin
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every site owner account (active and inactive) sorted by name. Each account shows its site owner name, email and an "active"/"inactive" indicator, and below them a **"Websites"** disclosure (native `<details>`, closed by default). Opened, it lists the websites linked to the account (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator) followed by the account's **"Link a Website"** button. An account with no websites shows "No websites linked." there. With no accounts at all, the list shows "No site owner accounts yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content here.
+Lists every site owner account (active and inactive) sorted by name. Each account shows its site owner name, email and an "active"/"inactive" indicator, and below them a **"Websites"** disclosure (native `<details>`, closed by default). Opened, it lists the websites linked to the account (website name linked to its URL, opening in a new tab, and an "active"/"inactive" indicator) followed by the account's **"Link a Website"** button. An account with no websites shows "No websites linked." there. With no accounts at all, the list shows "No site owner accounts yet." Under each website sits a summary of its galleries (not deleted, newest first), so the administrator can see what the site owner cropped, which Cloudinary's Media Library never shows (crops are rectangles applied to a URL, not uploaded files; Rich decided 2026-10-31). Each gallery shows **Gallery Name:** {galleryName} with its "published" / "draft" pill, **Photos:** {imageCount}, **Thumbnails:** Yes / No and **Mobile crop:** Yes / No (`hasThumbnails`, `hasMobileCrops`: Yes only when every image has that crop). A website with no galleries shows "No galleries yet." The list refetches after a successful Create an Account or Link a Website. The administrator never sees post content or gallery images here: galleries show only as these counts and flags.
 
 ### Get All Websites (admin)
 
@@ -162,9 +162,15 @@ The read-only audit log, so the administrator can answer "who did what?" without
 
 Hook used: `useWebsites()` → `GET /api/siteOwner/websites`
 
-Fetches the site owner's active websites, each with summaries of its posts. Rendered under a "Your Posts" heading as a table per website, like the Audit Events table: each website's heading reads "Website: {websiteName}", and under it a table with one row per post and the columns **Created**, **Post Name**, **Status** and a last column holding the row's ⋮ menu (see Post actions menu; its heading "Actions" is for screen readers only). Created is the post's `createdAt` as a local date: every post has one, while Post Date is optional and is only what the site owner shows on their website (Rich decided 2026-10-30). Post Name links to `/dashboard/post/{id}`; Status is the indicator pill reading "published" or "draft". The columns keep fixed widths, so every website's table lines up; only the post name wraps, so the table fits a phone's width; it has no sideways-scrolling box, which would clip the ⋮ menus. Posts are ordered by `createdAt`, newest first (as returned). A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." A "Create a Post" button sits at the top of the page; it is disabled until the websites have loaded, since they fill its Website dropdown.
+Fetches the site owner's active websites, each with summaries of its posts and of its galleries. Rendered under a "Your Websites" heading (`WebsiteList`), one section per website: its heading reads "Website: {websiteName}", then a "Posts" heading over the website's post table (`PostTable`), then a "Galleries" heading over its gallery table (`GalleryTable`, see Gallery table). The post table is like the Audit Events table: one row per post and the columns **Created**, **Post Name**, **Status** and a last column holding the row's ⋮ menu (see Post actions menu; its heading "Actions" is for screen readers only). Created is the post's `createdAt` as a local date: every post has one, while Post Date is optional and is only what the site owner shows on their website (Rich decided 2026-10-30). Post Name links to `/dashboard/post/{id}`; Status is the indicator pill reading "published" or "draft". The columns keep fixed widths, so every website's table lines up; only the post name wraps, so the table fits a phone's width; it has no sideways-scrolling box, which would clip the ⋮ menus. Posts are ordered by `createdAt`, newest first (as returned). A website with no posts shows "No posts yet." A site owner with no websites sees "You have no websites yet." "Create a Post" and "Create a Gallery" buttons sit side by side at the top of the page; both are disabled until the websites have loaded, since they fill the forms' Website dropdown.
 
-The same data also fills the website dropdown in Create a Post.
+The same data also fills the website dropdown in Create a Post and Create a Gallery, and gives the gallery forms the names already taken.
+
+### Gallery table
+
+Under each website's "Galleries" heading, a table with one row per gallery (published and draft, newest first as returned) and the columns **Gallery Name** (linked to `/dashboard/gallery/{id}`), **Gallery Code**, **Status** (the "published" / "draft" pill) and the row's ⋮ menu. It has no Created column, so it keeps the post table's width at phone width; the name and the code wrap. A website with no galleries shows "No galleries yet." The Gallery Code is the gallery's `slug`, shown so the site owner can tell Rich which gallery goes where on their website. "Slug" is our technical word and the site owner never sees it (Rich decided 2026-10-31).
+
+Each row's ⋮ (`GalleryActionsMenu`, named "Actions for {galleryName}") works like the post table's: **View** (`/dashboard/gallery/{id}`), **Edit** (`/dashboard/gallery/{id}?edit=1`), **"Status to draft"** / **"Status to publish"** (`PATCH /api/siteOwner/galleries/:id/status`, straight away, then the list refetches; a failure shows in a dialog) and **Delete** (the confirmation in Delete a Gallery, then the list refetches and the gallery leaves its table; a failure shows in a dialog).
 
 ### Post actions menu
 
@@ -198,7 +204,7 @@ All fields go through the same frontend validation used everywhere else, UX only
 
 - **The Add buttons** on the left, with no heading since they explain themselves (Rich, 2026-10-30): **Add Paragraph** and **Add Image**. The review view has no Cancel button: its X in the top right is its one way out, and asks first, as above (Rich decided 2026-10-30). Each Add opens its dialog on top of the review view (see Post body dialogs). At 5 paragraphs Add Paragraph is disabled with "Maximum of 5 paragraphs" under it; at 5 images, Add Image with "Maximum of 5 images".
 - **The preview** in the middle (see Post preview).
-- **The toolbar** on the right (`PostToolbar`): one row for every part of the post, top to bottom, each with a ⋮ menu (the shared `ActionsMenu`, the same disclosure as the post table's, named "Actions for post name", "Actions for date", "Actions for paragraph 2"…):
+- **The toolbar** on the right (`PostToolbar`): one row for every part of the post, top to bottom, each with a ⋮ menu (the shared `ActionsMenu`, the same disclosure as the post table's, named "Actions for post name", "Actions for date", "Actions for paragraph 2"…). Each of the post's own fields reads its label in bold, then its value ("Post Name: Walk day", "Header: A walk"); every row stays on one line, cut off with an ellipsis, so the toolbar keeps its width:
   - **Post name** (it never shows on the website, so it is here rather than in the preview): Edit.
   - **Date, header and sub header:** Edit and Delete. While empty, the row reads "No date", "No header" or "No sub header" and its menu offers only **Add**. Delete empties the field, with no confirmation, since Add brings it back.
   - **"Body":** a heading on a light grey line separates the post's own fields above from its body below, so the two read apart. A list-level backend message for the body (`body`) shows under it.
@@ -318,3 +324,85 @@ Request, on confirm: `DELETE /api/siteOwner/posts/:id`, no body (it carries `X-C
 
 - **Success (`204`, no body):** go to `/dashboard`, where the post is no longer listed. Its old URL now shows "Post not found." with the link back to `/dashboard` (Get a Post by ID).
 - **Failure:** render the backend's `error.message` in a dialog (for example "Post not found." if it was already deleted); the site owner stays on the post page and can try again.
+
+---
+
+## Photo Galleries (site owner)
+
+A gallery is a section of a client website showing a series of photos (an artwork portfolio, the inside of a business). A website can have many galleries, each with 1 to 30 images in order. Galleries work like posts: `draft` / `published`, deleted for good as far as the site owner can tell, and the same image upload on Submit. Each image may also have two optional crops: a square **thumbnail** and a **mobile** crop at least as tall as it is wide. Request and response shapes are in `docs/api.md` (Feature 10, decided by Rich 2026-10-31).
+
+### Create a Gallery
+
+Hook used: `useGalleries()` (`create`), plus `useWebsites()` for the Website dropdown and the names already taken
+
+Built like Create a Post (`GalleryForm`, with the same `PostStepDialog`s, cancel gate, form timeout and Submit progress), one intent per dialog:
+
+1. **"Name your gallery":** **Gallery Name** (required, max 100, with its count) and its help text "Only you see this, it's how you find the gallery on your dashboard." With more than one website, a **Website** dropdown sits above it, as in Create a Post. A gallery's name is unique among its website's galleries, ignoring case: a name that website's galleries already have shows "A gallery with this name already exists." as soon as it is typed (the backend's 409 message, word for word), and **Next** stays disabled. Only the chosen website's galleries count. **Cancel** closes at once.
+2. **"Gallery details":** the note "These fields are optional.", then **Title** (max 150) and **Copy** (a textarea, max 2000, plain text, help text "Line breaks you add will show on your website."), each with its count. Cancel / Next.
+3. **"Add your first image":** the note "One image is required for a gallery.", then the image's fields (see Gallery image dialog). Cancel / **Insert**.
+4. **The review view,** titled "Create a Gallery".
+
+From step 2 on, Cancel, Esc and the review view's X ask "Are you sure you want to cancel creating this gallery?", with **"Yes, cancel"** and **"Keep editing"** (Rich, 2026-10-31).
+
+**The review view** has the post review view's three parts:
+
+- **Add Image** on the left, disabled at 30 images with "Maximum of 30 images" under it.
+- **The preview** in the middle (`GalleryPreview`): the title, the copy with its line breaks, then the images whole, in order, each with its caption under it, side by side at a fixed width (two to a row at phone width) and wrapping onto as many rows as they need. How the website lays the images out, and where it uses the crops, is up to the website.
+- **The toolbar** on the right (`GalleryToolbar`), each row with a ⋮ menu, and each of the gallery's own fields reading its label in bold, then its value ("Gallery Name: Our Interior", "Title: Inside"), as in the post toolbar: **Gallery name** (Edit); **Title** and **Copy** (Edit and Delete, or only Add while empty: "No title", "No copy"); an **"Images"** heading (a list-level backend message for `images` shows under it); then each image by its icon and alt text, with Edit, Move up / Move down arrows where it can move, and Delete, except on the only image, since every gallery needs one. Under the images, in a list of its own, the **Mobile Shape** row (Edit, only while an image has a mobile crop, see Consistent crops). Under "Images", what the gallery's crops still lack (see Consistent crops), and under each image the crop it needs. Under the list, the **Status** switch ("Published", on by default; help text "Set a gallery to published for it to be live on your website, or draft to save it and publish it at a later date.") and **Submit**.
+
+Edit / Add from the toolbar opens its own dialog on a copy, as in Create a Post: **Save** (a field) or **Insert** (an image) changes the gallery, **Cancel** leaves it as it was. Renaming checks the name the same way; a gallery keeps its own name.
+
+**Submit** uploads the new images first, exactly as Create a Post does ("Uploading images…", then "Submitting…"; one signature, each new file to Cloudinary, nothing saved if one fails), then `POST /api/siteOwner/galleries` with `{ websiteId, galleryName, title, copy, status, images }` (blank optional fields as `null`; each image `{ src, width, height, altText, caption, thumbnailCrop, mobileCrop }`, a missing crop `null`). Each new image's crops are first scaled to the stored size (see Crops).
+
+- **Success:** close the dialogs and refetch `useWebsites()`, so the new gallery appears in its website's table. No success dialog.
+- **Failure:** the backend's `error.message` under Submit (a taken name's 409, "A gallery with this name already exists.", among them), each `error.fields` message under its toolbar row (`galleryName`, `images.2.caption`, `images.2.thumbnailCrop`…) and in that row's dialog. Adding, moving or deleting an image drops the `images.N.…` messages and the list's `images` message, as for a post body. Everything entered stays.
+
+### Gallery image dialog
+
+"Add your first image" (step 3), "Add an image" or "Edit image":
+
+- **Image** and **Alt Text:** the same file picker, checks and notes as a post image (Post body dialogs).
+- **Caption:** optional, max 300, with its count and the note "Optional. Shown with the image on your website."
+- **Crops:** the heading "Crops" with "*Optional" beside it, then a **Thumbnail** row, with the note "*A square version for your gallery's grid. Clicking it opens the full image.", and a **Mobile** row, with the note "*A taller version shown on phones, so the image fills more of the screen." (`GalleryCropField`, each note under its label, Rich decided 2026-10-31). Each shows a small picture of its crop once there is one, and **"Crop thumbnail"** / **"Crop for mobile"** (it reads **"Edit crop"** once there is a crop) and, once there is one, **"Remove crop"**. Both are disabled until an image is picked. **Picking another file clears both crops**, since they were drawn on the image it replaces. A crop's backend message shows under its row.
+- **Insert** stays disabled until the image has a file and alt text, the caption fits, and its crops follow the gallery's (see Consistent crops). A crop row the other images make required reads "*Required, since your other images have one."
+
+**The crop dialog** (`CropDialog`, "Crop thumbnail" or "Crop for mobile", on top of the image's dialog, Cancel / **Save**): the image under a fixed-shape frame, dragged to place it and zoomed with the wheel, a pinch, or the **Zoom** slider (`react-easy-crop`, Rich approved 2026-10-31). The thumbnail's frame is square. The gallery's first mobile crop has a **Shape** choice: **4:5** (the default), 3:4, 9:16 or 1:1; later ones are cropped in the gallery's shape (see Consistent crops). Re-opening a crop starts from it, in its shape. Save keeps the crop on the image's working copy; Cancel leaves it as it was.
+
+### Consistent crops
+
+A gallery's crops are consistent, so the website's grid and phone layout work (Rich decided 2026-10-31; the backend refuses the same cases): if any image has a thumbnail crop, every image needs one; if any image has a mobile crop, every image needs one; and every mobile crop has one shape. The form steers the site owner so incomplete crops are never submitted:
+
+- **The image dialog:** a crop the gallery's other images have is marked "*Required, since your other images have one.", and Insert waits for it. A new image can't join the gallery without the crops the others have.
+- **The mobile shape** is one setting for the whole gallery. The first mobile crop sets it: its crop dialog shows the Shape choices above the frame, each previewing live on the photo, and Save sets the shape. Every later mobile crop is cropped in that shape, with no Shape choices. Once any image has a mobile crop, the toolbar shows a **Mobile Shape** row ("**Mobile Shape:** 4:5") whose ⋮ offers Edit: the "Edit mobile shape" dialog, with the note "*Changing the shape reshapes every image's mobile crop around its centre. You can adjust each one afterwards.", the Shape choices and Cancel / **Save** (disabled until another shape is picked). Save redraws every mobile crop in the new shape around its own centre, at its height, shrunk to fit its image, so nothing is lost and the gallery is never left in two shapes (Rich decided 2026-10-31).
+- **The review view:** adding a crop to one image, or removing it from one, can leave the others out of step. Each such image's toolbar row then says what it needs ("Needs a thumbnail crop.", "Needs a mobile crop.", "Mobile crop is a different shape."), the gallery's messages show under "Images" ("Add a thumbnail crop to every image, or remove them all.", "Add a mobile crop to every image, or remove them all.", "Every mobile crop must be the same shape."), and **Submit** stays disabled until every image matches, or the crop is removed from all of them.
+- "Same shape" means each mobile crop's width / height is within 1% of the first one's, which allows for whole-pixel rounding (a 4:5 crop stored as 750 × 938).
+
+### Crops
+
+A crop is `{ x, y, width, height }` in the **stored** image's pixels (`docs/api.md` → Notes, Crops). The crop tool works on the image the browser shows: a picked file at its own size, or a stored image at its stored size. Cloudinary scales a file larger than 2500 × 2500 down as it stores it, so on Submit each new image's crops are scaled by its stored size over its picked size (`scaleCrop` in `_lib/crops.js`), rounded to whole pixels and kept inside the image: the thumbnail exactly square, the mobile crop at least as tall as it is wide, as the backend checks. A stored image's crops are sent as they are.
+
+### Get a Gallery by ID
+
+Hook used: `useGallery(id)` → `GET /api/siteOwner/galleries/:id`
+
+`/dashboard/gallery/{id}`, built like the post page: website name, gallery name, the published / draft pill with the Published switch, then **Gallery Code** (the `slug`) with the note "Give us this code when you tell us where this gallery goes on your website.", Title and Copy (with its line breaks), then, under an "Images:" heading, the images two to a row on desktop (one at phone width), each as a row of three labelled columns, **Main** (the image, smaller than a post's photo, in its stored proportions), **Thumbnail** and **Mobile** (each crop's picture, or "None"), wrapping on a narrow screen, with its Caption and Alt Text under the row, then created and last-updated dates. An empty title, copy, caption or crop shows "None". "Edit Gallery" and "Delete Gallery" sit side by side at the end. A 404 shows "Gallery not found." with a link back to `/dashboard`. `?edit=1` (the ⋮ menu's Edit) opens Edit once the gallery has loaded, then drops itself from the address.
+
+### Edit a Gallery
+
+Hook used: `useGallery(id)` (`update`), plus `useWebsites()` for the names already taken
+
+"Edit Gallery" opens the review view straight away, titled "Edit Gallery", filled in from the gallery (each image with its id, caption and crops). No Website field and no Status switch. The site owner's websites are fetched while the form is open, so a name another gallery on the website has is refused before submit; until they arrive, the backend's 409 still catches it. The X and Esc close it at once while nothing has changed, then ask "Are you sure you want to cancel your changes?" ("Discard changes" / "Keep editing").
+
+On Submit → `PATCH /api/siteOwner/galleries/:id` with the full form `{ galleryName, title, copy, images }`: images in their new order, existing ones with their `id`, removed ones absent. New images upload first as in Create a Gallery. Renaming never changes the slug. Success closes the form and the page shows the edit (no success dialog); a failure shows as in Create a Gallery.
+
+### Gallery Draft / Publish
+
+Hook used: `useGallery(id)` (`setStatus`); the ⋮ menu's status item uses `useGalleries()` (`setStatus`)
+
+As for a post: the Published switch on the gallery page (and the ⋮ menu's status item) sends `PATCH /api/siteOwner/galleries/:id/status` with `{ status: "draft" }` or `{ status: "published" }` straight away, with no confirmation and no success dialog. The switch moves only once the request succeeds; a failure shows in a dialog.
+
+### Delete a Gallery
+
+Hook used: `useGalleries()` (`remove`)
+
+"Delete Gallery" on the gallery page, or the ⋮ menu's Delete, opens `ConfirmDialog`: "Delete {galleryName}? It will be removed from your dashboard and your website. This can't be undone.", with "Delete Gallery" and "Cancel". On confirm, `DELETE /api/siteOwner/galleries/:id`; the page's button reads "Deleting…" meanwhile. Success (`204`) goes to `/dashboard` (from the page) or refetches the list (from the ⋮ menu). A failure shows the backend's `error.message` in a dialog.
