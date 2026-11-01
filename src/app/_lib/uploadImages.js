@@ -5,7 +5,7 @@
 
 import { apiFetch } from "./apiFetch";
 
-export const UPLOAD_FAILED_MESSAGE =
+const UPLOAD_FAILED_MESSAGE =
   "Your images couldn't be uploaded, please try again.";
 
 // Thrown when Cloudinary refuses an upload or can't be reached. Cloudinary's own message is

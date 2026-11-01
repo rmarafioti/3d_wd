@@ -47,8 +47,11 @@ npm run lint          # ESLint
 npm run format        # Prettier (run before every commit)
 npm run format:check  # Prettier check only, no changes (what CI runs)
 npm run build         # production build
+npm run start         # serves the production build (after npm run build)
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, `format:check`, a production-dependency `npm audit`, the tests and the build on every pull request and every push to `main`.
+
+Reminders (`.github/workflows/reminders.yml`) open a GitHub issue for the monthly dependency audit (the full `npm audit`, dev included, only when it finds a moderate or worse advisory) and the biweekly code sweep (`/code-sweep`, `.claude/skills/code-sweep/SKILL.md`). See `CLAUDE.md` → Reminders.
 
 The backend must be running locally (see the backend README) for sign-in and the dashboards to work.

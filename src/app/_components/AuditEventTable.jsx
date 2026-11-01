@@ -5,7 +5,7 @@
 import styles from "../_styling/auditEvents.module.css";
 
 // { websiteId: "w1", reason: "no_account" } → "websiteId: w1, reason: no_account".
-export function formatMetadata(metadata) {
+function formatMetadata(metadata) {
   if (!metadata) return "";
   return Object.entries(metadata)
     .map(([key, value]) => {
