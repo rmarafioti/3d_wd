@@ -88,5 +88,5 @@ Numbered as in the backend's `docs/deploy.md` → Deployment checklist; the step
 - **26.** Production header checks, the scanners moved here from step 20, and the HSTS `preload` decision (section 7). Done 2026-10-27: every header on `/` and `/sign-in` with `curl`, `www` and `http` redirect to `https://3dwebdev.com`, the scanners show only the expected flags, `preload` not now. The frontend's Production environment moved from `main` to the `production` branch (section 8).
 - **27.** Stevie The Dog onboarded on production (backend and Rich). Done 2026-10-28. Nothing for the frontend.
 - **28.** Stevie The Dog's post create, archive, make active and edit each show live after one refresh (backend and Rich). Done 2026-10-28. Nothing for the frontend.
-- **29.** Record the launch. In progress: the docs are done (this repo's `docs/launch`, and the backend's `docs/launch`, PR #38); the master doc Documentation Sync is pending.
+- **29.** Record the launch. Done 2026-10-28: the docs on `docs/launch` in both repos (backend PR #38), then the master doc on the backend's `docs/master-doc-sync`, a full Documentation Sync.
 - **30.** Reassess staging (Rich). It is kept for now (Render staging costs $13.30/month); if it is ever deleted, it is added back before the first breaking change.
