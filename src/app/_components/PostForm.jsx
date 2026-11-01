@@ -17,13 +17,14 @@
 // asks first ("Are you sure…?"), except on the first step, where only a name is lost, and in Edit
 // before anything has changed.
 //
-// Submit first uploads any newly picked images (uploadPicked: one signature, then each file to
-// Cloudinary) and swaps their Cloudinary src, width and height into the body, then saves:
-// POST /api/siteOwner/posts with the status, or PATCH /api/siteOwner/posts/:id with the full form.
-// If an upload fails nothing is saved; images already uploaded keep their Cloudinary src, so
-// trying again doesn't upload them twice. While it works, Submit reads "Uploading images…" and
-// then "Submitting…". useFormTimeout clears the form after 20 hours. The parent unmounts it in
-// onClose or after onSuccess.
+// Submit first uploads any newly picked images (uploadPicked: each file shrunk, one signature,
+// then each file to Cloudinary) and swaps their Cloudinary src, width and height into the body,
+// then saves: POST /api/siteOwner/posts with the status, or PATCH /api/siteOwner/posts/:id with
+// the full form. If an upload fails nothing is saved; images already uploaded keep their
+// Cloudinary src, so trying again doesn't upload them twice. While it works, SubmitProgressDialog
+// names each step ("Preparing photos…", "Uploading photos (1 of 3)…", "Saving your post…").
+// useFormTimeout clears the form after 20 hours. The parent unmounts it in onClose or after
+// onSuccess.
 
 "use client";
 
@@ -39,6 +40,7 @@ import FieldLabel from "./FieldLabel";
 import ConfirmDialog from "./ConfirmDialog";
 import Toggle from "./Toggle";
 import MessageDialog from "./MessageDialog";
+import SubmitProgressDialog from "./SubmitProgressDialog";
 import {
   isBlank,
   validateImage,
@@ -223,7 +225,8 @@ export default function PostForm({
   // Fields the site owner has left at least once; only their messages are shown.
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  // The step Submit is on, shown in SubmitProgressDialog; null while Submit isn't running.
+  const [progress, setProgress] = useState(null);
   const [serverError, setServerError] = useState(null);
   const [timedOut, setTimedOut] = useState(false);
 
@@ -255,10 +258,6 @@ export default function PostForm({
   // checks, and its one required paragraph can't be deleted.
   const isValid = Object.keys(errors).length === 0;
   const fieldErrors = serverError?.fields ?? {};
-  // Submit names the step it is on; the line under it is only for a failure's message.
-  let progress = null;
-  if (uploading) progress = "Uploading images…";
-  else if (submitting) progress = "Submitting…";
 
   const paragraphCount = body.filter(
     (element) => element.type === "paragraph",
@@ -403,13 +402,7 @@ export default function PostForm({
     const newImages = body.filter((element) => element.file);
     if (newImages.length === 0) return body;
 
-    setUploading(true);
-    let storedBySrc;
-    try {
-      storedBySrc = await uploadPicked(websiteId, newImages);
-    } finally {
-      setUploading(false);
-    }
+    const storedBySrc = await uploadPicked(websiteId, newImages, setProgress);
 
     function swap(element) {
       const image = storedBySrc.get(element.src);
@@ -431,6 +424,7 @@ export default function PostForm({
     setServerError(null);
     try {
       const payload = toPayload({ ...values, body: await uploadNewImages() });
+      setProgress("Saving your post…");
       const post = await onSubmit(
         isCreate ? { websiteId, ...payload, status } : payload,
       );
@@ -439,6 +433,7 @@ export default function PostForm({
       // Everything entered stays. A failed upload throws its own message, a failed sign or save
       // the backend's.
       setServerError({ message: err.message, fields: err.fields });
+      setProgress(null);
       setSubmitting(false);
     }
   }
@@ -586,13 +581,8 @@ export default function PostForm({
               disabled={!isValid || submitting}
               onClick={handleSubmit}
             >
-              {progress ?? "Submit"}
+              Submit
             </button>
-            {/* A disabled button's new label isn't reliably announced, so screen readers hear
-                the progress from here. */}
-            <p role="status" className={styles.visuallyHidden}>
-              {progress}
-            </p>
             {serverError?.message && <p>{serverError.message}</p>}
           </PostToolbar>
         </div>
@@ -702,6 +692,7 @@ export default function PostForm({
           onClose={() => setConfirmingCancel(false)}
         />
       )}
+      {progress && <SubmitProgressDialog message={progress} />}
     </>
   );
 }
