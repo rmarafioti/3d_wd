@@ -117,12 +117,17 @@ textarea {
   max-width: 100%;
   resize: vertical;
   height: 160px;
+  /* 16px or more, so iPhone Safari doesn't zoom in when the field is tapped. */
+  font-size: 1rem;
   border: 1px solid black;
   padding: 0.5rem;
 }
 
 input,
 select {
+  /* The browser's default is about 13px, and iPhone Safari zooms into a tapped field under 16px.
+     Pinch-zoom stays on: the viewport isn't locked. */
+  font-size: 1rem;
   border: 1px solid black;
   padding: 0.5rem;
   width: 100%;

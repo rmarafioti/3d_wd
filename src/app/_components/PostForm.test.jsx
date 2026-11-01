@@ -5,8 +5,9 @@
 // the post on Insert / Save, a cancelled image edit keeping the post's image), Edit opening on the
 // review view, the request payload (body in order, blank → null, image ids kept across a move, no
 // client key), backend errors on their toolbar rows and dropped once the body shifts, image
-// uploads on Submit (docs/api.md → Endpoints, Notes: one signature, each new file to Cloudinary,
-// nothing saved if one fails, no second upload on a retry) and the 20-hour form timeout.
+// uploads on Submit (docs/api.md → Endpoints, Notes: each file shrunk, one signature, each new file
+// to Cloudinary, nothing saved if one fails, no second upload on a retry), the progress dialog and
+// the 20-hour form timeout.
 
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
@@ -18,6 +19,7 @@ import {
   mockFetch,
   pressEscape,
   stubImageLoading,
+  stubImageShrinking,
   stubObjectUrls,
 } from "../../test/helpers";
 
@@ -717,6 +719,10 @@ describe("PostForm image uploads", () => {
   it("signs once for the post's website, uploads each new image to Cloudinary, then saves Cloudinary's src and size", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
+    const { decodes, encodes } = stubImageShrinking({
+      width: 4000,
+      height: 3000,
+    });
     const calls = mockUploads();
     const onSubmit = vi.fn().mockResolvedValue(POST);
     const { user, onSuccess } = renderCreate({ onSubmit });
@@ -745,10 +751,18 @@ describe("PostForm image uploads", () => {
         file: expect.any(File),
       });
     }
+    // Each picked file is shrunk to fit 2500 px before it goes up.
     expect(uploads.map((upload) => upload.body.file.name)).toEqual([
       "Stevie.jpg",
       "Ball.jpg",
     ]);
+    expect(encodes).toEqual([
+      expect.objectContaining({ width: 2500, height: 1875 }),
+      expect.objectContaining({ width: 2500, height: 1875 }),
+    ]);
+    expect(uploads.map((upload) => upload.body.file)).not.toContain(
+      decodes[0].file,
+    );
     expect(onSubmit.mock.calls[0][0].body.slice(1)).toEqual([
       {
         type: "image",
@@ -929,32 +943,59 @@ describe("PostForm image uploads", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
   });
 
-  it('reads "Uploading images…" on Submit while the images upload, then "Submitting…" while the post saves', async () => {
+  it("shows each step of Submit in a progress dialog: preparing, uploading as each upload finishes, then saving", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
-    const upload = deferred();
-    mockUploads([() => upload.promise]);
+    const sign = deferred();
+    const first = deferred();
+    const second = deferred();
+    mockFetch({
+      "POST /api/siteOwner/uploads/sign": () => sign.promise,
+      [`POST ${UPLOAD_URL}`]: [() => first.promise, () => second.promise],
+    });
     const save = deferred();
     const { user } = renderCreate({
       onSubmit: vi.fn().mockReturnValue(save.promise),
     });
     await walkSteps(user);
-    await addImage(user, loads);
+    await addImage(user, loads, "Stevie");
+    await addImage(user, loads, "Ball");
 
     await user.click(button("Submit"));
 
     expect(
-      await screen.findByRole("button", { name: "Uploading images…" }),
-    ).toBeDisabled();
-    expect(screen.getByRole("status")).toHaveTextContent("Uploading images…");
-    await act(async () => upload.resolve(stored(1)));
-    expect(
-      await screen.findByRole("button", { name: "Submitting…" }),
-    ).toBeDisabled();
-    expect(screen.getByRole("status")).toHaveTextContent("Submitting…");
+      await screen.findByRole("dialog", { name: "Preparing photos…" }),
+    ).toBeInTheDocument();
+    expect(button("Submit")).toBeDisabled();
+    await act(async () => sign.resolve({ body: { data: SIGNATURE } }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Uploading photos (0 of 2)…",
+    );
+    await act(async () => first.resolve(stored(1)));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Uploading photos (1 of 2)…",
+    );
+    await act(async () => second.resolve(stored(2)));
+    expect(screen.getByRole("status")).toHaveTextContent("Saving your post…");
   });
 
-  it('reads "Submitting…" on Submit while a post without images saves, and "Submit" again after a failure', async () => {
+  it("can't be dismissed with Esc while Submit runs", async () => {
+    const save = deferred();
+    const { user } = renderCreate({
+      onSubmit: vi.fn().mockReturnValue(save.promise),
+    });
+    await walkSteps(user);
+    await user.click(button("Submit"));
+    const progress = await screen.findByRole("dialog", {
+      name: "Saving your post…",
+    });
+
+    pressEscape(progress);
+
+    expect(progress).toHaveAttribute("open");
+  });
+
+  it('goes straight to "Saving your post…" without new images, and on a failure closes the dialog and shows the error under Submit', async () => {
     const save = deferred();
     const { user } = renderCreate({
       onSubmit: vi.fn().mockReturnValue(save.promise),
@@ -964,16 +1005,36 @@ describe("PostForm image uploads", () => {
     await user.click(button("Submit"));
 
     expect(
-      await screen.findByRole("button", { name: "Submitting…" }),
-    ).toBeDisabled();
+      await screen.findByRole("dialog", { name: "Saving your post…" }),
+    ).toBeInTheDocument();
     await act(async () =>
       save.reject({ message: "Something went wrong, please try again." }),
     );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(button("Submit")).toBeEnabled();
     expect(
-      screen.getAllByText("Something went wrong, please try again."),
-    ).toHaveLength(1);
-    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+      screen.getByText("Something went wrong, please try again."),
+    ).toBeInTheDocument();
+    expect(toolbarRows()[0]).toBe("Post Name: Walk day");
+  });
+
+  it("keeps the progress dialog closed after a failed upload, even as another upload finishes", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    const second = deferred();
+    mockUploads([{ networkError: true }, () => second.promise]);
+    const { user } = renderCreate({ onSubmit: vi.fn() });
+    await walkSteps(user);
+    await addImage(user, loads, "Stevie");
+    await addImage(user, loads, "Ball");
+    await user.click(button("Submit"));
+    await screen.findByText(
+      "Your images couldn't be uploaded, please try again.",
+    );
+
+    await act(async () => second.resolve(stored(2)));
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("lets go of picked images' object URLs when the form closes", async () => {

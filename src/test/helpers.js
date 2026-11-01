@@ -147,6 +147,34 @@ export function stubImageLoading() {
   return loads;
 }
 
+// jsdom has no createImageBitmap and no canvas drawing, so shrinkImage falls back to the picked
+// file unless this stands in for them. Every picked file decodes as a `width` × `height` photo
+// (or fails to, with `fail: true`), and the canvas encodes it as a small Blob of the type asked
+// for. Returns { decodes, encodes }: each decode as { file, options }, each encode as
+// { width, height, type, quality }.
+export function stubImageShrinking({ width, height, fail = false }) {
+  const decodes = [];
+  const encodes = [];
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn(async (file, options) => {
+      decodes.push({ file, options });
+      if (fail) throw new DOMException("The source image cannot be decoded.");
+      return { width, height, close: vi.fn() };
+    }),
+  );
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    drawImage: vi.fn(),
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+    function (callback, type, quality) {
+      encodes.push({ width: this.width, height: this.height, type, quality });
+      callback(new Blob(["shrunk"], { type }));
+    },
+  );
+  return { decodes, encodes };
+}
+
 // jsdom has no URL.createObjectURL / revokeObjectURL. Each file gets "blob:test/1",
 // "blob:test/2", …; returns the revoke spy so a test can check an object URL was let go.
 export function stubObjectUrls() {

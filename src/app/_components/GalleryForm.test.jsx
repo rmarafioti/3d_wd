@@ -3,8 +3,9 @@
 // website's names don't count; the first image's step), the review view (no Delete on the only
 // image, the 30-image limit), the crop dialog (the mobile shapes, a new file clearing the crops),
 // consistent crops across the gallery (every image or none has each crop, one mobile shape set by
-// the first mobile crop and changed from the toolbar, with Submit and Insert waiting for them), Submit (one signature, each new file to Cloudinary, then crops scaled to Cloudinary's stored
-// size), Edit's payload (ids kept, stored crops sent as they are, its own name allowed), the
+// the first mobile crop and changed from the toolbar, with Submit and Insert waiting for them),
+// Submit (each file shrunk, one signature, each new file to Cloudinary, then crops scaled to
+// Cloudinary's stored size, and the progress dialog's save step), Edit's payload (ids kept, stored crops sent as they are, its own name allowed), the
 // backend's 409 under Submit, a crop's field message on its row and in its dialog, and the cancel
 // gate. react-easy-crop is third-party UI, so a stub stands in for it and reports the crop the
 // test sets.
@@ -15,10 +16,12 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GalleryForm, { galleryToFormValues } from "./GalleryForm";
 import {
+  deferred,
   imageFile,
   mockFetch,
   pressEscape,
   stubImageLoading,
+  stubImageShrinking,
   stubObjectUrls,
 } from "../../test/helpers";
 
@@ -273,9 +276,12 @@ describe("GalleryForm crops", () => {
 });
 
 describe("GalleryForm submit", () => {
-  it("uploads the new image, then saves it with Cloudinary's src and size and its crops scaled to them", async () => {
+  it("uploads the new image shrunk, then saves it with Cloudinary's src and size and its crops scaled to them", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
+    // The picked photo is 4000 × 3000 (pickImage), shrunk to 2500 × 1875 before it goes up; the
+    // crops were drawn on the picked size and land in the same place on the stored one.
+    const { encodes } = stubImageShrinking({ width: 4000, height: 3000 });
     const calls = mockUploads();
     const onSubmit = vi.fn().mockResolvedValue(GALLERY);
     const { user, onSuccess } = renderCreate({ onSubmit });
@@ -303,6 +309,9 @@ describe("GalleryForm submit", () => {
     expect(calls.map((call) => call.path)).toEqual([
       "/api/siteOwner/uploads/sign",
       UPLOAD_URL,
+    ]);
+    expect(encodes).toEqual([
+      expect.objectContaining({ width: 2500, height: 1875 }),
     ]);
     expect(onSubmit).toHaveBeenCalledWith({
       websiteId: "w1",
@@ -344,6 +353,19 @@ describe("GalleryForm submit", () => {
       await screen.findByText("A gallery with this name already exists."),
     ).toBeInTheDocument();
     expect(button("Submit")).toBeEnabled();
+  });
+
+  it('names the save step "Saving your gallery…" in the progress dialog', async () => {
+    const save = deferred();
+    const { user } = renderEdit({
+      onSubmit: vi.fn().mockReturnValue(save.promise),
+    });
+
+    await user.click(button("Submit"));
+
+    expect(
+      await screen.findByRole("dialog", { name: "Saving your gallery…" }),
+    ).toBeInTheDocument();
   });
 });
 

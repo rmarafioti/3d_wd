@@ -25,6 +25,7 @@
 // (scaleCrop), then saves: POST /api/siteOwner/galleries with the status, or
 // PATCH /api/siteOwner/galleries/:id with the full form. If an upload fails nothing is saved;
 // images already uploaded keep their Cloudinary src, so trying again doesn't upload them twice.
+// While it works, SubmitProgressDialog names each step, ending in "Saving your gallery…".
 // useFormTimeout clears the form after 20 hours. The parent unmounts it in onClose or after
 // onSuccess.
 
@@ -42,6 +43,7 @@ import FieldLabel from "./FieldLabel";
 import ConfirmDialog from "./ConfirmDialog";
 import Toggle from "./Toggle";
 import MessageDialog from "./MessageDialog";
+import SubmitProgressDialog from "./SubmitProgressDialog";
 import MobileShapePicker from "./MobileShapePicker";
 import {
   GALLERY_NAME_TAKEN_MESSAGE,
@@ -220,7 +222,8 @@ export default function GalleryForm({
   // Fields the site owner has left at least once; only their messages are shown.
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  // The step Submit is on, shown in SubmitProgressDialog; null while Submit isn't running.
+  const [progress, setProgress] = useState(null);
   const [serverError, setServerError] = useState(null);
   const [timedOut, setTimedOut] = useState(false);
 
@@ -261,10 +264,6 @@ export default function GalleryForm({
   const isValid =
     Object.keys(errors).length === 0 && crops.messages.length === 0;
   const fieldErrors = serverError?.fields ?? {};
-  // Submit names the step it is on; the line under it is only for a failure's message.
-  let progress = null;
-  if (uploading) progress = "Uploading images…";
-  else if (submitting) progress = "Submitting…";
 
   const imagesFull = images.length >= MAX_GALLERY_IMAGES;
 
@@ -436,13 +435,7 @@ export default function GalleryForm({
     const newImages = images.filter((image) => image.file);
     if (newImages.length === 0) return images;
 
-    setUploading(true);
-    let storedBySrc;
-    try {
-      storedBySrc = await uploadPicked(websiteId, newImages);
-    } finally {
-      setUploading(false);
-    }
+    const storedBySrc = await uploadPicked(websiteId, newImages, setProgress);
 
     function swap(image) {
       const stored = storedBySrc.get(image.src);
@@ -475,6 +468,7 @@ export default function GalleryForm({
     setServerError(null);
     try {
       const payload = toPayload({ ...values, images: await uploadNewImages() });
+      setProgress("Saving your gallery…");
       const gallery = await onSubmit(
         isCreate ? { websiteId, ...payload, status } : payload,
       );
@@ -483,6 +477,7 @@ export default function GalleryForm({
       // Everything entered stays. A failed upload throws its own message, a failed sign or save
       // the backend's (a taken name's 409 among them).
       setServerError({ message: err.message, fields: err.fields });
+      setProgress(null);
       setSubmitting(false);
     }
   }
@@ -620,13 +615,8 @@ export default function GalleryForm({
               disabled={!isValid || submitting}
               onClick={handleSubmit}
             >
-              {progress ?? "Submit"}
+              Submit
             </button>
-            {/* A disabled button's new label isn't reliably announced, so screen readers hear
-                the progress from here. */}
-            <p role="status" className={styles.visuallyHidden}>
-              {progress}
-            </p>
             {serverError?.message && <p>{serverError.message}</p>}
           </GalleryToolbar>
         </div>
@@ -777,6 +767,7 @@ export default function GalleryForm({
           onClose={() => setConfirmingCancel(false)}
         />
       )}
+      {progress && <SubmitProgressDialog message={progress} />}
     </>
   );
 }
