@@ -25,6 +25,7 @@ Installs:
 - Next.js (current stable)
 - React
 - @react-oauth/google
+- @sentry/browser (error reports, production only)
 - Dev tools: Vitest, React Testing Library and jsdom (unit tests), ESLint, Prettier
 
 ```
@@ -33,12 +34,13 @@ cp .env.example .env
 
 Set:
 
-| Variable                          | Local value                                                   | Staging value                      | Production value           |
-| --------------------------------- | ------------------------------------------------------------- | ---------------------------------- | -------------------------- |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id                                    | same                               | same                       |
-| `NEXT_PUBLIC_API_BASE_URL`        | leave empty (calls go to `/api` through the dev proxy)        | `https://api-staging.3dwebdev.com` | `https://api.3dwebdev.com` |
-| `API_PROXY_TARGET`                | `http://localhost:4000` (where the dev proxy forwards `/api`) | not set                            | not set                    |
-| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email                                     | same                               | same                       |
+| Variable                          | Local value                                                   | Staging value                      | Production value                         |
+| --------------------------------- | ------------------------------------------------------------- | ---------------------------------- | ---------------------------------------- |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | the Google OAuth client id                                    | same                               | same                                     |
+| `NEXT_PUBLIC_API_BASE_URL`        | leave empty (calls go to `/api` through the dev proxy)        | `https://api-staging.3dwebdev.com` | `https://api.3dwebdev.com`               |
+| `API_PROXY_TARGET`                | `http://localhost:4000` (where the dev proxy forwards `/api`) | not set                            | not set                                  |
+| `NEXT_PUBLIC_ADMIN_CONTACT_EMAIL` | the admin's contact email                                     | same                               | same                                     |
+| `NEXT_PUBLIC_SENTRY_DSN`          | leave empty (Sentry off)                                      | not set (Sentry off)               | the `3dwd-frontend` Sentry project's DSN |
 
 ```
 npm run dev           # starts the app on http://localhost:3000

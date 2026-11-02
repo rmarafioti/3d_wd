@@ -8,7 +8,7 @@ const GENERIC_MESSAGE = "Something went wrong, please try again.";
 const LOGIN_PATH = "/api/auth/login";
 
 // Error thrown for every failed request, carrying what the UI needs to display it.
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(message, status, fields) {
     super(message);
     this.name = "ApiError";
