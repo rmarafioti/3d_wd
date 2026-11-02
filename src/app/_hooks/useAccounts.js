@@ -1,5 +1,6 @@
-// useAccounts (admin): all site owner accounts with their websites.
-// Returns { data, loading, error, refetch } plus createAccount and linkWebsite.
+// useAccounts (admin): all site owner accounts with their websites (each with its abilities and
+// gallery summaries). Returns { data, loading, error, refetch } plus createAccount, linkWebsite
+// and setAbilityLive.
 
 "use client";
 
@@ -42,5 +43,27 @@ export function useAccounts() {
     [refetch],
   );
 
-  return { data, loading, error, refetch, createAccount, linkWebsite };
+  // Sets a requested ability live, once the client website shows it and the client has approved
+  // it. Returns the Ability. Throws the ApiError on failure.
+  const setAbilityLive = useCallback(
+    async (abilityId) => {
+      const result = await apiFetch(
+        `/api/admin/abilities/${encodeURIComponent(abilityId)}/status`,
+        { method: "PATCH", body: { status: "live" } },
+      );
+      refetch();
+      return result;
+    },
+    [refetch],
+  );
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+    createAccount,
+    linkWebsite,
+    setAbilityLive,
+  };
 }

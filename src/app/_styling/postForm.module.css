@@ -131,8 +131,10 @@
   border-color: rgb(117, 99, 236);
 }
 
+/* Cancel at the left, Add / Update link at the right, as in every dialog (Rich, 2026-11-02). */
 .linkDraftButtons {
   display: flex;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 

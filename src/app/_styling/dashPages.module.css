@@ -1,6 +1,6 @@
 .accountList,
 .account,
-.gallerySummary,
+.accountDetails,
 .createAccounts,
 .siteOwnerAccount {
   display: flex;
@@ -9,11 +9,98 @@
   align-items: flex-start;
 }
 
-/* A website's galleries in the Accounts aside are set apart like the accounts themselves. */
-.account,
-.gallerySummary {
+/* Each account in the Accounts aside is set apart by a line under it. */
+.account {
   margin-top: 1rem;
   border-bottom: 1px solid lightgray;
+}
+
+/* The account list and everything nested in it span the panel's width, so the panel (which
+   centres its content) never re-centres them, and their spacing stays put, as a disclosure opens
+   (Rich, 2026-11-02). */
+.accountList,
+.disclosure,
+.accountDetails,
+.websites,
+.abilities {
+  width: 100%;
+}
+
+/* A website's abilities, under its link. */
+.abilities {
+  margin-top: 1rem;
+}
+
+/* "Abilities", and each ability's row (its name, pill and switch) while its items are open, are
+   set apart from what follows by a lighter line than the one under each ability, so the headings
+   read as part of it (Rich, 2026-11-02). Closed, an ability shows only the line under it. */
+.abilitiesHeader,
+.abilityDetails[open] > .abilityHeader {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(230, 230, 230);
+}
+
+/* Every disclosure's summary in the account list (an account, Websites, an ability, a gallery): a
+   full-width row like an .itemRow, so a pill lines up with theirs at the right edge. A flex summary
+   loses the browser's open / closed marker (hidden below for Safari too), so .marker draws it, the
+   same triangle at the same size on every one: the Accounts toggle's, pointing right when closed
+   and down when open (Rich, 2026-11-02). */
+.summaryRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.summaryRow::-webkit-details-marker {
+  display: none;
+}
+
+[open] > .summaryRow > .marker {
+  transform: rotate(90deg);
+}
+
+/* Takes the row's spare width, so the pill sits at the right edge. */
+.summaryName {
+  flex-grow: 1;
+}
+
+/* A pill and the switch beside it, kept together at the row's right end. */
+.pillGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* No global summary margin under an ability's row, so it has the same space above and below its
+   text as the site owner's ability rows (Rich, 2026-11-02). */
+.abilityHeader {
+  margin-bottom: 0rem;
+}
+
+/* An ability's posts or galleries, indented under its row. */
+.items {
+  list-style: none;
+  margin: 1rem 0rem 0.5rem 1rem;
+}
+
+/* A website, post or gallery: its name at the left and its status pill at the right, so every
+   row's pill lines up; and an opened gallery's label and value, the same way (Rich, 2026-11-02). */
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gallerySummaryName {
+  margin-bottom: 0.5rem;
+}
+
+/* An opened gallery's photo count and crop flags, indented under its name. */
+.gallerySummary {
+  margin-left: 1rem;
 }
 
 .header,
@@ -33,17 +120,25 @@
   margin-bottom: 0.5rem;
 }
 
-.statusPill {
-  margin: 0rem 0rem 1rem 0rem;
+/* The site owner's request note keeps the line breaks they typed. */
+.requestNote {
+  margin-bottom: 0.5rem;
+  white-space: pre-line;
 }
 
-.noGalleries {
-  margin: 1rem 0rem;
+.noItems {
+  margin: 1rem 0rem 0.5rem 1rem;
 }
 
 .submitButton,
 .createAPost {
   width: 100%;
+}
+
+/* Positioned, so the Abilities aside sits over the dashboard's top right, like the Accounts aside
+   on /admin. */
+.dashboard {
+  position: relative;
 }
 
 /* Create a Post and Create a Gallery side by side, sharing the row's width. */

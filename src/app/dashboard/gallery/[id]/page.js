@@ -152,14 +152,7 @@ export default function GalleryPage() {
 
         <dl>
           <dt className={styles.key}>Gallery Code:</dt>
-          <dd className={styles.value}>
-            {gallery.slug}
-            <br />
-            <i className={styles.note}>
-              *Give us this code when you tell us where this gallery goes on
-              your website.
-            </i>
-          </dd>
+          <dd className={styles.value}>{gallery.slug}</dd>
           <dt className={styles.key}>Title:</dt>
           <dd className={styles.value}>{gallery.title ?? "None"}</dd>
           <dt className={styles.key}>Copy:</dt>

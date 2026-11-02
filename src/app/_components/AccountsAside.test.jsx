@@ -1,7 +1,8 @@
 // Tests for AccountsAside (docs/flows.md → Admin Dashboard, Link a Website): closed by default and
 // toggled open; the Link a Website dialog opens for the clicked account, an existing-website link
 // confirms with that account's name, and a new-website link opens the one-time reveal and
-// refreshes the website list on close.
+// refreshes the website list on close. Switching a requested ability live asks first, then sets
+// it live and refetches, sends nothing when cancelled, and shows a failure in a dialog.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -44,7 +45,8 @@ async function setup(linkRoute) {
   const user = userEvent.setup();
   renderAside();
   await user.click(screen.getByRole("button", { name: "Accounts" }));
-  await user.click(await screen.findByText("Websites"));
+  await user.click((await screen.findAllByText("Richard Marafioti"))[0]);
+  await user.click(screen.getByText("Websites"));
   await user.click(screen.getByRole("button", { name: "Link a Website" }));
   return { user, calls };
 }
@@ -64,7 +66,7 @@ describe("AccountsAside", () => {
       "aria-expanded",
       "false",
     );
-    expect(screen.queryByText("Richard Marafioti")).not.toBeInTheDocument();
+    expect(screen.queryAllByText("Richard Marafioti")).toHaveLength(0);
   });
 
   it("opens to show the accounts from its toggle", async () => {
@@ -79,7 +81,7 @@ describe("AccountsAside", () => {
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(await screen.findByText("Richard Marafioti")).toBeInTheDocument();
+    expect(await screen.findAllByText("Richard Marafioti")).not.toHaveLength(0);
   });
 
   it("closes again from the same toggle", async () => {
@@ -91,12 +93,12 @@ describe("AccountsAside", () => {
     renderAside();
     const toggle = screen.getByRole("button", { name: "Accounts" });
     await user.click(toggle);
-    await screen.findByText("Richard Marafioti");
+    await screen.findAllByText("Richard Marafioti");
 
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("Richard Marafioti")).not.toBeInTheDocument();
+    expect(screen.queryAllByText("Richard Marafioti")).toHaveLength(0);
   });
 
   it("links an existing website and confirms with the account's name", async () => {
@@ -111,7 +113,7 @@ describe("AccountsAside", () => {
     ).toBeInTheDocument();
     const dialog = within(screen.getByRole("dialog"));
     await user.selectOptions(
-      dialog.getByLabelText("Choose a website"),
+      dialog.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 
@@ -193,5 +195,98 @@ describe("AccountsAside", () => {
     expect(
       screen.getByText("Copy these now! They will never be shown again."),
     ).toBeInTheDocument();
+  });
+
+  describe("Live switch", () => {
+    const REQUESTED = {
+      id: "ab2",
+      kind: "galleries",
+      status: "requested",
+      turnedOn: true,
+      requestNote: "A Gallery page.",
+      requestedAt: "2026-11-02T00:00:00.000Z",
+      createdAt: "2026-11-02T00:00:00.000Z",
+      updatedAt: "2026-11-02T00:00:00.000Z",
+    };
+    const withAbility = (ability) => ({
+      ...ACCOUNT,
+      websites: [{ ...STEVIE, abilities: [ability], posts: [], galleries: [] }],
+    });
+
+    // Opens the aside, the account and its Websites disclosure, then switches the ability live.
+    async function clickSetLive(routes) {
+      const { calls } = mockFetch({
+        "GET /api/admin/websites": { body: { data: [STEVIE] } },
+        ...routes,
+      });
+      const user = userEvent.setup();
+      renderAside();
+      await user.click(screen.getByRole("button", { name: "Accounts" }));
+      await user.click((await screen.findAllByText("Richard Marafioti"))[0]);
+      await user.click(screen.getByText("Websites"));
+      await user.click(
+        screen.getByRole("switch", {
+          name: "Photo Galleries live for Stevie The Dog",
+        }),
+      );
+      return { user, calls };
+    }
+
+    it("asks first, then sets the ability live and refetches the accounts", async () => {
+      const { user, calls } = await clickSetLive({
+        "GET /api/admin/accounts": [
+          { body: { data: [withAbility(REQUESTED)] } },
+          { body: { data: [withAbility({ ...REQUESTED, status: "live" })] } },
+        ],
+        "PATCH /api/admin/abilities/ab2/status": {
+          body: { data: { ...REQUESTED, status: "live" } },
+        },
+      });
+      const dialog = screen.getByRole("dialog");
+
+      expect(
+        within(dialog).getByText(
+          "Set Photo Galleries live for Stevie The Dog? Only do this once it shows on their website and they have approved it.",
+        ),
+      ).toBeInTheDocument();
+
+      await user.click(
+        within(dialog).getByRole("button", { name: "Set live" }),
+      );
+
+      expect(await screen.findByText("live")).toBeInTheDocument();
+      expect(calls.find((call) => call.method === "PATCH").body).toEqual({
+        status: "live",
+      });
+    });
+
+    it("sends nothing when cancelled", async () => {
+      const { user, calls } = await clickSetLive({
+        "GET /api/admin/accounts": { body: { data: [withAbility(REQUESTED)] } },
+      });
+
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(0);
+    });
+
+    it("shows a failure in a dialog", async () => {
+      await clickSetLive({
+        "GET /api/admin/accounts": { body: { data: [withAbility(REQUESTED)] } },
+        "PATCH /api/admin/abilities/ab2/status": {
+          status: 409,
+          body: { error: { message: "This ability is already live." } },
+        },
+      });
+
+      await userEvent
+        .setup()
+        .click(screen.getByRole("button", { name: "Set live" }));
+
+      expect(
+        await screen.findByText("This ability is already live."),
+      ).toBeInTheDocument();
+    });
   });
 });

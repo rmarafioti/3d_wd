@@ -25,12 +25,13 @@ export default function ConfirmDialog({
     // The close event fires for the cancel button and Esc.
     <dialog ref={dialogRef} onClose={onClose} className={styles.confirmDialog}>
       <p>{message}</p>
+      {/* Cancel on the left, the action on the right, as in every dialog (Rich, 2026-11-02). */}
       <div className="dialogButtons">
-        <button type="button" onClick={onConfirm}>
-          {confirmLabel}
-        </button>
         <button type="button" onClick={() => dialogRef.current.close()}>
           {cancelLabel}
+        </button>
+        <button type="button" onClick={onConfirm}>
+          {confirmLabel}
         </button>
       </div>
     </dialog>

@@ -1,7 +1,8 @@
 // GalleryCropField (site owner): the Crops section of a gallery image's Add / Edit dialog
 // (docs/flows.md → Gallery image dialog): a row for the square thumbnail crop and one for the
 // mobile crop, each optional. A row says what its crop is for, shows the crop (CropPreview) once
-// there is one, and has a button to crop (or edit the crop) in CropDialog, and Remove crop.
+// there is one, and has a button to crop (or edit the crop) in CropDialog, and Remove crop,
+// stacked beside the crop's picture rather than under it, to save space (Rich, 2026-11-02).
 // Nothing can be cropped until an image is picked. rules (cropRules) are what the gallery's other
 // images ask of this one: a crop any of them has is marked required here, and a mobile crop is
 // cropped in their shape (GalleryForm holds Insert until both are met). Holds only which crop
@@ -86,33 +87,37 @@ export default function GalleryCropField({
                 <i>*{REQUIRED_NOTE}</i>
               </p>
             )}
-            {crop && hasImage && (
-              <CropPreview
-                src={image.src}
-                width={image.width}
-                height={image.height}
-                crop={crop}
-                alt={`${label} crop`}
-              />
-            )}
-            <div className={styles.cropButtons}>
-              <button
-                type="button"
-                disabled={!hasImage}
-                aria-label={crop ? `Edit ${label.toLowerCase()} crop` : action}
-                onClick={() => setCropping(option)}
-              >
-                {crop ? "Edit crop" : action}
-              </button>
-              {crop && (
+            <div className={styles.cropBody}>
+              {crop && hasImage && (
+                <CropPreview
+                  src={image.src}
+                  width={image.width}
+                  height={image.height}
+                  crop={crop}
+                  alt={`${label} crop`}
+                />
+              )}
+              <div className={styles.cropButtons}>
                 <button
                   type="button"
-                  aria-label={`Remove ${label.toLowerCase()} crop`}
-                  onClick={() => onPatch({ [field]: null })}
+                  disabled={!hasImage}
+                  aria-label={
+                    crop ? `Edit ${label.toLowerCase()} crop` : action
+                  }
+                  onClick={() => setCropping(option)}
                 >
-                  Remove crop
+                  {crop ? "Edit crop" : action}
                 </button>
-              )}
+                {crop && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${label.toLowerCase()} crop`}
+                    onClick={() => onPatch({ [field]: null })}
+                  >
+                    Remove crop
+                  </button>
+                )}
+              </div>
             </div>
             {error && <p className="fieldError">{error}</p>}
           </div>

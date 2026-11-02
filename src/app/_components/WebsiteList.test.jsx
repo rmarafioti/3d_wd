@@ -7,9 +7,23 @@ import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import WebsiteList from "./WebsiteList";
 
+const GALLERIES_ABILITY = {
+  id: "ab2",
+  kind: "galleries",
+  status: "added",
+  turnedOn: true,
+  requestNote: null,
+  requestedAt: null,
+  createdAt: "2026-11-01T00:00:00.000Z",
+  updatedAt: "2026-11-01T00:00:00.000Z",
+};
 const WEBSITE = {
   id: "w1",
   websiteName: "Stevie The Dog",
+  abilities: [
+    { ...GALLERIES_ABILITY, id: "ab1", kind: "posts" },
+    GALLERIES_ABILITY,
+  ],
   posts: [
     {
       id: "p2",
@@ -138,5 +152,19 @@ describe("WebsiteList", () => {
     );
 
     expect(screen.getByText("No galleries yet.")).toBeInTheDocument();
+  });
+
+  it("leaves out the Galleries table for a website without Photo Galleries", () => {
+    render(
+      <WebsiteList
+        websites={[{ ...WEBSITE, abilities: [WEBSITE.abilities[0]] }]}
+        loading={false}
+        error={null}
+      />,
+    );
+
+    expect(screen.getByText("Posts")).toBeInTheDocument();
+    expect(screen.queryByText("Galleries")).not.toBeInTheDocument();
+    expect(screen.queryByText("Our Interior")).not.toBeInTheDocument();
   });
 });

@@ -1,0 +1,16 @@
+/* Children span the dialog's width, so the field's label row puts its count at the right edge
+   (the global form rule lines children up at their own width). */
+.form {
+  align-items: stretch;
+}
+
+.heading,
+.message {
+  margin-bottom: 1rem;
+}
+
+/* Space between the field and Submit (Rich, 2026-11-02). A field message under it takes this
+   over, as the global .fieldError rule does for every field. */
+.noteField {
+  margin-bottom: 1rem;
+}

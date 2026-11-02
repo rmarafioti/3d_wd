@@ -1,7 +1,8 @@
-// useGalleries (site owner): gallery creation, status changes and deletion, like usePosts. It
-// fetches nothing, so it exposes just create, setStatus and remove. The dashboard calls them
-// directly and refetches its list (from useWebsites) after each; the gallery page changes status
-// through useGallery and deletes through remove, so both pages share one request for each.
+// useGalleries (site owner): gallery creation, status changes, deletion and each gallery's
+// request form, like usePosts. It fetches nothing, so it exposes just create, setStatus, remove
+// and request. The dashboard calls them directly and refetches its list (from useWebsites) after
+// each; the gallery page changes status through useGallery and deletes through remove, so both
+// pages share one request for each.
 
 "use client";
 
@@ -37,5 +38,16 @@ export function useGalleries() {
     [],
   );
 
-  return { create, setStatus, remove };
+  // The gallery's request form: where on the website it should appear. Returns the updated
+  // Gallery. Throws the ApiError on failure.
+  const request = useCallback(
+    (id, requestNote) =>
+      apiFetch(`/api/siteOwner/galleries/${encodeURIComponent(id)}/request`, {
+        method: "POST",
+        body: { requestNote },
+      }),
+    [],
+  );
+
+  return { create, setStatus, remove, request };
 }

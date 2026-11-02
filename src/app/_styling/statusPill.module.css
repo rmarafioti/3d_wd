@@ -3,12 +3,26 @@
   border-radius: 25px;
 }
 
-.active {
+/* .live, .off, .requested and .added are an ability's four states (AbilityPill). */
+.active,
+.live {
   background-color: rgb(15, 174, 15);
   color: white;
 }
 
-.inactive {
+.inactive,
+.off {
   background-color: red;
   color: white;
+}
+
+.requested {
+  background-color: rgb(117, 99, 236);
+  color: white;
+}
+
+.added {
+  background-color: white;
+  color: black;
+  border: 1px solid lightgray;
 }
