@@ -29,6 +29,10 @@ function scriptSrc(policy) {
   return policy.split("; ").find((d) => d.startsWith("script-src"));
 }
 
+function connectSrc(policy) {
+  return policy.split("; ").find((d) => d.startsWith("connect-src"));
+}
+
 afterEach(() => {
   vi.unstubAllEnvs();
 });
@@ -108,6 +112,27 @@ describe("proxy", () => {
 
   it("gives a page that isn't listed as static the nonce policy", () => {
     expect(scriptSrc(policyOf("/some-new-page"))).toContain("'nonce-");
+  });
+
+  it("allows Sentry's ingest origin in both policies once its DSN is set", () => {
+    vi.stubEnv(
+      "NEXT_PUBLIC_SENTRY_DSN",
+      "https://publickey@o123.ingest.us.sentry.io/456",
+    );
+
+    expect(connectSrc(policyOf("/dashboard"))).toContain(
+      " https://o123.ingest.us.sentry.io",
+    );
+    expect(connectSrc(policyOf("/"))).toBe(
+      "connect-src 'self' https://o123.ingest.us.sentry.io",
+    );
+  });
+
+  it("leaves Sentry out of both policies without a DSN", () => {
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "");
+
+    expect(policyOf("/dashboard")).not.toContain("sentry.io");
+    expect(connectSrc(policyOf("/"))).toBe("connect-src 'self'");
   });
 
   it("adds 'unsafe-eval' in development only", () => {
