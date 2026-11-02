@@ -190,3 +190,13 @@ export function validateGalleryImage(image) {
     errors.caption = "Caption must be 300 characters or fewer.";
   return errors;
 }
+
+// Validates an ability's request form (docs/api.md → Validation rules, Abilities): where on their
+// website the site owner wants the ability's content to appear. Line breaks inside are kept.
+export function validateRequestNote({ requestNote }) {
+  const errors = {};
+  if (isBlank(requestNote)) errors.requestNote = "Request note is required.";
+  else if (isTooLong(requestNote, 1000))
+    errors.requestNote = "Request note must be 1000 characters or fewer.";
+  return errors;
+}

@@ -64,11 +64,6 @@ its height follows its stored proportions. */
   overflow-wrap: anywhere;
 }
 
-/* The gallery page's help text under the slug. */
-.note {
-  color: grey;
-}
-
 /* The gallery page's images take the page's full width, so two fit side by side. */
 .imagesSection {
   width: 100%;

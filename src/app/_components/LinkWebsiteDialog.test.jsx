@@ -50,7 +50,7 @@ describe("LinkWebsiteDialog", () => {
       body: { data: response },
     });
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 
@@ -70,7 +70,7 @@ describe("LinkWebsiteDialog", () => {
       },
     });
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 

@@ -140,7 +140,7 @@ describe("CreateAccountForm", () => {
     });
     await fillOwner(user);
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 

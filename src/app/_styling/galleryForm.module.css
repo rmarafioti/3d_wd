@@ -35,8 +35,16 @@
   margin-bottom: 1rem;
 }
 
+/* A crop's picture with its buttons beside it, stacked in a column (Rich, 2026-11-02). */
+.cropBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .cropButtons {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 

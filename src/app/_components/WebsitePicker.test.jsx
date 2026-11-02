@@ -1,4 +1,4 @@
-// Tests for WebsitePicker (docs/flows.md → WebsitePicker): "Add new website" by default, picking
+// Tests for WebsitePicker (docs/flows.md → WebsitePicker): "Choose a website" by default, picking
 // an existing website fills and locks the fields, switching back clears and unlocks them, and
 // backend field messages show next to their fields. toWebsitePayload is covered through the
 // CreateAccountForm payload tests.
@@ -39,12 +39,12 @@ function Harness({ fieldErrors = {} }) {
 }
 
 describe("WebsitePicker", () => {
-  it('selects "Add new website" by default with empty, editable fields', () => {
+  it('selects "Choose a website" by default with empty, editable fields', () => {
     render(<Harness />);
 
-    expect(screen.getByLabelText("Choose a website")).toHaveDisplayValue(
-      "Add new website",
-    );
+    expect(
+      screen.getByLabelText("Choose an existing website"),
+    ).toHaveDisplayValue("Choose a website");
     expect(screen.getByLabelText("Website Name")).toHaveValue("");
     expect(screen.getByLabelText("Website Name")).not.toHaveAttribute(
       "readonly",
@@ -60,7 +60,7 @@ describe("WebsitePicker", () => {
     render(<Harness />);
 
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 
@@ -72,24 +72,24 @@ describe("WebsitePicker", () => {
     expect(screen.getByLabelText("Website URL")).toHaveAttribute("readonly");
 
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Good Boys",
     );
 
     expect(screen.getByLabelText("Website Name")).toHaveValue("Good Boys");
   });
 
-  it('clears and unlocks the fields when "Add new website" is picked again', async () => {
+  it('clears and unlocks the fields when "Choose a website" is picked again', async () => {
     const user = userEvent.setup();
     render(<Harness />);
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
-      "Add new website",
+      screen.getByLabelText("Choose an existing website"),
+      "Choose a website",
     );
 
     expect(screen.getByLabelText("Website Name")).toHaveValue("");

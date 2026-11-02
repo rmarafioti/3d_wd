@@ -117,12 +117,13 @@ export default function LinkPanel({
         </p>
       )}
 
+      {/* Cancel on the left, the action on the right, as in every dialog (Rich, 2026-11-02). */}
       <div className={styles.linkDraftButtons}>
-        <button type="button" disabled={!canSave} onClick={handleSave}>
-          {mode === "edit" ? "Update link" : "Add link"}
-        </button>
         <button type="button" onClick={onCancel}>
           Cancel
+        </button>
+        <button type="button" disabled={!canSave} onClick={handleSave}>
+          {mode === "edit" ? "Update link" : "Add link"}
         </button>
       </div>
     </div>

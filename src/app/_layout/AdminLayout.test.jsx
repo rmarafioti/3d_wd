@@ -43,7 +43,12 @@ describe("Admin layout", () => {
         {
           body: {
             data: [
-              { ...NEW_ACCOUNT, websites: [{ ...STEVIE, galleries: [] }] },
+              {
+                ...NEW_ACCOUNT,
+                websites: [
+                  { ...STEVIE, abilities: [], posts: [], galleries: [] },
+                ],
+              },
             ],
           },
         },
@@ -72,7 +77,7 @@ describe("Admin layout", () => {
       "jane@example.com",
     );
     await user.selectOptions(
-      screen.getByLabelText("Choose a website"),
+      screen.getByLabelText("Choose an existing website"),
       "Stevie The Dog",
     );
 

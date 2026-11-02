@@ -4,6 +4,8 @@
 
 .aside {
   position: absolute;
+  /* Left-aligned wherever it sits: the dashboard page around the Abilities aside centres text. */
+  text-align: left;
   top: 0;
   right: 0;
   z-index: 10;
@@ -20,20 +22,40 @@
 }
 
 /* Open: runs the height of the viewport; the toggle stays at the top and the list scrolls. */
+/* 300px fits a row's name, pill, switch and ⋮ side by side (Rich, 2026-11-02). */
 .open {
-  width: 240px;
+  width: 300px;
   height: 100vh;
   background-color: white;
   border-left: 1px solid lightgray;
 }
 
+/* For a block with a line under it: undoes the aside's 0.5rem side padding (.aside) so the line
+   meets the aside's left border, and adds it back inside, so the text stays where it was. Nested
+   blocks line up too, since the content of each stays on the same edge (Rich, 2026-11-02). */
+.fullWidth {
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  width: calc(100% + 1rem);
+}
+
+/* Spans the aside's full width, its content kept on the same edge (as .fullWidth does), so the
+   .fullWidth lines inside reach the aside's border within the panel rather than past it, and the
+   panel never scrolls sideways (Rich, 2026-11-02). */
 .panel {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 0;
-  width: 100%;
+  /* Fills the open aside's height, so a ⋮ list opening under the last row stays inside it. */
+  flex-grow: 1;
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  width: calc(100% + 1rem);
   overflow-y: auto;
+  /* A ⋮ list's right border lies 1px past a row's edge, on the aside's own edge: clipped, rather
+     than scrolling the panel sideways. */
+  overflow-x: hidden;
 }
 
 .toggle {
@@ -46,6 +68,16 @@
   padding: 1rem 1rem 1rem 0rem;
   width: 100%;
   text-align: left;
+}
+
+/* Open: a line under the header, so the list scrolling under it reads as passing behind it. It
+   meets the aside's left border, as the list's lines do (.fullWidth); the text stays put
+   (Rich, 2026-11-02). */
+.open .toggle {
+  margin-inline: -0.5rem;
+  padding-left: 0.5rem;
+  width: calc(100% + 1rem);
+  border-bottom: 1px solid lightgray;
 }
 
 /* At phone width the closed tab shows only its icon; open, the text returns as on desktop. */

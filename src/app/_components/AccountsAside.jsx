@@ -2,17 +2,20 @@
 // Navbar, rendered by the admin layout. Closed by default; its toggle opens the AccountList over
 // the page content. Owns the Link a Website flow started from each account: the form dialog,
 // then the one-time CredentialRevealModal (new website) or a confirmation dialog (existing
-// website). That flow lives outside the panel, so its dialogs stay open if the panel closes.
+// website). That flow lives outside the panel, so its dialogs stay open if the panel closes. Also
+// owns switching a requested ability live: a confirmation first, since the app can't undo it.
 
 "use client";
 
 import { useState } from "react";
 import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 import { useAdminData } from "../_hooks/useAdminData";
+import { abilityLabel } from "../_lib/abilities";
 import AccountList from "./AccountList";
 import LinkWebsiteDialog from "./LinkWebsiteDialog";
 import CredentialRevealModal from "./CredentialRevealModal";
 import MessageDialog from "./MessageDialog";
+import ConfirmDialog from "./ConfirmDialog";
 
 import styles from "../_styling/accountsAside.module.css";
 
@@ -25,6 +28,10 @@ export default function AccountsAside() {
   // open. The response may contain the one-time credentials, so it is set back to null the
   // moment that dialog closes.
   const [linkResult, setLinkResult] = useState(null);
+  // { ability, website } whose Set live confirmation is open, or null.
+  const [settingLive, setSettingLive] = useState(null);
+  // A failed Set live's message, held only while its dialog is open.
+  const [setLiveError, setSetLiveError] = useState(null);
 
   // Points right when closed and down when open, like the native marker on each account's
   // "Websites" <details> disclosure.
@@ -40,6 +47,18 @@ export default function AccountsAside() {
     setLinkResult(null);
     // A new website was created, so the pickers need it.
     websites.refetch();
+  }
+
+  // The confirm dialog closes first. On success the account list refetches (useAccounts), so the
+  // pill reads "live".
+  async function confirmSetLive() {
+    const { ability } = settingLive;
+    setSettingLive(null);
+    try {
+      await accounts.setAbilityLive(ability.id);
+    } catch (err) {
+      setSetLiveError(err.message);
+    }
   }
 
   return (
@@ -67,6 +86,9 @@ export default function AccountsAside() {
             loading={accounts.loading}
             error={accounts.error}
             onLink={setLinkingAccount}
+            onSetLive={(ability, website) =>
+              setSettingLive({ ability, website })
+            }
           />
         </div>
       )}
@@ -91,6 +113,20 @@ export default function AccountsAside() {
         <MessageDialog
           message={`${linkResult.response.website.websiteName} linked to ${linkResult.accountName}. No new API key or webhook secret was generated. The website's existing credentials are unchanged.`}
           onClose={() => setLinkResult(null)}
+        />
+      )}
+      {settingLive && (
+        <ConfirmDialog
+          message={`Set ${abilityLabel(settingLive.ability.kind)} live for ${settingLive.website.websiteName}? Only do this once it shows on their website and they have approved it.`}
+          confirmLabel="Set live"
+          onConfirm={confirmSetLive}
+          onClose={() => setSettingLive(null)}
+        />
+      )}
+      {setLiveError && (
+        <MessageDialog
+          message={setLiveError}
+          onClose={() => setSetLiveError(null)}
         />
       )}
     </aside>

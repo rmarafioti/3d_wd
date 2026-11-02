@@ -1,13 +1,16 @@
-// WebsitePicker: shared by Create an Account and Link a Website. Choose "Add new website" or an
-// existing website; reports { websiteId } or { websiteName, websiteUrl }.
+// WebsitePicker: shared by Create an Account and Link a Website. The admin types a new website's
+// name and URL, or chooses an existing website from the list below them (Rich, 2026-11-02);
+// reports { websiteId } or { websiteName, websiteUrl }.
 //
 // Controlled: the parent form owns `value` ({ websiteId, websiteName, websiteUrl }) so it can
-// validate and clear it. Picking an existing website fills and locks the name and URL fields;
-// picking "Add new website" clears and unlocks them.
+// validate and clear it. Choosing an existing website fills and locks the name and URL fields
+// above; choosing "Choose a website" again clears and unlocks them.
 
 "use client";
 
 import { useId } from "react";
+
+import styles from "../_styling/websitePicker.module.css";
 
 export const EMPTY_WEBSITE = { websiteId: "", websiteName: "", websiteUrl: "" };
 
@@ -42,20 +45,7 @@ export default function WebsitePicker({
 
   return (
     <fieldset>
-      <label htmlFor={`${id}-select`}>Choose a website</label>
-      <select
-        id={`${id}-select`}
-        value={value.websiteId}
-        onChange={handleSelect}
-      >
-        <option value="">Add new website</option>
-        {websites.map((website) => (
-          <option key={website.id} value={website.id}>
-            {website.websiteName}
-          </option>
-        ))}
-      </select>
-
+      <p className={styles.note}>Add a new website or choose from the list.</p>
       <label htmlFor={`${id}-name`}>Website Name</label>
       <input
         id={`${id}-name`}
@@ -83,6 +73,20 @@ export default function WebsitePicker({
       {fieldErrors.websiteUrl && (
         <p className="fieldError">{fieldErrors.websiteUrl}</p>
       )}
+
+      <label htmlFor={`${id}-select`}>Choose an existing website</label>
+      <select
+        id={`${id}-select`}
+        value={value.websiteId}
+        onChange={handleSelect}
+      >
+        <option value="">Choose a website</option>
+        {websites.map((website) => (
+          <option key={website.id} value={website.id}>
+            {website.websiteName}
+          </option>
+        ))}
+      </select>
     </fieldset>
   );
 }
