@@ -1,6 +1,6 @@
 # Deploy
 
-The frontend's side of deploying the Client Portal. The backend repo's `docs/deploy.md` is the source of truth for the shared decisions (made 2026-10-24) and holds the full Deployment checklist; this file covers only what the frontend does, and uses the backend's step numbers so both read in one order. Rich's master doc copies this file into the Frontend section of its Deployment tab.
+The frontend's side of deploying the Client Portal. The backend repo's `docs/deploy.md` is the source of truth for the shared decisions (made 2026-10-24) and holds the full Deployment checklist; this file covers only what the frontend does, and uses the backend's step numbers so both read in one order.
 
 ## 1. Hosting
 
