@@ -1,5 +1,6 @@
-// AuthButton: Navbar client island. "Sign in" link when no user in context, "Sign out" when there is one.
-// className replaces the purple button look, for Sign out listed like a link in the phone menu.
+// AuthButton: Navbar client island. "Sign in" link when no user in context, "Sign out" when there
+// is one. className replaces the purple button look, for Sign out listed like a link in the phone
+// menu.
 
 "use client";
 

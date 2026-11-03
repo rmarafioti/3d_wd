@@ -2,15 +2,14 @@
 // admin's Accounts aside. Closed by default; its toggle opens, over the page content, each of the
 // site owner's websites with every ability in the catalog (Posts, Photo Galleries): its pill
 // (AbilityPill, with prompts: "Add ?" while not added, "Turn On ?" while turned off; for Posts,
-// then a "requested" PlacementPill while they wait to be placed) and a ⋮ menu
-// with what its state allows: "Edit placement" once the posts request form was sent (Feature
-// 13), "+ Add" while not added, Turn On / Turn Off once live, and Remove once added (Photo
-// Galleries only). On / off is a menu choice, not a
-// switch (Rich, 2026-11-02). Owns those requests and their dialogs, as AccountsAside owns Link a
-// Website, so they stay open if the panel closes; onChange (the dashboard's refetch) runs after
-// each success. Add and Turn On / Off save straight away, since each is undone in one motion;
-// Remove deletes the website's galleries, so it asks first. A gallery's own request form is
-// edited on its page.
+// then a "requested" PlacementPill while they wait to be placed) and a ⋮ menu with what its state
+// allows: "Edit placement" once the posts request form was sent (Feature 13), "+ Add" while not
+// added, Turn On / Turn Off once live, and Remove once added (Photo Galleries only). On / off is a
+// menu choice, not a switch (Rich, 2026-11-02). Owns those requests and their dialogs, as
+// AccountsAside owns Link a Website, so they stay open if the panel closes; onChange (the
+// dashboard's refetch) runs after each success. Add and Turn On / Off save straight away, since
+// each is undone in one motion; Remove deletes the website's galleries, so it asks first. A
+// gallery's own request form is edited on its page.
 
 "use client";
 

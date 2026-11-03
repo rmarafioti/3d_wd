@@ -1,9 +1,11 @@
-// Site owner dashboard: each website with its post table and gallery table, Create a Post and Create
-// a Gallery (opened by the Navbar's links, ?create=post or ?create=gallery), and the shortcuts from each row's ⋮ menu that save from here: Status (straight away,
-// then a refetch so the row's pill follows) and Delete (its confirmation, then a refetch so the
-// post or gallery leaves its table). The Abilities aside sits over the top right, and galleries
-// show only for a website with the Photo Galleries ability. While an ability waits for its request
-// form (added, with a post or gallery already saved), the required request dialog is open.
+// Site owner dashboard: each website with its post table and gallery table, Create a Post and
+// Create a Gallery (opened by the Navbar's links, ?create=post or ?create=gallery), and the
+// shortcuts from each row's ⋮ menu that save from here: Status (straight away, then a refetch so
+// the row's pill follows) and Delete (its confirmation, then a refetch so the post or gallery
+// leaves its table). The Abilities aside sits over the top right, and galleries show only for a
+// website with the Photo Galleries ability. While a request form waits to be sent (posts with a
+// post and no placement yet, or after a new first post; a gallery with no message sent), the
+// required request dialog is open.
 // A Client Component on purpose: per-user data is only ever fetched client-side.
 
 "use client";

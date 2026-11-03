@@ -1,11 +1,10 @@
 // Single gallery view: the gallery's details and its slug (how the client website asks for it, so
 // the site owner can say which gallery goes where), each image with its caption, alt text and
-// crops, its placement (its pill and sent request note, with Edit placement, Feature
-// 13), Edit Gallery,
-// Delete Gallery, and the Published switch next to the status pill. Built
-// like the post page: the switch saves straight away (no confirmation, no success dialog), Delete
-// Gallery asks first (ConfirmDialog) and returns to /dashboard once the gallery is deleted, and
-// the dashboard's ⋮ menu links here with ?edit=1 to open the Edit form straight away.
+// crops, its placement (its pill and sent request note, with Edit placement, Feature 13), Edit
+// Gallery, Delete Gallery, and the Published switch next to the status pill. Built like the post
+// page: the switch saves straight away (no confirmation, no success dialog), Delete Gallery asks
+// first (ConfirmDialog) and returns to /dashboard once the gallery is deleted, and the dashboard's
+// ⋮ menu links here with ?edit=1 to open the Edit form straight away.
 // A Client Component on purpose: per-user data is only ever fetched client-side.
 
 "use client";
