@@ -13,7 +13,12 @@ import { useWebsites } from "../_hooks/useWebsites";
 import { usePosts } from "../_hooks/usePosts";
 import { useGalleries } from "../_hooks/useGalleries";
 import { useAbilities } from "../_hooks/useAbilities";
-import { abilityLabel, findAbility, pendingRequest } from "../_lib/abilities";
+import {
+  findAbility,
+  galleryRequestCopy,
+  pendingRequest,
+  postsRequestCopy,
+} from "../_lib/abilities";
 import PostForm from "../_components/PostForm";
 import GalleryForm from "../_components/GalleryForm";
 import WebsiteList from "../_components/WebsiteList";
@@ -46,14 +51,12 @@ export default function DashboardPage() {
   function requestCopy({ website, ability, gallery }) {
     if (gallery) {
       return {
-        heading: `Where should ${gallery.galleryName} go?`,
-        message: `Tell us where on ${website.websiteName} you'd like this gallery to appear. We'll send you a mockup to approve before it goes live.`,
+        ...galleryRequestCopy(website.websiteName, gallery),
         onSubmit: (requestNote) => galleries.request(gallery.id, requestNote),
       };
     }
     return {
-      heading: `Where should your ${abilityLabel(ability.kind).toLowerCase()} go?`,
-      message: `Tell us where on ${website.websiteName} you'd like them to appear. We'll send you a mockup to approve before they go live.`,
+      ...postsRequestCopy(website),
       onSubmit: (requestNote) => abilities.request(ability.id, requestNote),
     };
   }

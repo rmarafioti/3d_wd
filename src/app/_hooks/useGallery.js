@@ -1,8 +1,8 @@
 // useGallery(id) (site owner): a single gallery, like usePost.
-// Returns { data, loading, error } plus update and setStatus. Both mutations store the Gallery
+// Returns { data, loading, error } plus update, setStatus and editRequest. Each stores the Gallery
 // the API returns in data, so the page shows the server's copy without a second request.
-// setStatus sends through useGalleries, so the gallery page and the dashboard's ⋮ menu share one
-// status request.
+// setStatus and editRequest send through useGalleries, so the gallery page and the dashboard
+// share one request for each.
 
 "use client";
 
@@ -14,7 +14,8 @@ import { useGalleries } from "./useGalleries";
 export function useGallery(id) {
   const path = `/api/siteOwner/galleries/${encodeURIComponent(id)}`;
   const { data, loading, error, setData } = useApiResource(path);
-  const { setStatus: sendStatus } = useGalleries();
+  const { setStatus: sendStatus, editRequest: sendEditRequest } =
+    useGalleries();
 
   // payload: the full edit form { galleryName, title, copy, images }.
   // Returns the updated Gallery. Throws the ApiError on failure.
@@ -37,5 +38,16 @@ export function useGallery(id) {
     [id, sendStatus, setData],
   );
 
-  return { data, loading, error, update, setStatus };
+  // A change of mind about where the gallery goes, once its request form was sent. Returns the
+  // updated Gallery.
+  const editRequest = useCallback(
+    async (requestNote) => {
+      const gallery = await sendEditRequest(id, requestNote);
+      setData(gallery);
+      return gallery;
+    },
+    [id, sendEditRequest, setData],
+  );
+
+  return { data, loading, error, update, setStatus, editRequest };
 }

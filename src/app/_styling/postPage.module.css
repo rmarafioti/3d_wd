@@ -115,6 +115,12 @@ its height follows its stored proportions. */
   height: auto;
 }
 
+/* Sized to its text, so "Edit where it goes" stays on one line; every other button keeps the global
+   140px (Rich, 2026-11-02). */
+.editRequestButton {
+  width: auto;
+}
+
 @media (max-width: 667px) {
   .postPage {
     width: 100vw;

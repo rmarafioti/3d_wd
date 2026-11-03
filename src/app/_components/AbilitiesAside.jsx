@@ -1,20 +1,27 @@
 // AbilitiesAside (site owner): the Abilities panel at the top right of /dashboard, built like the
 // admin's Accounts aside. Closed by default; its toggle opens, over the page content, each of the
 // site owner's websites with every ability in the catalog (Posts, Photo Galleries): its pill
-// (AbilityPill, none while not added) and a ⋮ menu with what its state allows: "+ Add" while not
-// added, Turn On / Turn Off once live, and Remove once added (Photo Galleries only). On / off is a
-// menu choice, not a switch (Rich, 2026-11-02). Owns those requests and their dialogs, as
-// AccountsAside owns Link a Website, so they stay open if the panel closes; onChange (the
-// dashboard's refetch) runs after each success. Add and Turn On / Off save straight away, since
-// each is undone in one motion; Remove deletes the website's galleries, so it asks first.
+// (AbilityPill, none while not added) and a ⋮ menu with what its state allows: "Edit where it
+// goes" once the posts request form was sent (Feature 13), "+ Add" while not added, Turn On / Turn
+// Off once live, and Remove once added (Photo Galleries only). On / off is a menu choice, not a
+// switch (Rich, 2026-11-02). Owns those requests and their dialogs, as AccountsAside owns Link a
+// Website, so they stay open if the panel closes; onChange (the dashboard's refetch) runs after
+// each success. Add and Turn On / Off save straight away, since each is undone in one motion;
+// Remove deletes the website's galleries, so it asks first. A gallery's own request form is
+// edited on its page.
 
 "use client";
 
 import { useState } from "react";
 import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 import { useAbilities } from "../_hooks/useAbilities";
-import { ABILITY_KINDS, findAbility } from "../_lib/abilities";
+import {
+  ABILITY_KINDS,
+  findAbility,
+  postsRequestCopy,
+} from "../_lib/abilities";
 import AbilityPill from "./AbilityPill";
+import AbilityRequestDialog from "./AbilityRequestDialog";
 import ActionsMenu from "./ActionsMenu";
 import ConfirmDialog from "./ConfirmDialog";
 import MessageDialog from "./MessageDialog";
@@ -41,6 +48,8 @@ export default function AbilitiesAside({ websites, onChange }) {
   const [open, setOpen] = useState(false);
   // The ability whose Remove confirmation is open, or null.
   const [removing, setRemoving] = useState(null);
+  // The posts request form being edited, { website, ability }, or null.
+  const [editingRequest, setEditingRequest] = useState(null);
   // A failed request's message, held only while its dialog is open.
   const [actionError, setActionError] = useState(null);
 
@@ -53,6 +62,12 @@ export default function AbilitiesAside({ websites, onChange }) {
     } catch (err) {
       setActionError(err.message);
     }
+  }
+
+  // The edit is saved, which puts the ability back to requested: the refetch moves its pill.
+  function handleRequestEdited() {
+    setEditingRequest(null);
+    onChange();
   }
 
   // The confirm dialog closes first, like Delete Post's.
@@ -73,6 +88,13 @@ export default function AbilitiesAside({ websites, onChange }) {
       ];
     }
     const items = [];
+    // Only the posts form is the ability's; each gallery's is edited on its page.
+    if (entry.kind === "posts" && ability.requestedAt) {
+      items.push({
+        label: "Edit where it goes",
+        onClick: () => setEditingRequest({ website, ability }),
+      });
+    }
     if (ability.status === "live") {
       items.push({
         label: ability.turnedOn ? "Turn Off" : "Turn On",
@@ -148,6 +170,17 @@ export default function AbilitiesAside({ websites, onChange }) {
           confirmLabel="Remove"
           onConfirm={confirmRemove}
           onClose={() => setRemoving(null)}
+        />
+      )}
+      {editingRequest && (
+        <AbilityRequestDialog
+          {...postsRequestCopy(editingRequest.website)}
+          initialNote={editingRequest.ability.requestNote}
+          onSubmit={(requestNote) =>
+            abilities.editRequest(editingRequest.ability.id, requestNote)
+          }
+          onSent={handleRequestEdited}
+          onCancel={() => setEditingRequest(null)}
         />
       )}
       {actionError && (

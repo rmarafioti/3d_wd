@@ -1,6 +1,7 @@
 // Single gallery view: the gallery's details and its slug (how the client website asks for it, so
 // the site owner can say which gallery goes where), each image with its caption, alt text and
-// crops, Edit Gallery, Delete Gallery, and the Published switch next to the status pill. Built
+// crops, where it goes (its sent request note, with Edit where it goes, Feature 13), Edit Gallery,
+// Delete Gallery, and the Published switch next to the status pill. Built
 // like the post page: the switch saves straight away (no confirmation, no success dialog), Delete
 // Gallery asks first (ConfirmDialog) and returns to /dashboard once the gallery is deleted, and
 // the dashboard's ⋮ menu links here with ?edit=1 to open the Edit form straight away.
@@ -23,6 +24,8 @@ import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Toggle from "../../../_components/Toggle";
 import StatusPill from "../../../_components/StatusPill";
 import CropPreview from "../../../_components/CropPreview";
+import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
+import { galleryRequestCopy } from "../../../_lib/abilities";
 
 import styles from "../../../_styling/postPage.module.css";
 
@@ -72,7 +75,14 @@ export default function GalleryPage() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: gallery, loading, error, update, setStatus } = useGallery(id);
+  const {
+    data: gallery,
+    loading,
+    error,
+    update,
+    setStatus,
+    editRequest,
+  } = useGallery(id);
   const { remove } = useGalleries();
 
   // ?edit=1 (the ⋮ menu's Edit) opens the form; it shows once the gallery has loaded.
@@ -81,6 +91,8 @@ export default function GalleryPage() {
   const [statusPending, setStatusPending] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
+  // Edit where it goes: its request form's edit dialog is open.
+  const [editingRequest, setEditingRequest] = useState(false);
   // The open error dialog's text: a failed status change or delete. Closing it leaves the gallery
   // on screen as it was.
   const [message, setMessage] = useState(null);
@@ -153,6 +165,26 @@ export default function GalleryPage() {
         <dl>
           <dt className={styles.key}>Gallery Code:</dt>
           <dd className={styles.value}>{gallery.slug}</dd>
+          {/* Once its request form was sent: where the site owner asked for it to go. */}
+          {gallery.requestedAt && (
+            <>
+              <dt className={styles.key}>Where it goes:</dt>
+              <dd className={styles.value} style={{ whiteSpace: "pre-line" }}>
+                {gallery.requestNote ?? "None"}
+              </dd>
+              {/* Just under the note it edits (Rich, 2026-11-02). */}
+              <dd className={styles.value}>
+                <button
+                  type="button"
+                  disabled={deletePending}
+                  onClick={() => setEditingRequest(true)}
+                  className={styles.editRequestButton}
+                >
+                  Edit where it goes
+                </button>
+              </dd>
+            </>
+          )}
           <dt className={styles.key}>Title:</dt>
           <dd className={styles.value}>{gallery.title ?? "None"}</dd>
           <dt className={styles.key}>Copy:</dt>
@@ -237,6 +269,16 @@ export default function GalleryPage() {
             gallery={gallery}
             onSubmit={update}
             onClose={() => setEditing(false)}
+          />
+        )}
+        {editingRequest && (
+          // useGallery stores the returned Gallery, so the page shows the new note.
+          <AbilityRequestDialog
+            {...galleryRequestCopy(gallery.websiteName, gallery)}
+            initialNote={gallery.requestNote}
+            onSubmit={editRequest}
+            onSent={() => setEditingRequest(false)}
+            onCancel={() => setEditingRequest(false)}
           />
         )}
         {confirmingDelete && (
