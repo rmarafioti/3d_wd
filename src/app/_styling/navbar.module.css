@@ -1,3 +1,19 @@
+/* Two rows (Rich, 2026-11-03): the top row, then, once signed in, the links under a line. Column
+   rather than the global nav's row; positioned, so the phone menu opens under it. */
+.nav {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
 /* inline-block so the "Sign in" link's padded box is as tall as the "Sign out" button's. */
 .signButton {
   display: inline-block;
@@ -17,8 +33,94 @@
   gap: 1rem;
 }
 
+/* The row keeps its 1rem sides and the gap between links. It has no padding above or below:
+   each link's taller padding gives the row its height instead, so a link's gray highlight meets
+   the lines over and under the row (Rich, 2026-11-03). */
+.links {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0rem 1rem;
+  border-top: 1px solid lightgray;
+  list-style: none;
+}
+
+/* Text links, highlighted light gray like the ⋮ menus' items under the pointer or reached with
+   Tab. Also Sign out in the phone menu, a button made to read as one of them: no purple, no fixed
+   width, no rounded corners. */
+.navLink {
+  display: block;
+  width: auto;
+  /* 1rem above and below: the row's old 0.5rem plus the link's own. */
+  padding: 1rem 0.5rem;
+  border-radius: 0px;
+  color: black;
+  background-color: white;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  background-color: lightgray;
+}
+
+/* Phone only: the hamburger, and Sign out inside its menu. */
+.menuButton,
+.menuSignOut {
+  display: none;
+}
+
 @media (max-width: 667px) {
   .signButton {
     width: 88px;
+  }
+
+  .desktopOnly,
+  .dashboardTitle {
+    display: none;
+  }
+
+  /* Icon only, black on white like the asides' toggles. */
+  .menuButton {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    padding: 0.2rem;
+    font-size: 1.5rem;
+    color: black;
+    background-color: white;
+  }
+
+  .links {
+    display: none;
+  }
+
+  /* Over the page under the navbar, above the asides (z-index 10), so neither covers it. Each
+     item runs the menu's width, so its highlight meets both sides. */
+  .links.menuOpen {
+    display: flex;
+    flex-direction: column;
+    gap: 0rem;
+    padding: 0rem;
+    position: absolute;
+    top: 100%;
+    left: 0rem;
+    right: 0rem;
+    z-index: 20;
+    background-color: white;
+    border-top: none;
+    border-bottom: 1px solid lightgray;
+  }
+
+  /* A little space under Sign out, the menu's last item, before its bottom line. */
+  .menuSignOut {
+    display: block;
+    padding-bottom: 0.5rem;
+  }
+
+  .links.menuOpen .navLink {
+    width: 100%;
+    padding: 0.5rem 1rem;
   }
 }

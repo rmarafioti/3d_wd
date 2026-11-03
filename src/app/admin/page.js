@@ -1,29 +1,13 @@
-// Admin dashboard: the Create an Account form. The Accounts list and Link a Website live in the
-// Accounts aside, which the admin layout renders on every /admin route; both read the same data
-// from AdminDataContext. A Client Component on purpose: per-user data is only ever fetched
-// client-side.
-
-"use client";
-
-import { useAdminData } from "../_hooks/useAdminData";
-import CreateAccountForm from "../_components/CreateAccountForm";
+// Admin dashboard (/admin): no section shows until the admin picks an action from the Navbar's
+// links (Create an Account, Audit Events), each its own page (Rich, 2026-11-03). The Accounts
+// aside is the admin layout's, on every /admin route.
 
 import styles from "../_styling/dashPages.module.css";
 
 export default function AdminPage() {
-  const { accounts, websites } = useAdminData();
-
   return (
     <article>
-      <section className={styles.createAccounts}>
-        <h1 className={styles.header}>Create an Account</h1>
-        {websites.error && <p>{websites.error.message}</p>}
-        <CreateAccountForm
-          websites={websites.data ?? []}
-          createAccount={accounts.createAccount}
-          onNewWebsite={websites.refetch}
-        />
-      </section>
+      <p className={styles.header}>Choose an action from the menu.</p>
     </article>
   );
 }

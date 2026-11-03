@@ -6,7 +6,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "../_context/AuthContext";
 import AdminLayout from "./AdminLayout";
-import AdminPage from "../admin/page";
+import CreateAccountPage from "../admin/createAccount/page";
 import { mockFetch } from "../../test/helpers";
 
 vi.mock("next/navigation", () => ({
@@ -63,7 +63,7 @@ describe("Admin layout", () => {
     render(
       <AuthProvider>
         <AdminLayout>
-          <AdminPage />
+          <CreateAccountPage />
         </AdminLayout>
       </AuthProvider>,
     );

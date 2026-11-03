@@ -163,6 +163,9 @@ dialog {
   margin: auto;
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 2rem);
+  /* The visible height, which shrinks while a phone browser's top and bottom bars show, so a
+     dialog's buttons are never under them; 100vh above stays for an older browser. */
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 2rem;
@@ -191,5 +194,13 @@ dialog::backdrop {
 
   dialog {
     padding: 1rem;
+  }
+
+  /* No focus ring on a tapped field at phone width (Rich, 2026-11-03): the keyboard and the caret
+     already show where typing goes. Desktop keeps it for keyboard users. */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
   }
 }

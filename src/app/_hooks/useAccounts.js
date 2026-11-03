@@ -1,6 +1,6 @@
 // useAccounts (admin): all site owner accounts with their websites (each with its abilities and
-// gallery summaries). Returns { data, loading, error, refetch } plus createAccount, linkWebsite
-// and setAbilityLive.
+// gallery summaries). Returns { data, loading, error, refetch } plus createAccount, linkWebsite,
+// setAbilityLive and setGalleryLive.
 
 "use client";
 
@@ -43,13 +43,29 @@ export function useAccounts() {
     [refetch],
   );
 
-  // Sets a requested ability live, once the client website shows it and the client has approved
-  // it. Returns the Ability. Throws the ApiError on failure.
+  // Sets an ability live (docs/api.md → Notes, Abilities): Photo Galleries once its component is
+  // wired into the client website; posts, with their placement, once they show there and the
+  // client has approved them. Returns the Ability. Throws the ApiError on failure.
   const setAbilityLive = useCallback(
     async (abilityId) => {
       const result = await apiFetch(
         `/api/admin/abilities/${encodeURIComponent(abilityId)}/status`,
         { method: "PATCH", body: { status: "live" } },
+      );
+      refetch();
+      return result;
+    },
+    [refetch],
+  );
+
+  // Sets a requested gallery's placement live, once it shows on the client website and the
+  // client has approved it; Photo Galleries must be live first. Returns the AdminGallerySummary.
+  // Throws the ApiError on failure.
+  const setGalleryLive = useCallback(
+    async (galleryId) => {
+      const result = await apiFetch(
+        `/api/admin/galleries/${encodeURIComponent(galleryId)}/placement`,
+        { method: "PATCH", body: { placement: "live" } },
       );
       refetch();
       return result;
@@ -65,5 +81,6 @@ export function useAccounts() {
     createAccount,
     linkWebsite,
     setAbilityLive,
+    setGalleryLive,
   };
 }

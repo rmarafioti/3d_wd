@@ -3,7 +3,8 @@
 // the page content. Owns the Link a Website flow started from each account: the form dialog,
 // then the one-time CredentialRevealModal (new website) or a confirmation dialog (existing
 // website). That flow lives outside the panel, so its dialogs stay open if the panel closes. Also
-// owns switching a requested ability live: a confirmation first, since the app can't undo it.
+// owns setting an ability or a gallery's placement live: a confirmation first, since the app
+// can't undo it.
 
 "use client";
 
@@ -28,13 +29,13 @@ export default function AccountsAside() {
   // open. The response may contain the one-time credentials, so it is set back to null the
   // moment that dialog closes.
   const [linkResult, setLinkResult] = useState(null);
-  // { ability, website } whose Set live confirmation is open, or null.
+  // What is being set live, whose confirmation is open: { ability, website } or
+  // { gallery, website }, or null.
   const [settingLive, setSettingLive] = useState(null);
   // A failed Set live's message, held only while its dialog is open.
   const [setLiveError, setSetLiveError] = useState(null);
 
-  // Points right when closed and down when open, like the native marker on each account's
-  // "Websites" <details> disclosure.
+  // Points right when closed and down when open, like the marker on each website's disclosure.
   const ToggleIcon = open ? GoTriangleDown : GoTriangleRight;
 
   function handleLinked(response) {
@@ -52,13 +53,27 @@ export default function AccountsAside() {
   // The confirm dialog closes first. On success the account list refetches (useAccounts), so the
   // pill reads "live".
   async function confirmSetLive() {
-    const { ability } = settingLive;
+    const { ability, gallery } = settingLive;
     setSettingLive(null);
     try {
-      await accounts.setAbilityLive(ability.id);
+      if (gallery) await accounts.setGalleryLive(gallery.id);
+      else await accounts.setAbilityLive(ability.id);
     } catch (err) {
       setSetLiveError(err.message);
     }
+  }
+
+  // Photo Galleries goes live once its component is wired, before any gallery is placed; posts
+  // and each gallery once they show on the website and the client approved them (issue #71).
+  // Wording for Rich to confirm in the browser.
+  function setLiveMessage({ ability, gallery, website }) {
+    if (gallery) {
+      return `Set ${gallery.galleryName} live on ${website.websiteName}? Only do this once it shows on their website and they have approved it.`;
+    }
+    if (ability.kind === "galleries") {
+      return `Set Photo Galleries live for ${website.websiteName}? Only do this once the gallery component is in their website.`;
+    }
+    return `Set ${abilityLabel(ability.kind)} live for ${website.websiteName}? Only do this once it shows on their website and they have approved it.`;
   }
 
   return (
@@ -89,6 +104,9 @@ export default function AccountsAside() {
             onSetLive={(ability, website) =>
               setSettingLive({ ability, website })
             }
+            onSetGalleryLive={(gallery, website) =>
+              setSettingLive({ gallery, website })
+            }
           />
         </div>
       )}
@@ -117,7 +135,7 @@ export default function AccountsAside() {
       )}
       {settingLive && (
         <ConfirmDialog
-          message={`Set ${abilityLabel(settingLive.ability.kind)} live for ${settingLive.website.websiteName}? Only do this once it shows on their website and they have approved it.`}
+          message={setLiveMessage(settingLive)}
           confirmLabel="Set live"
           onConfirm={confirmSetLive}
           onClose={() => setSettingLive(null)}

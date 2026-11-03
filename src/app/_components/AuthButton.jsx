@@ -1,4 +1,6 @@
-// AuthButton: Navbar client island. "Sign in" link when no user in context, "Sign out" when there is one.
+// AuthButton: Navbar client island. "Sign in" link when no user in context, "Sign out" when there
+// is one. className replaces the purple button look, for Sign out listed like a link in the phone
+// menu.
 
 "use client";
 
@@ -7,7 +9,7 @@ import { useAuth } from "../_hooks/useAuth";
 
 import styles from "../_styling/navbar.module.css";
 
-export default function AuthButton() {
+export default function AuthButton({ className = styles.signButton }) {
   const { user, setUser } = useAuth();
 
   async function handleSignOut() {
@@ -30,13 +32,13 @@ export default function AuthButton() {
   // policy (no nonce, and the Google sign-in script blocked). A full load gets /sign-in's own.
   if (!user)
     return (
-      <a href="/sign-in" className={styles.signButton}>
+      <a href="/sign-in" className={className}>
         Sign in
       </a>
     );
 
   return (
-    <button type="button" onClick={handleSignOut} className={styles.signButton}>
+    <button type="button" onClick={handleSignOut} className={className}>
       Sign out
     </button>
   );
