@@ -2,7 +2,7 @@
 
 Full behavioral spec for each frontend flow. `CLAUDE.md` holds the short, always-loaded rules (ownership checks, anti-patterns, patterns); this file holds the specific flow detail those rules apply to. Imported from `CLAUDE.md` via `@docs/flows.md`. Request and response shapes for every call referenced here are in `docs/api.md`.
 
-All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, `ConfirmDialog`, which has only its confirm button and a cancel button ("Cancel", or "Keep editing" when cancelling a post or gallery) so the user makes the choice, Create / Edit Post's and Create / Edit a Gallery's smaller dialogs (the steps, Add / Edit from the toolbar, and the crop dialogs), which have a Cancel button instead, the sign-in dialog, which has no X while it reads "Signing in…", the Submit progress dialog, which has no X and ignores Esc while Submit runs, and an ability's request dialog, which has no X and no Cancel and ignores Esc, since it is required. They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
+All pop-ups below are native `<dialog>` elements with the X close button in the top right (`DialogCloseButton`), except the one-time reveal, which keeps a labelled Close button, `ConfirmDialog`, which has only its confirm button and a cancel button ("Cancel", or "Keep editing" when cancelling a post or gallery) so the user makes the choice, Create / Edit Post's and Create / Edit a Gallery's smaller dialogs (the steps, Add / Edit from the toolbar, and the crop dialogs), which have a Cancel button instead, the sign-in dialog, which has no X while it reads "Signing in…", the Submit progress dialog, which has no X and ignores Esc while Submit runs, and an ability's request dialog, which has no X and no Cancel and ignores Esc when first sent, since it is required (its edit has Cancel instead). They are never closed by clicking outside (see CLAUDE.md → Every pop-up is a native `<dialog>`).
 
 ---
 
@@ -352,16 +352,17 @@ On `/dashboard` only, at the top right of the page, built like the admin's Accou
 
 - **Pill** (`AbilityPill`): "requested" while a request waits (even if turned off, so a new message is always flagged, Rich decided 2026-11-02), otherwise "off" while `turnedOn` is false, otherwise the status: **added** (white with a light gray border), **requested** (purple), **live** (green), **off** (red), reusing the app's colours (Rich decided 2026-11-02). An ability the website hasn't added shows no pill.
 - **Menu**, only what the ability's state allows:
+  - **"Edit where it goes"** on Posts, once its request form was sent (`requestedAt` set), whatever its status: opens the request dialog's edit (Changing where it goes).
   - **"+ Add"** while the website doesn't have it. Sends `POST /api/siteOwner/abilities` with `{ websiteId, kind }` straight away. It is also how a removed Photo Galleries is added back: within 30 days its galleries return with their earlier status.
   - **"Turn Off"** / **"Turn On"** only while `live`, for Posts and Photo Galleries. Sends `PATCH /api/siteOwner/abilities/:id/turnedOn` with `{ turnedOn }` straight away, with no confirmation, since the same item undoes it. A menu choice rather than a switch (Rich decided 2026-11-02).
   - **"Remove"** once added, for Photo Galleries only, never Posts. It asks first with `ConfirmDialog`: "Your galleries will be hidden now and deleted for good after 30 days. Add Photo Galleries again before {date} to get them back.", where {date} is 30 days from now as a local date ("December 2, 2026"), with "Remove" and "Cancel". On confirm, `DELETE /api/siteOwner/abilities/:id`.
-  - A row with nothing to offer (Posts while `added` or `requested`) has no ⋮; its space is kept, so every row's pill lines up. The list opens from the row, its top on the row's bottom line and its right edge on the row's, like the post table's menus.
+  - A row with nothing to offer (Posts while `added` with no form sent yet) has no ⋮; its space is kept, so every row's pill lines up. The list opens from the row, its top on the row's bottom line and its right edge on the row's, like the post table's menus.
 - After each success the websites refetch, so the pill, the dashboard's tables and Create a Gallery all follow. A failure shows the backend's `error.message` in a dialog (for example "This ability has already been added.").
 - While a website doesn't have Photo Galleries, its "Galleries" heading and table are hidden, and Create a Gallery shows only when some website has it (Get All Websites).
 
 ### Request dialog
 
-Hooks used: `useAbilities()` (`request`) for posts, `useGalleries()` (`request`) for a gallery
+Hooks used: `useAbilities()` (`request`, `editRequest`) for posts, `useGalleries()` (`request`) and `useGallery(id)` (`editRequest`) for a gallery
 
 The site owner tells us where on their website their content should appear, in a required dialog (`AbilityRequestDialog`) the dashboard opens whenever one is pending (Rich decided 2026-11-02):
 
@@ -373,7 +374,9 @@ Either way the ability goes back to `requested` on the backend, so the administr
 - **Where on your website:** a textarea, required, max 1000, with its character count; line breaks are kept. "Request note is required." once it has been left blank.
 - **Submit**, disabled until the note is valid, reads "Sending…" while the request is in flight. On success the websites refetch and the dialog closes. A failure shows the backend's `error.message` under Submit (and a `requestNote` field message under the field), and the dialog stays.
 - It has no X and no Cancel, and Esc doesn't close it: sending it is the only way on.
-- Rich emails the site owner a styling mockup by hand; once the client approves, the administrator sets the ability live (Get All Accounts).
+- Sending it emails the administrator (Feature 13, from the backend, which the response never waits for), with Reply-To the site owner: Rich replies in that thread with a styling mockup, and once the client approves, the administrator sets the ability live (Get All Accounts).
+
+**Changing where it goes** (Feature 13, Rich decided 2026-11-02): a message already sent can be edited, live or not, from **"Edit where it goes"**: for posts, the Posts ⋮ in the Abilities aside; for a gallery, the button under its page's Where it goes (Get a Gallery by ID). It opens the same dialog with the same title and message, prefilled with the note sent (empty for a gallery sent before notes were kept), with two differences: **Cancel** on the left (and Esc) closes it, sending nothing, and **Submit** stays disabled until the note has changed. Submit sends `PATCH` to the same path the first message used, with `{ requestNote }`. The edit replaces the note, emails the administrator again, and puts the ability back to `requested`, so its pill reads "requested" until the administrator moves the content and sets it live again. On success the aside's websites refetch (posts), or the gallery page shows the returned note (a gallery; the dashboard's pill follows on its next load). A blank note shows "Request note is required.", and a `409` its `error.message` under Submit, as for the first message.
 
 The wording of the titles, messages and field label is for Rich to confirm in the browser.
 
@@ -437,7 +440,7 @@ A crop is `{ x, y, width, height }` in the **stored** image's pixels (`docs/api.
 
 Hook used: `useGallery(id)` → `GET /api/siteOwner/galleries/:id`
 
-`/dashboard/gallery/{id}`, built like the post page: website name, gallery name, the published / draft pill with the Published switch, then **Gallery Code** (the `slug`), Title and Copy (with its line breaks), then, under an "Images:" heading, the images two to a row on desktop (one at phone width), each as a row of three labelled columns, **Main** (the image, smaller than a post's photo, in its stored proportions), **Thumbnail** and **Mobile** (each crop's picture, or "None"), wrapping on a narrow screen, with its Caption and Alt Text under the row, then created and last-updated dates. An empty title, copy, caption or crop shows "None". "Edit Gallery" and "Delete Gallery" sit side by side at the end. A 404 shows "Gallery not found." with a link back to `/dashboard`. `?edit=1` (the ⋮ menu's Edit) opens Edit once the gallery has loaded, then drops itself from the address.
+`/dashboard/gallery/{id}`, built like the post page: website name, gallery name, the published / draft pill with the Published switch, then **Gallery Code** (the `slug`), **Where it goes** (once its request form was sent: the note, with its line breaks, or "None" for a gallery sent before notes were kept, with an "Edit where it goes" button just under it, see Changing where it goes), Title and Copy (with its line breaks), then, under an "Images:" heading, the images two to a row on desktop (one at phone width), each as a row of three labelled columns, **Main** (the image, smaller than a post's photo, in its stored proportions), **Thumbnail** and **Mobile** (each crop's picture, or "None"), wrapping on a narrow screen, with its Caption and Alt Text under the row, then created and last-updated dates. An empty title, copy, caption or crop shows "None". "Edit Gallery" and "Delete Gallery" sit side by side at the end. A 404 shows "Gallery not found." with a link back to `/dashboard`. `?edit=1` (the ⋮ menu's Edit) opens Edit once the gallery has loaded, then drops itself from the address.
 
 ### Edit a Gallery
 

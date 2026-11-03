@@ -57,3 +57,21 @@ export function pendingRequest(websites) {
   }
   return null;
 }
+
+// The request dialog's heading and message for a website's posts, shared by the first form (the
+// dashboard) and its edit (the Abilities aside), so both read the same.
+export function postsRequestCopy(website) {
+  return {
+    heading: "Where should your posts go?",
+    message: `Tell us where on ${website.websiteName} you'd like them to appear. We'll send you a mockup to approve before they go live.`,
+  };
+}
+
+// The same for one gallery, which has its own place on the website: the first form (the
+// dashboard) and its edit (the gallery page).
+export function galleryRequestCopy(websiteName, gallery) {
+  return {
+    heading: `Where should ${gallery.galleryName} go?`,
+    message: `Tell us where on ${websiteName} you'd like this gallery to appear. We'll send you a mockup to approve before it goes live.`,
+  };
+}

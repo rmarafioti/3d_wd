@@ -1,5 +1,5 @@
 // useAbilities (site owner): a website's abilities (docs/api.md → Notes, Abilities): add one, send
-// its request form, turn it on or off, and remove it. It fetches nothing, like useGalleries: the
+// its request form or edit it, turn it on or off, and remove it. It fetches nothing, like useGalleries: the
 // abilities come with each website from useWebsites, which the dashboard refetches after each.
 // Each returns the API's data and throws the ApiError on failure.
 
@@ -33,6 +33,17 @@ export function useAbilities() {
     [],
   );
 
+  // A change of mind: edits the request form already sent, which puts the ability back to
+  // requested. Returns the Ability.
+  const editRequest = useCallback(
+    (id, requestNote) =>
+      apiFetch(`${abilityPath(id)}/request`, {
+        method: "PATCH",
+        body: { requestNote },
+      }),
+    [],
+  );
+
   // Only once the ability is live. Returns the Ability.
   const setTurnedOn = useCallback(
     (id, turnedOn) =>
@@ -50,5 +61,5 @@ export function useAbilities() {
     [],
   );
 
-  return { add, request, setTurnedOn, remove };
+  return { add, request, editRequest, setTurnedOn, remove };
 }

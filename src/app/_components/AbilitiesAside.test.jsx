@@ -1,8 +1,9 @@
 // Tests for AbilitiesAside (docs/flows.md → Abilities aside): closed by default; each website's
 // abilities with their pills ("off" while turned off) and a ⋮ menu offering only what the state
-// allows ("+ Add", Turn On / Turn Off once live, Remove for Photo Galleries only); Add and Turn
-// Off save straight away; Remove asks first, naming the last day to add it back; a failure shows in a
-// dialog.
+// allows (Edit where it goes once the posts form was sent, "+ Add", Turn On / Turn Off once live,
+// Remove for Photo Galleries only); Add and Turn Off save straight away; Remove asks first, naming
+// the last day to add it back; a failure shows in a dialog; the posts form's edit opens
+// prefilled, saves only a changed note, and can be cancelled.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -38,7 +39,13 @@ const STEVIE = {
   galleries: [],
 };
 
-const MENU_ITEMS = ["+ Add", "Turn On", "Turn Off", "Remove"];
+const MENU_ITEMS = [
+  "Edit where it goes",
+  "+ Add",
+  "Turn On",
+  "Turn Off",
+  "Remove",
+];
 
 // Opens the ⋮ of one ability in the open aside; returns that ability's menu items' names.
 async function openMenu(user, abilityLabel) {
@@ -87,11 +94,14 @@ describe("AbilitiesAside", () => {
     expect(await openMenu(user, "Photo Galleries")).toEqual(["+ Add"]);
   });
 
-  it("offers Turn Off on live posts, and never Remove", async () => {
+  it("offers Edit where it goes and Turn Off on live posts, and never Remove", async () => {
     const { user } = renderAside([STEVIE]);
     await user.click(screen.getByRole("button", { name: "Abilities" }));
 
-    expect(await openMenu(user, "Posts")).toEqual(["Turn Off"]);
+    expect(await openMenu(user, "Posts")).toEqual([
+      "Edit where it goes",
+      "Turn Off",
+    ]);
   });
 
   it("reads off and offers Turn On while a live ability is turned off", async () => {
@@ -101,7 +111,10 @@ describe("AbilitiesAside", () => {
     await user.click(screen.getByRole("button", { name: "Abilities" }));
 
     expect(screen.getByText("off")).toBeInTheDocument();
-    expect(await openMenu(user, "Posts")).toEqual(["Turn On"]);
+    expect(await openMenu(user, "Posts")).toEqual([
+      "Edit where it goes",
+      "Turn On",
+    ]);
   });
 
   it("offers Turn Off and Remove on live Photo Galleries", async () => {
@@ -116,17 +129,20 @@ describe("AbilitiesAside", () => {
     ]);
   });
 
-  it("offers only Remove on added Photo Galleries, and no menu on posts not yet live", async () => {
+  it("offers only Remove on Photo Galleries not yet live, and no menu on posts whose form wasn't sent", async () => {
     const { user } = renderAside([
       {
         ...STEVIE,
-        abilities: [{ ...POSTS, status: "requested" }, GALLERIES],
+        abilities: [
+          { ...POSTS, status: "added", requestNote: null, requestedAt: null },
+          { ...GALLERIES, status: "requested" },
+        ],
       },
     ]);
     await user.click(screen.getByRole("button", { name: "Abilities" }));
 
-    expect(screen.getByText("requested")).toBeInTheDocument();
     expect(screen.getByText("added")).toBeInTheDocument();
+    expect(screen.getByText("requested")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: "Actions for Posts on Stevie The Dog",
@@ -255,5 +271,90 @@ describe("AbilitiesAside", () => {
 
     expect(screen.getByText("requested")).toBeInTheDocument();
     expect(screen.queryByText("off")).not.toBeInTheDocument();
+  });
+
+  it("edits the posts request form, prefilled, and refetches once it is saved", async () => {
+    const { calls } = mockFetch({
+      "PATCH /api/siteOwner/abilities/ab1/request": {
+        body: {
+          data: { ...POSTS, status: "requested", requestNote: "The blog." },
+        },
+      },
+    });
+    const { user, onChange } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    await openMenu(user, "Posts");
+    await user.click(
+      screen.getByRole("button", { name: "Edit where it goes" }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Where should your posts go?",
+    });
+    const note = within(dialog).getByLabelText("Where on your website");
+    const submit = within(dialog).getByRole("button", { name: "Submit" });
+
+    expect(note).toHaveValue("The news page.");
+    expect(submit).toBeDisabled();
+
+    await user.clear(note);
+    await user.type(note, "The blog.");
+    await user.click(submit);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(calls[0].method).toBe("PATCH");
+    expect(calls[0].body).toEqual({ requestNote: "The blog." });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("sends nothing when the edit is cancelled", async () => {
+    const { calls } = mockFetch({});
+    const { user, onChange } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    await openMenu(user, "Posts");
+    await user.click(
+      screen.getByRole("button", { name: "Edit where it goes" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("refuses a blank note, and shows the backend's message in the dialog", async () => {
+    mockFetch({
+      "PATCH /api/siteOwner/abilities/ab1/request": {
+        status: 409,
+        body: {
+          error: { message: "This ability hasn't been requested yet." },
+        },
+      },
+    });
+    const { user, onChange } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    await openMenu(user, "Posts");
+    await user.click(
+      screen.getByRole("button", { name: "Edit where it goes" }),
+    );
+    const dialog = screen.getByRole("dialog");
+    const note = within(dialog).getByLabelText("Where on your website");
+
+    await user.clear(note);
+    await user.tab();
+
+    expect(
+      within(dialog).getByText("Request note is required."),
+    ).toBeInTheDocument();
+
+    await user.type(note, "Somewhere else.");
+    await user.click(within(dialog).getByRole("button", { name: "Submit" }));
+
+    expect(
+      await within(dialog).findByText(
+        "This ability hasn't been requested yet.",
+      ),
+    ).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
