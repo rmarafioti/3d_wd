@@ -1,5 +1,5 @@
-// Site owner dashboard: each website with its post table and gallery table, Create a Post, Create
-// a Gallery, and the shortcuts from each row's ⋮ menu that save from here: Status (straight away,
+// Site owner dashboard: each website with its post table and gallery table, Create a Post and Create
+// a Gallery (opened by the Navbar's links, ?create=post or ?create=gallery), and the shortcuts from each row's ⋮ menu that save from here: Status (straight away,
 // then a refetch so the row's pill follows) and Delete (its confirmation, then a refetch so the
 // post or gallery leaves its table). The Abilities aside sits over the top right, and galleries
 // show only for a website with the Photo Galleries ability. While an ability waits for its request
@@ -8,8 +8,9 @@
 
 "use client";
 
-import { useState } from "react";
-import { useWebsites } from "../_hooks/useWebsites";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSiteOwnerData } from "../_hooks/useSiteOwnerData";
 import { usePosts } from "../_hooks/usePosts";
 import { useGalleries } from "../_hooks/useGalleries";
 import { useAbilities } from "../_hooks/useAbilities";
@@ -30,12 +31,24 @@ import AbilityRequestDialog from "../_components/AbilityRequestDialog";
 import styles from "../_styling/dashPages.module.css";
 
 export default function DashboardPage() {
-  const websites = useWebsites();
+  const websites = useSiteOwnerData();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const posts = usePosts();
   const galleries = useGalleries();
   const abilities = useAbilities();
   // The form open on top of the page: "post", "gallery" or null.
   const [creating, setCreating] = useState(null);
+  // The ?create= value last read, so a Navbar link opens its form whenever it is followed, even
+  // with the dashboard already open (adjusting state while rendering, not in an effect).
+  const createParam = searchParams.get("create");
+  const [readCreate, setReadCreate] = useState(null);
+  if (createParam !== readCreate) {
+    setReadCreate(createParam);
+    if (createParam === "post" || createParam === "gallery") {
+      setCreating(createParam);
+    }
+  }
   // What is being deleted, from its row's ⋮ menu, or null: { post } or { gallery }.
   const [deleting, setDeleting] = useState(null);
   // A failed status change's or delete's message, held only while its dialog is open.
@@ -61,8 +74,24 @@ export default function DashboardPage() {
     };
   }
 
+  // A form shows once what it needs has loaded: the websites for a post, and a website with Photo
+  // Galleries for a gallery (a ?create=gallery without one opens nothing).
+  const postFormOpen = creating === "post" && Boolean(websites.data);
+  const galleryFormOpen = creating === "gallery" && galleryWebsites?.length > 0;
+  // Once loaded with none, the gallery form is let go, so adding Photo Galleries later doesn't
+  // suddenly open it.
+  if (creating === "gallery" && galleryWebsites?.length === 0) {
+    setCreating(null);
+  }
+
   // Waits while a Create form is open: its save's refetch is what makes it pending.
-  const pending = creating ? null : pendingRequest(websites.data);
+  const pending =
+    postFormOpen || galleryFormOpen ? null : pendingRequest(websites.data);
+
+  // Drops ?create= from the address once read, so a refresh or Back doesn't reopen the form.
+  useEffect(() => {
+    if (createParam) router.replace("/dashboard");
+  }, [createParam, router]);
 
   // No success dialog: the new row appearing in its table shows it was created (Rich decided
   // 2026-10-30). The list keeps its rows while it refetches.
@@ -99,26 +128,6 @@ export default function DashboardPage() {
   return (
     <article className={styles.dashboard}>
       <section className={styles.siteOwnerAccount}>
-        <div className={styles.createButtons}>
-          <button
-            type="button"
-            disabled={!websites.data}
-            onClick={() => setCreating("post")}
-            className={styles.createAPost}
-          >
-            Create a Post
-          </button>
-          {galleryWebsites?.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setCreating("gallery")}
-              className={styles.createAPost}
-            >
-              Create a Gallery
-            </button>
-          )}
-        </div>
-
         <h1 className={styles.postHeader}>Your Websites</h1>
         <WebsiteList
           websites={websites.data}
@@ -134,7 +143,7 @@ export default function DashboardPage() {
           onDeleteGallery={(gallery) => setDeleting({ gallery })}
         />
 
-        {creating === "post" && (
+        {postFormOpen && (
           <PostForm
             mode="create"
             websites={websites.data}
@@ -143,7 +152,7 @@ export default function DashboardPage() {
             onClose={() => setCreating(null)}
           />
         )}
-        {creating === "gallery" && (
+        {galleryFormOpen && (
           <GalleryForm
             mode="create"
             websites={galleryWebsites}

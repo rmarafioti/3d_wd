@@ -1,6 +1,8 @@
+/* Never bold, even in a bold heading or row (Rich, 2026-11-03). */
 .pill {
   padding: 0.2rem 0.5rem;
   border-radius: 25px;
+  font-weight: normal;
 }
 
 /* .live, .off, .requested and .added are an ability's four states (AbilityPill). */

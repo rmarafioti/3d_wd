@@ -1,9 +1,11 @@
 // AbilitiesAside (site owner): the Abilities panel at the top right of /dashboard, built like the
 // admin's Accounts aside. Closed by default; its toggle opens, over the page content, each of the
 // site owner's websites with every ability in the catalog (Posts, Photo Galleries): its pill
-// (AbilityPill, none while not added) and a ⋮ menu with what its state allows: "Edit where it
-// goes" once the posts request form was sent (Feature 13), "+ Add" while not added, Turn On / Turn
-// Off once live, and Remove once added (Photo Galleries only). On / off is a menu choice, not a
+// (AbilityPill, with prompts: "Add ?" while not added, "Turn On ?" while turned off; for Posts,
+// then a "requested" PlacementPill while they wait to be placed) and a ⋮ menu
+// with what its state allows: "Edit placement" once the posts request form was sent (Feature
+// 13), "+ Add" while not added, Turn On / Turn Off once live, and Remove once added (Photo
+// Galleries only). On / off is a menu choice, not a
 // switch (Rich, 2026-11-02). Owns those requests and their dialogs, as AccountsAside owns Link a
 // Website, so they stay open if the panel closes; onChange (the dashboard's refetch) runs after
 // each success. Add and Turn On / Off save straight away, since each is undone in one motion;
@@ -22,6 +24,7 @@ import {
 } from "../_lib/abilities";
 import AbilityPill from "./AbilityPill";
 import AbilityRequestDialog from "./AbilityRequestDialog";
+import PlacementPill from "./PlacementPill";
 import ActionsMenu from "./ActionsMenu";
 import ConfirmDialog from "./ConfirmDialog";
 import MessageDialog from "./MessageDialog";
@@ -91,7 +94,7 @@ export default function AbilitiesAside({ websites, onChange }) {
     // Only the posts form is the ability's; each gallery's is edited on its page.
     if (entry.kind === "posts" && ability.requestedAt) {
       items.push({
-        label: "Edit where it goes",
+        label: "Edit placement",
         onClick: () => setEditingRequest({ website, ability }),
       });
     }
@@ -145,7 +148,14 @@ export default function AbilitiesAside({ websites, onChange }) {
                       className={`${styles.ability} ${styles.abilityRow} ${asideStyles.fullWidth}`}
                     >
                       <span className={styles.abilityName}>{entry.label}</span>
-                      {ability && <AbilityPill ability={ability} />}
+                      <AbilityPill ability={ability} prompts />
+                      {/* Posts waiting to be placed: a second pill only then, since once the admin
+                          sets them live the status pill already reads "live" (Rich, 2026-11-03).
+                          Each gallery's placement is on its page. */}
+                      {entry.kind === "posts" &&
+                        ability?.placement === "requested" && (
+                          <PlacementPill placement="requested" />
+                        )}
                       {/* Always there, empty without a ⋮, so every row's pill lines up. */}
                       <span className={styles.menu}>
                         {items.length > 0 && (

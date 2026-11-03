@@ -9,7 +9,7 @@
   align-items: flex-start;
 }
 
-/* Each account in the Accounts aside is set apart by a line under it. */
+/* Each website in the Accounts aside is set apart by a line under it. */
 .account {
   margin-top: 1rem;
   border-bottom: 1px solid lightgray;
@@ -21,14 +21,18 @@
 .accountList,
 .disclosure,
 .accountDetails,
-.websites,
 .abilities {
   width: 100%;
 }
 
-/* A website's abilities, under its link. */
+/* A website's abilities, under its site owners. */
 .abilities {
   margin-top: 1rem;
+}
+
+/* Each site owner of a website. */
+.owner {
+  width: 100%;
 }
 
 /* "Abilities", and each ability's row (its name, pill and switch) while its items are open, are
@@ -105,10 +109,7 @@
 
 .header,
 .postHeader,
-.websites,
-.accountList,
-.createAPost,
-.linkWebsiteButton {
+.accountList {
   margin-bottom: 1rem;
 }
 
@@ -130,8 +131,7 @@
   margin: 1rem 0rem 0.5rem 1rem;
 }
 
-.submitButton,
-.createAPost {
+.submitButton {
   width: 100%;
 }
 
@@ -141,15 +141,21 @@
   position: relative;
 }
 
-/* Create a Post and Create a Gallery side by side, sharing the row's width. */
-.createButtons {
-  display: flex;
-  gap: 1rem;
-  width: 100%;
+/* The tables' width (postTable.module.css), so a website with no posts or galleries doesn't
+   shrink the section (Rich, 2026-11-03). */
+.siteOwnerAccount {
+  width: 30rem;
+  max-width: 100%;
 }
 
 @media (max-width: 667px) {
   .header {
     margin-left: 1rem;
+  }
+
+  /* The screen's width less a 1rem gutter each side, as the tables' (postTable.module.css). */
+  .siteOwnerAccount {
+    width: 100%;
+    padding: 0rem 1rem;
   }
 }

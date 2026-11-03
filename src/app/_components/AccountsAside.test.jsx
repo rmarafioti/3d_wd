@@ -1,8 +1,9 @@
 // Tests for AccountsAside (docs/flows.md → Admin Dashboard, Link a Website): closed by default and
 // toggled open; the Link a Website dialog opens for the clicked account, an existing-website link
 // confirms with that account's name, and a new-website link opens the one-time reveal and
-// refreshes the website list on close. Switching a requested ability live asks first, then sets
-// it live and refetches, sends nothing when cancelled, and shows a failure in a dialog.
+// refreshes the website list on close. Switching an ability live asks first, then sets it live and
+// refetches, sends nothing when cancelled, and shows a failure in a dialog; a requested gallery's
+// Live switch does the same through its placement route.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -24,7 +25,7 @@ const ACCOUNT = {
   role: "site_owner",
   active: true,
   createdAt: "2026-10-01T00:00:00.000Z",
-  websites: [],
+  websites: [{ ...STEVIE, abilities: [], posts: [], galleries: [] }],
 };
 
 function renderAside() {
@@ -35,7 +36,7 @@ function renderAside() {
   );
 }
 
-// Opens the aside, the account's Websites disclosure and its Link a Website dialog.
+// Opens the aside, the website's disclosure and its site owner's Link a Website dialog.
 async function setup(linkRoute) {
   const { calls } = mockFetch({
     "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
@@ -45,8 +46,10 @@ async function setup(linkRoute) {
   const user = userEvent.setup();
   renderAside();
   await user.click(screen.getByRole("button", { name: "Accounts" }));
-  await user.click((await screen.findAllByText("Richard Marafioti"))[0]);
-  await user.click(screen.getByText("Websites"));
+  await user.click(await screen.findByText("Stevie The Dog"));
+  await user.click(
+    screen.getByRole("button", { name: "Actions for Richard Marafioti" }),
+  );
   await user.click(screen.getByRole("button", { name: "Link a Website" }));
   return { user, calls };
 }
@@ -198,13 +201,14 @@ describe("AccountsAside", () => {
   });
 
   describe("Live switch", () => {
-    const REQUESTED = {
+    const ADDED = {
       id: "ab2",
       kind: "galleries",
-      status: "requested",
+      status: "added",
       turnedOn: true,
-      requestNote: "A Gallery page.",
-      requestedAt: "2026-11-02T00:00:00.000Z",
+      placement: null,
+      requestNote: null,
+      requestedAt: null,
       createdAt: "2026-11-02T00:00:00.000Z",
       updatedAt: "2026-11-02T00:00:00.000Z",
     };
@@ -213,7 +217,7 @@ describe("AccountsAside", () => {
       websites: [{ ...STEVIE, abilities: [ability], posts: [], galleries: [] }],
     });
 
-    // Opens the aside, the account and its Websites disclosure, then switches the ability live.
+    // Opens the aside and the website's disclosure, then switches the ability live.
     async function clickSetLive(routes) {
       const { calls } = mockFetch({
         "GET /api/admin/websites": { body: { data: [STEVIE] } },
@@ -222,8 +226,7 @@ describe("AccountsAside", () => {
       const user = userEvent.setup();
       renderAside();
       await user.click(screen.getByRole("button", { name: "Accounts" }));
-      await user.click((await screen.findAllByText("Richard Marafioti"))[0]);
-      await user.click(screen.getByText("Websites"));
+      await user.click(await screen.findByText("Stevie The Dog"));
       await user.click(
         screen.getByRole("switch", {
           name: "Photo Galleries live for Stevie The Dog",
@@ -235,18 +238,18 @@ describe("AccountsAside", () => {
     it("asks first, then sets the ability live and refetches the accounts", async () => {
       const { user, calls } = await clickSetLive({
         "GET /api/admin/accounts": [
-          { body: { data: [withAbility(REQUESTED)] } },
-          { body: { data: [withAbility({ ...REQUESTED, status: "live" })] } },
+          { body: { data: [withAbility(ADDED)] } },
+          { body: { data: [withAbility({ ...ADDED, status: "live" })] } },
         ],
         "PATCH /api/admin/abilities/ab2/status": {
-          body: { data: { ...REQUESTED, status: "live" } },
+          body: { data: { ...ADDED, status: "live" } },
         },
       });
       const dialog = screen.getByRole("dialog");
 
       expect(
         within(dialog).getByText(
-          "Set Photo Galleries live for Stevie The Dog? Only do this once it shows on their website and they have approved it.",
+          "Set Photo Galleries live for Stevie The Dog? Only do this once the gallery component is in their website.",
         ),
       ).toBeInTheDocument();
 
@@ -262,7 +265,7 @@ describe("AccountsAside", () => {
 
     it("sends nothing when cancelled", async () => {
       const { user, calls } = await clickSetLive({
-        "GET /api/admin/accounts": { body: { data: [withAbility(REQUESTED)] } },
+        "GET /api/admin/accounts": { body: { data: [withAbility(ADDED)] } },
       });
 
       await user.click(screen.getByRole("button", { name: "Cancel" }));
@@ -273,7 +276,7 @@ describe("AccountsAside", () => {
 
     it("shows a failure in a dialog", async () => {
       await clickSetLive({
-        "GET /api/admin/accounts": { body: { data: [withAbility(REQUESTED)] } },
+        "GET /api/admin/accounts": { body: { data: [withAbility(ADDED)] } },
         "PATCH /api/admin/abilities/ab2/status": {
           status: 409,
           body: { error: { message: "This ability is already live." } },
@@ -286,6 +289,115 @@ describe("AccountsAside", () => {
 
       expect(
         await screen.findByText("This ability is already live."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("Gallery Live switch", () => {
+    const LIVE_GALLERIES = {
+      id: "ab2",
+      kind: "galleries",
+      status: "live",
+      turnedOn: true,
+      placement: null,
+      requestNote: null,
+      requestedAt: null,
+      createdAt: "2026-11-02T00:00:00.000Z",
+      updatedAt: "2026-11-02T00:00:00.000Z",
+    };
+    const GALLERY = {
+      id: "g1",
+      galleryName: "Our Interior",
+      status: "published",
+      placement: "requested",
+      requestNote: "The front page slider.",
+      imageCount: 3,
+      hasThumbnails: false,
+      hasMobileCrops: false,
+    };
+    const withGallery = (gallery) => ({
+      ...ACCOUNT,
+      websites: [
+        {
+          ...STEVIE,
+          abilities: [LIVE_GALLERIES],
+          posts: [],
+          galleries: [gallery],
+        },
+      ],
+    });
+
+    // Opens the aside, the website and the gallery, then switches the gallery live.
+    async function clickGalleryLive(routes) {
+      const { calls } = mockFetch({
+        "GET /api/admin/websites": { body: { data: [STEVIE] } },
+        ...routes,
+      });
+      const user = userEvent.setup();
+      renderAside();
+      await user.click(screen.getByRole("button", { name: "Accounts" }));
+      await user.click(await screen.findByText("Stevie The Dog"));
+      await user.click(screen.getByText("Our Interior"));
+      await user.click(
+        screen.getByRole("switch", {
+          name: "Our Interior live on Stevie The Dog",
+        }),
+      );
+      return { user, calls };
+    }
+
+    it("asks first, then sets the gallery's placement live and refetches the accounts", async () => {
+      const { user, calls } = await clickGalleryLive({
+        "GET /api/admin/accounts": [
+          { body: { data: [withGallery(GALLERY)] } },
+          {
+            body: { data: [withGallery({ ...GALLERY, placement: "live" })] },
+          },
+        ],
+        "PATCH /api/admin/galleries/g1/placement": {
+          body: { data: { ...GALLERY, placement: "live" } },
+        },
+      });
+      const dialog = screen.getByRole("dialog");
+
+      expect(
+        within(dialog).getByText(
+          "Set Our Interior live on Stevie The Dog? Only do this once it shows on their website and they have approved it.",
+        ),
+      ).toBeInTheDocument();
+
+      await user.click(
+        within(dialog).getByRole("button", { name: "Set live" }),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("switch", {
+            name: "Our Interior live on Stevie The Dog",
+          }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(calls.find((call) => call.method === "PATCH").body).toEqual({
+        placement: "live",
+      });
+      expect(
+        calls.filter((call) => call.path === "/api/admin/accounts"),
+      ).toHaveLength(2);
+    });
+
+    it("shows a failure in a dialog", async () => {
+      const { user } = await clickGalleryLive({
+        "GET /api/admin/accounts": { body: { data: [withGallery(GALLERY)] } },
+        "PATCH /api/admin/galleries/g1/placement": {
+          status: 409,
+          body: { error: { message: "Set Photo Galleries live first." } },
+        },
+      });
+
+      await user.click(screen.getByRole("button", { name: "Set live" }));
+
+      expect(
+        await screen.findByText("Set Photo Galleries live first."),
       ).toBeInTheDocument();
     });
   });

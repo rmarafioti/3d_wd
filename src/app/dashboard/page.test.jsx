@@ -1,18 +1,42 @@
 // Tests for the site owner dashboard's own wiring (docs/flows.md → Create a Post, Post actions
-// menu): the form opens from "Create a Post", and a create closes it and refetches the list with no
+// menu): the form opens from the Navbar's ?create=post once the websites have loaded, and drops
+// the query; a create closes it and refetches the list with no
 // success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure
 // in a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled,
 // and shows a failure in a dialog. A gallery row's ⋮ (docs/flows.md → Gallery actions menu) saves
-// its status and deletes through the gallery routes; Create a Gallery opens its form. Galleries
+// its status and deletes through the gallery routes; ?create=gallery opens its form. Galleries
 // show only with the Photo Galleries ability (docs/flows.md → Abilities), and the required request
 // dialog opens for the posts once they have a first post (again after every post was deleted),
 // and for each new gallery.
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DashboardPage from "./page";
+import { SiteOwnerDataProvider } from "../_context/SiteOwnerDataContext";
 import { mockFetch, pressEscape } from "../../test/helpers";
+
+const router = { replace: vi.fn() };
+// The page's address query, set per test (the Navbar's links add ?create=).
+let search = "";
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+  useSearchParams: () => new URLSearchParams(search),
+  usePathname: () => "/dashboard",
+}));
+
+beforeEach(() => {
+  search = "";
+});
+
+// The page reads the websites the dashboard layout fetches for it.
+function renderPage() {
+  return render(
+    <SiteOwnerDataProvider>
+      <DashboardPage />
+    </SiteOwnerDataProvider>,
+  );
+}
 
 // Both abilities live, as the backfill leaves Stevie's posts, so no request dialog opens.
 const POSTS_ABILITY = {
@@ -20,6 +44,7 @@ const POSTS_ABILITY = {
   kind: "posts",
   status: "live",
   turnedOn: true,
+  placement: "live",
   requestNote: "The news page.",
   requestedAt: "2026-11-01T00:00:00.000Z",
   createdAt: "2026-11-01T00:00:00.000Z",
@@ -29,7 +54,8 @@ const GALLERIES_ABILITY = {
   ...POSTS_ABILITY,
   id: "ab2",
   kind: "galleries",
-  requestNote: "A Gallery page.",
+  placement: null,
+  requestNote: null,
 };
 const WEBSITE = {
   id: "w1",
@@ -67,13 +93,13 @@ describe("Dashboard page", () => {
         body: { data: { ...NEW_POST, websiteId: "w1" } },
       },
     });
+    search = "create=post";
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await screen.findByText("No posts yet.");
     const websiteGets = () =>
       calls.filter((call) => call.path === "/api/siteOwner/websites");
 
-    await user.click(screen.getByRole("button", { name: "Create a Post" }));
     await user.type(screen.getByLabelText("Post Name"), "Walk day");
     await user.click(screen.getByRole("button", { name: "Next" }));
     await user.click(screen.getByRole("button", { name: "Next" }));
@@ -88,14 +114,19 @@ describe("Dashboard page", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("disables Create a Post until the websites have loaded", () => {
-    mockFetch({ "GET /api/siteOwner/websites": () => new Promise(() => {}) });
+  it("opens Create a Post from ?create=post only once the websites have loaded, and drops the query", async () => {
+    search = "create=post";
+    mockFetch({
+      "GET /api/siteOwner/websites": { body: { data: [WEBSITE] } },
+    });
 
-    render(<DashboardPage />);
+    renderPage();
 
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Create a Post" }),
-    ).toBeDisabled();
+      await screen.findByRole("dialog", { name: "Name your post" }),
+    ).toBeInTheDocument();
+    expect(router.replace).toHaveBeenCalledWith("/dashboard");
   });
 
   it("moves a post to draft from its ⋮ menu straight away, and the refetched row shows it", async () => {
@@ -113,7 +144,7 @@ describe("Dashboard page", () => {
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Actions for Walk day" }),
     );
@@ -138,7 +169,7 @@ describe("Dashboard page", () => {
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Actions for Walk day" }),
     );
@@ -160,7 +191,7 @@ describe("Dashboard page", () => {
       "DELETE /api/siteOwner/posts/p1": deleteRoute,
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Actions for Walk day" }),
     );
@@ -213,19 +244,16 @@ describe("Dashboard page", () => {
     expect(screen.getByRole("link", { name: "Walk day" })).toBeInTheDocument();
   });
 
-  it("opens Create a Gallery's first step once the websites have loaded", async () => {
+  it("opens Create a Gallery's first step from ?create=gallery once the websites have loaded", async () => {
+    search = "create=gallery";
     mockFetch({
       "GET /api/siteOwner/websites": { body: { data: [WEBSITE] } },
     });
-    const user = userEvent.setup();
-    render(<DashboardPage />);
 
-    await user.click(
-      await screen.findByRole("button", { name: "Create a Gallery" }),
-    );
+    renderPage();
 
     expect(
-      screen.getByRole("dialog", { name: "Name your gallery" }),
+      await screen.findByRole("dialog", { name: "Name your gallery" }),
     ).toBeInTheDocument();
   });
 
@@ -246,7 +274,7 @@ describe("Dashboard page", () => {
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Actions for Our Interior" }),
     );
@@ -268,7 +296,7 @@ describe("Dashboard page", () => {
       "DELETE /api/siteOwner/galleries/g1": { status: 204 },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Actions for Our Interior" }),
     );
@@ -288,19 +316,18 @@ describe("Dashboard page", () => {
     ).toEqual(["/api/siteOwner/galleries/g1"]);
   });
 
-  it("hides Create a Gallery and the Galleries table until the website has Photo Galleries", async () => {
+  it("opens no gallery form and hides the Galleries table until the website has Photo Galleries", async () => {
+    search = "create=gallery";
     mockFetch({
       "GET /api/siteOwner/websites": {
         body: { data: [{ ...WEBSITE, abilities: [POSTS_ABILITY] }] },
       },
     });
 
-    render(<DashboardPage />);
+    renderPage();
     await screen.findByText("No posts yet.");
 
-    expect(
-      screen.queryByRole("button", { name: "Create a Gallery" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("Galleries")).not.toBeInTheDocument();
   });
 
@@ -311,14 +338,20 @@ describe("Dashboard page", () => {
       },
     });
 
-    render(<DashboardPage />);
+    renderPage();
     await screen.findByRole("link", { name: "Walk day" });
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("requires the request form once an added ability has a post, and closes once it is requested", async () => {
-    const added = { ...POSTS_ABILITY, status: "added", requestNote: null };
+  it("requires the request form once posts with no placement have a post, and closes once it is requested", async () => {
+    const added = {
+      ...POSTS_ABILITY,
+      status: "added",
+      placement: null,
+      requestNote: null,
+      requestedAt: null,
+    };
     const { calls } = mockFetch({
       "GET /api/siteOwner/websites": [
         {
@@ -331,7 +364,13 @@ describe("Dashboard page", () => {
             data: [
               {
                 ...WEBSITE,
-                abilities: [{ ...added, status: "requested" }],
+                abilities: [
+                  {
+                    ...added,
+                    placement: "requested",
+                    requestedAt: "2026-11-03T00:00:00.000Z",
+                  },
+                ],
                 posts: [NEW_POST],
               },
             ],
@@ -339,11 +378,11 @@ describe("Dashboard page", () => {
         },
       ],
       "POST /api/siteOwner/abilities/ab1/request": {
-        body: { data: { ...added, status: "requested" } },
+        body: { data: { ...added, placement: "requested" } },
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     const dialog = await screen.findByRole("dialog", {
       name: "Where should your posts go?",
     });
@@ -371,7 +410,13 @@ describe("Dashboard page", () => {
   });
 
   it("keeps the request form open with the backend's message when it fails", async () => {
-    const added = { ...POSTS_ABILITY, status: "added", requestNote: null };
+    const added = {
+      ...POSTS_ABILITY,
+      status: "added",
+      placement: null,
+      requestNote: null,
+      requestedAt: null,
+    };
     mockFetch({
       "GET /api/siteOwner/websites": {
         body: {
@@ -386,7 +431,7 @@ describe("Dashboard page", () => {
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     const dialog = await screen.findByRole("dialog");
 
     await user.type(
@@ -420,7 +465,7 @@ describe("Dashboard page", () => {
       },
     });
 
-    render(<DashboardPage />);
+    renderPage();
 
     expect(
       await screen.findByRole("dialog", {
@@ -452,7 +497,7 @@ describe("Dashboard page", () => {
       },
     });
 
-    render(<DashboardPage />);
+    renderPage();
     await screen.findByRole("link", { name: "Beach day" });
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -481,7 +526,7 @@ describe("Dashboard page", () => {
       },
     });
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    renderPage();
     const dialog = await screen.findByRole("dialog", {
       name: "Where should Our Interior go?",
     });

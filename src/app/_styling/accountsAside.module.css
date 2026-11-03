@@ -26,6 +26,8 @@
 .open {
   width: 300px;
   height: 100vh;
+  /* The visible height on a phone, so the last row isn't under the browser's bottom bar. */
+  height: 100dvh;
   background-color: white;
   border-left: 1px solid lightgray;
 }

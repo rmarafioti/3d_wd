@@ -18,22 +18,28 @@ export function abilityLabel(kind) {
   return ABILITY_KINDS.find((entry) => entry.kind === kind).label;
 }
 
-// The word on an ability's pill (docs/api.md → Notes, Abilities): "requested" while a request
-// waits, even if the site owner turned it off, so a new message is always flagged (Rich,
-// 2026-11-02); otherwise "off" while turned off, otherwise its status.
-export function abilityPillLabel(ability) {
-  if (ability.status === "requested") return "requested";
-  return ability.turnedOn ? ability.status : "off";
+// The word on an ability's pill (docs/api.md → Notes, Abilities): its status, "added" or "live"
+// (whether its code is wired into the client website), or "off" while live and turned off. Where
+// its content goes is placement, shown by PlacementPill (issue #71). With prompts (the site owner's
+// Abilities aside), the pill also says what can be done next: "Add ?" for an ability the website
+// hasn't added (undefined), and "Turn On ?" in place of "off" (Rich, 2026-11-03). The admin can do
+// neither, so the admin's list keeps "off".
+export function abilityPillLabel(ability, { prompts = false } = {}) {
+  if (!ability) return prompts ? "Add ?" : null;
+  if (ability.status === "live" && !ability.turnedOn) {
+    return prompts ? "Turn On ?" : "off";
+  }
+  return ability.status;
 }
 
 // Posts wait for their request form once the website has a post and either the form was never
-// sent (added) or every post was deleted after it was, so the oldest post now is newer than the
-// form (Rich, 2026-11-02). A posts ability backfilled live without a form (requestedAt null) waits
-// for nothing.
+// sent (placement null) or every post was deleted after it was, so the oldest post now is newer
+// than the form (Rich, 2026-11-02; the backend's rule, docs/api.md → Notes, Abilities). Posts
+// backfilled live without a form (placement live, requestedAt null) wait for nothing.
 function postsPending(website) {
   const ability = findAbility(website, "posts");
   if (!ability || website.posts.length === 0) return false;
-  if (ability.status === "added") return true;
+  if (ability.placement === null) return true;
   if (!ability.requestedAt) return false;
   const oldest = Math.min(
     ...website.posts.map((post) => Date.parse(post.createdAt)),

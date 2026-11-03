@@ -1,6 +1,7 @@
 // Single gallery view: the gallery's details and its slug (how the client website asks for it, so
 // the site owner can say which gallery goes where), each image with its caption, alt text and
-// crops, where it goes (its sent request note, with Edit where it goes, Feature 13), Edit Gallery,
+// crops, its placement (its pill and sent request note, with Edit placement, Feature
+// 13), Edit Gallery,
 // Delete Gallery, and the Published switch next to the status pill. Built
 // like the post page: the switch saves straight away (no confirmation, no success dialog), Delete
 // Gallery asks first (ConfirmDialog) and returns to /dashboard once the gallery is deleted, and
@@ -23,6 +24,7 @@ import MessageDialog from "../../../_components/MessageDialog";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Toggle from "../../../_components/Toggle";
 import StatusPill from "../../../_components/StatusPill";
+import PlacementPill from "../../../_components/PlacementPill";
 import CropPreview from "../../../_components/CropPreview";
 import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
 import { galleryRequestCopy } from "../../../_lib/abilities";
@@ -91,7 +93,7 @@ export default function GalleryPage() {
   const [statusPending, setStatusPending] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
-  // Edit where it goes: its request form's edit dialog is open.
+  // Edit placement: its request form's edit dialog is open.
   const [editingRequest, setEditingRequest] = useState(false);
   // The open error dialog's text: a failed status change or delete. Closing it leaves the gallery
   // on screen as it was.
@@ -168,7 +170,11 @@ export default function GalleryPage() {
           {/* Once its request form was sent: where the site owner asked for it to go. */}
           {gallery.requestedAt && (
             <>
-              <dt className={styles.key}>Where it goes:</dt>
+              {/* Its placement beside it: requested until the admin sets it live (Rich,
+                  2026-11-03). */}
+              <dt className={styles.key}>
+                Placement: <PlacementPill placement={gallery.placement} />
+              </dt>
               <dd className={styles.value} style={{ whiteSpace: "pre-line" }}>
                 {gallery.requestNote ?? "None"}
               </dd>
@@ -180,7 +186,7 @@ export default function GalleryPage() {
                   onClick={() => setEditingRequest(true)}
                   className={styles.editRequestButton}
                 >
-                  Edit where it goes
+                  Edit placement
                 </button>
               </dd>
             </>

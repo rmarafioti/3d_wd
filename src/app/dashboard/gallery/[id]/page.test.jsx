@@ -3,7 +3,7 @@
 // and a crop's picture, the 404 view, the Published switch saving straight away through the
 // gallery status route, Delete Gallery confirmed then back to /dashboard, and ?edit=1 opening the
 // Edit form, which fetches the websites for the names already taken and closes after a save with
-// no success dialog; once its request form was sent, where it goes and its edit (prefilled,
+// no success dialog; once its request form was sent, its placement and its edit (prefilled,
 // cancellable, the page showing the saved note).
 
 import { describe, expect, it, vi } from "vitest";
@@ -50,6 +50,7 @@ const GALLERY = {
 
 const REQUESTED = {
   ...GALLERY,
+  placement: "requested",
   requestNote: "The about page.",
   requestedAt: "2026-11-01T00:00:00.000Z",
 };
@@ -199,16 +200,24 @@ describe("Gallery page", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("shows neither where it goes nor its edit before the request form is sent", async () => {
+  it("shows neither its placement nor its edit before the request form is sent", async () => {
     await setup();
 
-    expect(screen.queryByText("Where it goes:")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Placement:/)).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Edit where it goes" }),
+      screen.queryByRole("button", { name: "Edit placement" }),
     ).not.toBeInTheDocument();
   });
 
-  it("edits where it goes, prefilled, and shows the saved note", async () => {
+  it("shows the gallery's placement beside its Placement label", async () => {
+    await setup({}, "", REQUESTED);
+
+    expect(
+      within(screen.getByText(/^Placement:/)).getByText("requested"),
+    ).toBeInTheDocument();
+  });
+
+  it("edits its placement note, prefilled, and shows the saved note", async () => {
     const { user, calls } = await setup(
       {
         "PATCH /api/siteOwner/galleries/g1/request": {
@@ -219,12 +228,10 @@ describe("Gallery page", () => {
       REQUESTED,
     );
     expect(
-      screen.getByText("Where it goes:").nextElementSibling,
+      screen.getByText(/^Placement:/).nextElementSibling,
     ).toHaveTextContent("The about page.");
 
-    await user.click(
-      screen.getByRole("button", { name: "Edit where it goes" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Edit placement" }));
     const dialog = screen.getByRole("dialog", {
       name: "Where should Our Interior go?",
     });
@@ -238,7 +245,7 @@ describe("Gallery page", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
     expect(
-      screen.getByText("Where it goes:").nextElementSibling,
+      screen.getByText(/^Placement:/).nextElementSibling,
     ).toHaveTextContent("The home page.");
     const patch = calls.find((call) => call.method === "PATCH");
     expect(patch.body).toEqual({ requestNote: "The home page." });
@@ -248,21 +255,17 @@ describe("Gallery page", () => {
     const { user } = await setup({}, "", { ...REQUESTED, requestNote: null });
 
     expect(
-      screen.getByText("Where it goes:").nextElementSibling,
+      screen.getByText(/^Placement:/).nextElementSibling,
     ).toHaveTextContent(/^None$/);
 
-    await user.click(
-      screen.getByRole("button", { name: "Edit where it goes" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Edit placement" }));
 
     expect(screen.getByLabelText("Where on your website")).toHaveValue("");
   });
 
   it("closes the edit on Esc, sending nothing", async () => {
     const { user, calls } = await setup({}, "", REQUESTED);
-    await user.click(
-      screen.getByRole("button", { name: "Edit where it goes" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Edit placement" }));
 
     pressEscape(screen.getByRole("dialog"));
 
