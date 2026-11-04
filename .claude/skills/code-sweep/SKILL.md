@@ -98,11 +98,7 @@ For each file, against `CLAUDE.md` → Code Style and Anti-Patterns → New styl
 - Naming: `handleX` for component-level event handlers, a plain verb for a function named for its action, `onX` callback props, booleans as questions, the vocabulary of `docs/flows.md` and `docs/api.md`. Components `PascalCase.jsx`, hooks `useX.js`.
 - Text input: `(value ?? "").trim()` before an emptiness or length check, through the `_lib/validation.js` helpers where one exists. A bare `.trim()` is fine after an `isBlank` check, or on a field the API always sends as a string.
 - No nested ternaries in JSX; early returns over nested `if` / `else`.
-- No em dashes in user-facing strings; check each hit inside a string or JSX text:
-
-  ```
-  grep -rn '—' src --include='*.js' --include='*.jsx' --exclude='*.test.js' --exclude='*.test.jsx'
-  ```
+- No em dashes in user-facing strings: `npm run lint` refuses one in a string, a template or JSX text under `src/` (step 9). Read only for what lint can't see, such as a message built from a constant outside `src/`.
 
 - Styling: CSS Modules in `src/app/_styling/` imported as `styles`; classes only, never ids; camelCase class names; one rule per selector; the one phone breakpoint `@media (max-width: 667px)` at the end of the file; no new colours, fonts, shadows or animation beyond what the modules already use. `globals.css` holds only shared element rules plus `.fieldError` and `.dialogButtons`.
 
@@ -184,34 +180,16 @@ Finding: whichever side is wrong. If the spec is right and the code differs, a *
 
 ### Step 7: Architecture rules still hold — whole repo (Checklist 7)
 
-One check per rule from `CLAUDE.md` (Role Ownership Check Rule, Anti-Patterns, Patterns and Preferences):
-
-- `fetch` only in `_lib/apiFetch.js` (our API) and `_lib/uploadImages.js` (Cloudinary):
-
-  ```
-  grep -rnE '(^|[^A-Za-z_])fetch\(' src --include='*.js' --include='*.jsx' --exclude='*.test.js' --exclude='*.test.jsx'
-  ```
+One check per rule from `CLAUDE.md` (Role Ownership Check Rule, Anti-Patterns, Patterns and Preferences). The rules marked **(lint)** there are proven by `npm run lint` (step 9), with `eslint.config.test.mjs` proving each rule fires: `fetch` only in `_lib/apiFetch.js` and `_lib/uploadImages.js`, no `localStorage`, `sessionStorage` or `document.cookie`, no raw HTML, Sentry imported only in `_lib/sentry.js` and never given user data, `apiFetch` imported only in `_hooks/`, `_lib/`, `SignInForm` and `AuthButton`, and the landing page with no `"use client"`, hook or context. Here, check only that `eslint.config.mjs` still holds those rules with their allowed files, and read for what lint can't see:
 
 - No account id sent: no request body or path built from an `accountId` in a site owner flow.
-- The session never stored or read in JS:
-
-  ```
-  grep -rnE 'localStorage|sessionStorage|document\.cookie' src --exclude='*.test.js' --exclude='*.test.jsx'
-  ```
-
-  `proxy.js` only checks that the `session` cookie exists, never decodes it.
-
-- The landing page stays static: `src/app/page.js` has no `"use client"`, no hook and no fetch; `STATIC_PATHS` in `_lib/contentSecurityPolicy.js` lists only pages with no session and no user content; a link from it to a session page is a plain `<a>`.
+- `proxy.js` only checks that the `session` cookie exists, never decodes it.
+- The landing page stays static: `STATIC_PATHS` in `_lib/contentSecurityPolicy.js` lists only pages with no session and no user content; a link from it to a session page is a plain `<a>`.
 - Dashboards stay client-side: every page under `src/app/dashboard/` and `src/app/admin/` is a client component, and their `layout.js` files only call `connection()` and render the client layout, with no user data on the server.
 - The one-time reveal: credentials are rendered from the raw response in `CredentialRevealModal` and never put in Context, a hook's state or storage; the reveal blocks Esc.
 - Every pop-up is a native `<dialog>` opened with `showModal()`: through `useModalDialog` when it opens on mount, or by its own `showModal()` call when it opens on demand (the sign-in dialog), with `DialogCloseButton` except the documented exceptions (`CLAUDE.md` → Every pop-up is a native `<dialog>`), and no outside-click close.
-- Every data hook returns `{ data, loading, error }` plus its mutations; list hooks expose `refetch()`; components call no `apiFetch` directly outside `_hooks/` and `_lib/`, except `SignInForm` and `AuthButton` (sign-in and sign-out, `CLAUDE.md` → Data fetching goes through a per-resource custom hook):
-
-  ```
-  grep -rln 'apiFetch' src --exclude='*.test.js' --exclude='*.test.jsx'
-  ```
-
-- No raw HTML: no `dangerouslySetInnerHTML`; paragraph markup is read only through `_lib/postFormatting.js`.
+- Every data hook returns `{ data, loading, error }` plus its mutations; list hooks expose `refetch()`.
+- Paragraph markup is read only through `_lib/postFormatting.js`.
 - Dependencies: `package.json` adds no UI library beyond `react-icons` and `react-easy-crop`.
 - Destructive actions (Delete Post, Delete Gallery, cancelling a form with something to lose) go through `ConfirmDialog`; status switches don't, and `Toggle` never flips before the request succeeds.
 

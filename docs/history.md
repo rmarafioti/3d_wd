@@ -1,6 +1,6 @@
 # History
 
-The frontend's record of work as it was first written: every progress entry in full (the last five also sit, shortened, in `CLAUDE.md` → Current progress), the Now paragraph they replaced, the MVP Build Order, and the Features as first recorded. Not imported from `CLAUDE.md`, so it isn't loaded every session. Moved here word for word (issue #69); the rules still in force are in `CLAUDE.md` and `docs/`, and the decisions behind each change are in its PR.
+The frontend's record of work as it was first written: every progress entry in full (the last five also sit, shortened, in `CLAUDE.md` → Current progress), the Now paragraph they replaced, the launch record, the MVP Build Order, and the Features as first recorded. Not imported from `CLAUDE.md`, so it isn't loaded every session. Moved here word for word (issue #69); the rules still in force are in `CLAUDE.md` and `docs/`, and the decisions behind each change are in its PR.
 
 ## Progress
 
@@ -65,6 +65,41 @@ The Now paragraph of Current progress before issue #69 cut it to short bullets.
 ## Releases
 
 This repo's production releases before release tags were made by `npm run release` were backfilled once, on 2026-10-31, as annotated tags Rich pushed himself. The earliest release of 2026-10-29, frontend only, is `release-2026-10-29-3`, since the day's first two names were already the backend's.
+
+## Launch
+
+The frontend's launch, as recorded in `docs/deploy.md` before the V1 trim, moved here word for word. The rules still in force are in `docs/deploy.md`.
+
+### The frontend's steps in the launch checklist
+
+Numbered as in the backend's `docs/launch-record.md`; the steps in between are the backend's.
+
+- **2.** This file. Done 2026-10-24.
+- **5.** Move the frontend and client website projects into a Vercel Pro team (Rich). Done.
+- **6.** Branch protection on `main` in both repos (Rich). Done 2026-10-23. This repo's `production` branch is protected too: a rule with no "Require…" boxes, so force pushes and deletions are blocked; no pull request or status check is required, since the release push happens outside a pull request.
+- **16.** Staging: the `staging.3dwebdev.com` domain on the `staging` branch, the staging env vars, preview protection, and the staging OAuth origin (Rich). Done. Since 2026-10-29 the domain and the staging env vars follow `main` instead, and the `staging` branch is deleted (section 8).
+- **17.** The first staging deploy. Done.
+- **18.** The staging test, end to end, in a separate browser profile. Done.
+- **20.** Staging header checks and `Cross-Origin-Opener-Policy` (section 7). Done 2026-10-27: headers checked in DevTools (the policy from the Console, see section 7), the scanners moved to step 26, and Google sign-in re-tested as the admin and the site owner with the new header.
+- **23.** Production: the apex and `www` domains, the production env vars, and the production OAuth origin (Rich). Done 2026-10-27 (the `www` direction and the production env vars needed fixing, sections 3 and 4).
+- **24.** The first production deploy. Done 2026-10-27: Rich signed in as the admin on `https://3dwebdev.com`.
+- **26.** Production header checks, the scanners moved here from step 20, and the HSTS `preload` decision (section 7). Done 2026-10-27: every header on `/` and `/sign-in` with `curl`, `www` and `http` redirect to `https://3dwebdev.com`, the scanners show only the expected flags, `preload` not now. The frontend's Production environment moved from `main` to the `production` branch (section 8).
+- **27.** Stevie The Dog onboarded on production (backend and Rich). Done 2026-10-28. Nothing for the frontend.
+- **28.** Stevie The Dog's post create, archive, make active and edit each show live after one refresh (backend and Rich). Done 2026-10-28. Nothing for the frontend.
+- **29.** Record the launch. Done 2026-10-28: the docs on `docs/launch` in both repos (backend PR #38), then the master doc on the backend's `docs/master-doc-sync`, a full Documentation Sync.
+- **30.** Reassess staging (Rich). It is kept for now (Render staging costs $13.30/month); if it is ever deleted, it is added back before the first breaking change.
+
+### Lines trimmed from `docs/deploy.md` (§3, §4, §7)
+
+- **Each environment's variables are separate entries in Vercel**, added on their own: a variable scoped to Preview does nothing for Production. Staging's Preview variables are scoped to the `main` branch, the branch staging is built from (until 2026-10-29 they were scoped to the `staging` branch, and moved with the domain). At step 23 the first production build had none of the three, so Google refused sign-in with "Missing required parameter: client_id" (Error 400 invalid_request). After adding or changing a variable, Redeploy that environment with the build cache off, since the values are inlined at build time.
+- **Production:** `3dwebdev.com` (apex) on the Vercel project's Production environment, which tracks the `production` branch (section 8), with `www.3dwebdev.com` added as a redirect to the apex. Vercel's default when the apex was added (step 23) was the reverse, `3dwebdev.com` → `www`, and it had to be flipped by hand: check that `curl -I https://www.3dwebdev.com` answers 308 with `location: https://3dwebdev.com/`.
+- **Staging:** `staging.3dwebdev.com`, assigned to the `main` branch, so every merge to `main` shows there by itself (until 2026-10-29 it was the `staging` branch, which was then deleted).
+
+Header checks (§7, steps 1 to 3):
+
+1. `curl -I` a static page (`/`) and a dynamic one (`/sign-in`), and check each sends its Content Security Policy (fixed on `/`, with a nonce on `/sign-in` whose `connect-src` includes that environment's API origin, `https://api.cloudinary.com`, Google's `gsi` and, on production, Sentry's ingest origin; on production the fixed policy's `connect-src` lists Sentry's ingest origin too), `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options` and `Cross-Origin-Opener-Policy`. Staging is behind Vercel Deployment Protection, so there a plain `curl` only sees Vercel's 302 to its sign-in page: check them in the browser's DevTools instead, signed in to Vercel. Network → the document request lists the other headers, but on staging (2026-10-27) it didn't list the Content Security Policy, although both pages enforced it. So check the policy from the Console on each page, loaded from the address bar: `fetch(location.href).then(r => console.log(r.headers.get("content-security-policy")))` prints the header, and `eval("1")` must fail, quoting the page's `script-src`. Vercel's protection bypass secret is never pasted into chat, a commit or a scanner.
+2. Scan `/` and `/sign-in` with securityheaders.com and Mozilla HTTP Observatory. Expected flags, all decided: `'unsafe-inline'` scripts on the static landing page, `'unsafe-inline'` styles everywhere, no HSTS `preload`. The scanners can't reach staging through its protection, so they run on production only, at step 26; staging and production run the same config. Production results (2026-10-27): Mozilla HTTP Observatory B+ (80), 11 of 12 tests passed, the one failure `'unsafe-inline'` scripts (Observatory scans only a host's root page, so it covers `/`; `curl` covers `/sign-in`). securityheaders.com: `/` A, its one warning `'unsafe-inline'` in `script-src`; `/sign-in` A+. securityheaders.com refuses scripted requests, so it is run in the browser.
+3. Add `Cross-Origin-Opener-Policy: same-origin-allow-popups` (Google's recommended value for its sign-in pop-up) to the security headers in `next.config.mjs`, deploy, and re-test Google sign-in. Done on its own branch (`chore/coop-header`), tested on staging 2026-10-27: the admin and the site owner both sign in. Two Console messages during sign-in are expected and harmless: Google's script logs "Cross-Origin-Opener-Policy policy would block the window.postMessage call" ("would block": a report-only rule, not ours, and sign-in completes), and on staging only, Vercel's preview toolbar is refused a `vercel.live` frame by `frame-src` (the policy working; the toolbar isn't on production).
 
 ## MVP Build Order
 

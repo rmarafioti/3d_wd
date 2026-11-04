@@ -1,6 +1,6 @@
 # API
 
-The API contract this frontend codes against. Imported from `CLAUDE.md` via `@docs/api.md`. This is a copy — the source of truth is `docs/endpoints.md` in the backend repo. If the contract changes, update both repos together; never let them drift.
+The API contract this frontend codes against. Read on demand (`CLAUDE.md` → Read before). This is a copy — the source of truth is `docs/endpoints.md` in the backend repo. If the contract changes, update both repos together; never let them drift.
 
 ## API Contract
 

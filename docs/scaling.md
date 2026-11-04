@@ -1,11 +1,11 @@
 # Scaling
 
-The frontend's rules for changing the app since launch. Imported from `CLAUDE.md` via `@docs/scaling.md`. The shared rules are in the backend's `docs/scaling.md`, the source of truth: launch (§0), classifying a change (§1), schema rules (§2), expand → migrate → contract (§3), API contract rules and the deploy order (§4), the new-feature template (§5), performance and pagination (§6), running more than one instance (§7), environments and staging (§8), and docs, tests and review (§9). This file holds only what the frontend does to follow them; "backend → N" means section N of the backend's `docs/scaling.md`.
+The frontend's rules for changing the app since launch. Read on demand (`CLAUDE.md` → Read before). The shared rules are in the backend's `docs/scaling.md`, the source of truth: launch (§0), classifying a change (§1), schema rules (§2), expand → migrate → contract (§3), API contract rules and the deploy order (§4), the new-feature template (§5), performance and pagination (§6), running more than one instance (§7), environments and staging (§8), and docs, tests and review (§9). This file holds only what the frontend does to follow them; "backend → N" means section N of the backend's `docs/scaling.md`.
 
 ## 1. Before planning
 
 - State whether the change is **additive**, **breaking** or **data-changing** (backend → 1). The plan for a breaking change says so in its first lines.
-- Since launch (2026-10-28), a breaking or data-changing change goes through expand → migrate → contract (backend → 0, 3).
+- Every breaking or data-changing change goes through expand → migrate → contract (backend → 0, 3).
 
 ## 2. Reading responses and building requests
 
