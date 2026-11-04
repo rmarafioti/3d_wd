@@ -4,7 +4,7 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 
 ## 0. Launched
 
-- Backend → 0, word for word: "Production launched on 2026-10-28, with Stevie The Dog as its first client website (`docs/deploy.md` → Deployment checklist). Before then, breaking changes were made in place, with no versioned public path, no expand → migrate → contract, and test rows dropped; older entries in `CLAUDE.md` that cite §0 refer to that. From launch on, every rule below applies, and a breaking or data-changing change goes through expand → migrate → contract (Section 3)."
+- Backend → 0, word for word: "Production launched on 2026-10-28, with Stevie The Dog as its first client website (`docs/launch-record.md`). Before then, breaking changes were made in place, with no versioned public path, no expand → migrate → contract, and test rows dropped; older entries in `CLAUDE.md` that cite §0 refer to that. From launch on, every rule below applies, and a breaking or data-changing change goes through expand → migrate → contract (Section 3)."
 - On the frontend this means: since launch, section 3's deploy order applies to every contract change, and a breaking change goes through expand → migrate → contract (backend → 3).
 
 ## 1. Classify the change first
@@ -52,7 +52,7 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 
 Follow the backend's template (backend → 5). On the frontend side:
 
-- New work after the MVP is tracked as numbered features in `CLAUDE.md`, each one its own branch → plan → approval → build → verify → PR, the same rhythm as the Build Order (backend → 9).
+- New work after the MVP is tracked as numbered features in `CLAUDE.md`, each one its own branch → plan → approval → build → verify → PR, the same rhythm as the MVP Build Order (`docs/history.md`; backend → 9).
 - Spec first: `docs/api.md`, and `docs/flows.md` for UI flows.
 - The backend deploys first (section 3).
 - Data goes through a new hook in `_hooks/` with the `{ data, loading, error }` shape.
@@ -61,7 +61,7 @@ Follow the backend's template (backend → 5). On the frontend side:
 
 ## 9. Environments
 
-- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from `main` on every merge (backend → 8). It is kept after launch and its cost reassessed (backend Deployment checklist step 30); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
+- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from `main` on every merge (backend → 8). It is kept after launch and its cost reassessed (backend `CLAUDE.md` → Current progress → Next); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
 - A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
 
 ## 10. Keeping this file in step

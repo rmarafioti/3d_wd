@@ -1,13 +1,13 @@
 ---
 name: code-sweep
-description: Read-only code review of the frontend against CLAUDE.md → Code Review → Checklist, reported as findings in its Output format, with a row for the Code Sweep Tracker sheet. `full` reviews the whole Scope, `<sha>` the code changed since that commit, `diff` only the current branch (the per-step self-review).
+description: Read-only code review of the frontend against CLAUDE.md → Code Review → Checklist, reported as findings in this file's Output format, with a row for the Code Sweep Tracker sheet. `full` reviews the whole Scope, `<sha>` the code changed since that commit, `diff` only the current branch (the per-step self-review).
 argument-hint: full | <last swept commit> | diff
 disable-model-invocation: true
 ---
 
 # /code-sweep
 
-The procedure for `CLAUDE.md` → Code Review in this repo (`3d_wd`, the frontend). `CLAUDE.md` holds the rules (the Checklist, Output and Scope); this file holds how to check each one, step by step, so every run is the same. A change to the Checklist, its Scope or this procedure changes both files in the same PR. The backend has its own `/code-sweep` with the same outline; this one is never run against the backend.
+The procedure for `CLAUDE.md` → Code Review in this repo (`3d_wd`, the frontend). `CLAUDE.md` holds the Checklist, imported every session so its rules also guide writing code; this file is the only copy of the review's Scope and Output, and holds how to check each item, step by step, so every run is the same. A change to the Checklist changes both files in the same PR. The backend has its own `/code-sweep` with the same outline; this one is never run against the backend.
 
 Arguments: `$ARGUMENTS`
 
@@ -50,7 +50,7 @@ Record the review's end commit now: `git rev-parse --short origin/main` (for `di
 
 ## 4. Scope
 
-Covered (kept in step with `CLAUDE.md` → Code Review → Scope):
+Covered:
 
 - `src/`, every `*.test.js` and `*.test.jsx` in it included
 - `next.config.mjs`, `eslint.config.mjs`, `vitest.config.mjs`, `jsconfig.json`, `package.json`, `.env.example`, `.prettierrc`, `.prettierignore`
@@ -60,7 +60,9 @@ Covered (kept in step with `CLAUDE.md` → Code Review → Scope):
 
 Copies, checked only for being identical to the backend's (step 6), never reviewed line by line, since a change to them is made in the backend first: `.claude/hooks/` and `docs/api.md`.
 
-Left out: `node_modules/`, `.next/`, `package-lock.json`, `AGENTS.md` (written by `next dev`), `.claude/settings.local.json` (personal), `.env` (never read).
+A `diff` review covers only that branch's diff, plus anything the diff duplicates or makes dead elsewhere. It is mandatory on every code update (`CLAUDE.md` → Workflow Checklist).
+
+Left out: `docs/history.md` (a record as written, not rules in force), `node_modules/`, `.next/`, `package-lock.json`, `AGENTS.md` (written by `next dev`), `.claude/settings.local.json` (personal), `.env` (never read).
 
 The files for steps 1–5 and 8 (see Arguments):
 
@@ -155,17 +157,12 @@ Every comment in a reviewed file, against the code next to it, and each JS / JSX
 
 ### Step 6: Docs match code — whole repo (Checklist 6)
 
-- **Architecture tree:** every path in `CLAUDE.md` → Project Architecture exists (`git ls-files`), and every tracked file or folder the tree's level of detail would list is in it, with a true description. The `_components/` list matches the components on disk:
-
-  ```
-  ls src/app/_components | grep -v '\.test\.' | sed 's/\.jsx$//'
-  ```
-
-- **Hooks:** the hook list in `CLAUDE.md` → Patterns and Preferences matches `src/app/_hooks/` (each hook listed exists, each hook file is listed, and each description, return shape and mutation is true of the code).
+- **Architecture tree:** every path in `CLAUDE.md` → Project Architecture exists (`git ls-files`), with a true description. The tree lists folders and the files a rule is attached to, not every component or hook.
+- **Hooks:** each hook's header comment says truly what it fetches and which mutations it exposes, and the shared hook rules in `CLAUDE.md` → Patterns and Preferences are true of `src/app/_hooks/`.
 - **Flows:** the components, hooks and requests `docs/flows.md` names for each flow are the ones the code uses, and its user-facing strings appear word for word in the code. Check the messages in `src/app/_lib/validation.js`, `postFields.js` and `galleryFields.js`, and each message the UI hard-codes (the timeout, the upload failure, the empty states), against `docs/flows.md` and `docs/api.md`.
 - **Scripts:** each script in `package.json` is named in `README.md`, `CLAUDE.md` or `docs/`.
 - **Env:** `.env.example`, the env table in `README.md` and `docs/deploy.md` §3 name the same variables.
-- **Progress:** `CLAUDE.md` → Current progress (Now, Next, Pending notes) is true of `main`.
+- **Progress:** `CLAUDE.md` → Current progress (Now, Next, Pending notes) is true of `main`, and lists no more than five entries (older ones are in `docs/history.md`, which isn't reviewed line by line).
 - **Copies:** when the backend is the sibling folder `../3d_wd_backend`, compare, read-only, against its `origin/main` (after `git -C ../3d_wd_backend fetch origin`):
 
   ```
@@ -255,7 +252,7 @@ Also run the full `npm audit` (dev included) and list moderate or worse advisori
 
 ## 8. Output
 
-The `CLAUDE.md` → Code Review → Output format, exactly:
+Findings are a list, most important first. A finding's type is **bug** (behaviour is wrong), **cleanup** (behaviour-neutral) or **doc** (docs or comments only); one that needs Rich to make a style or spec decision is a **decision**, with no fix proposed until he does. Exactly:
 
 1. **Findings**, most important first (bugs, then decisions, then cleanups, then docs). Each one:
    - **file:line**
