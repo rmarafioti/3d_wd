@@ -1,12 +1,5 @@
 // PostPreview (site owner): the post as it will read on the client website, drawn live from
-// Create / Edit Post's current, unsaved values, in the review view beside the PostToolbar: the
-// date first (so a reader sees how recent the post is before anything else), then the header, sub
-// header and the body in order. Paragraphs keep their line breaks and formatting (FormattedText,
-// the same renderer as the post page). Every element is already complete, since it only joins the
-// body through its dialog's Insert. A picked image shows from memory (its object URL) before it is
-// uploaded. The client website's own styling isn't applied (Post preview v1). Images use Next.js
-// <Image> at their size, unoptimized, so neither an object URL nor a Cloudinary URL needs a
-// next.config host list.
+// Create / Edit Post's unsaved values in the review view.
 
 import Image from "next/image";
 import FormattedText from "./FormattedText";
@@ -17,6 +10,7 @@ import styles from "../_styling/postPreview.module.css";
 export default function PostPreview({ header, subHeader, postDate, body }) {
   return (
     <section aria-label="Post preview" className={styles.preview}>
+      {/* The date first, so a reader sees how recent the post is before anything else. */}
       {!isBlank(postDate) && <p>{postDate}</p>}
       {!isBlank(header) && <h3>{header.trim()}</h3>}
       {!isBlank(subHeader) && <p>{subHeader.trim()}</p>}
@@ -27,6 +21,8 @@ export default function PostPreview({ header, subHeader, postDate, body }) {
             <FormattedText text={element.text.trim()} />
           </p>
         ) : (
+          // Unoptimized, so neither a picked file's object URL nor a Cloudinary URL needs a
+          // next.config host list.
           <Image
             key={element.key}
             src={element.src}

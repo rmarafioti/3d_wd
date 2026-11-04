@@ -1,8 +1,5 @@
-// Tests for Navbar (docs/flows.md → App Shell): signed out, the top row alone; the admin's links
-// (Create an Account, Audit Events); the site owner's Create a Post, and Create a Gallery only
-// once a website has Photo Galleries (set by the dashboard layout's data through NavContext); the
-// phone menu opens from the hamburger and closes on Esc (focus back on it), on a click outside and
-// on a picked link.
+// Tests for Navbar: the signed-out row, each role's links (Create a Gallery through NavContext) and
+// the phone menu's opening and closing.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

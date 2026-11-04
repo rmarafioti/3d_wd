@@ -1,5 +1,5 @@
-// Root layout: wraps every page in AuthProvider and NavProvider (both start empty and never fetch),
-// Navbar and Footer.
+// Root layout: wraps every page in AuthProvider and NavProvider (both start empty and never
+// fetch), Navbar and Footer.
 
 import "./globals.css";
 import { AuthProvider } from "./_context/AuthContext";

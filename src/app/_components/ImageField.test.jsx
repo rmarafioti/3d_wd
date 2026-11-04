@@ -1,8 +1,5 @@
-// Tests for ImageField (docs/flows.md → Post body dialogs): the file picker (refused files, a
-// picked file shown from memory, an unreadable file let go of, a late load for a replaced file),
-// an existing image from its stored src, the alt text note once a file is picked, the character
-// count, and server messages. ImageField is controlled; the harness owns its value the way
-// PostForm's image dialog owns its draft.
+// Tests for ImageField: the file picker and its checks, a picked or stored image shown, the alt
+// text note and count, and server messages.
 
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
@@ -25,6 +22,8 @@ const IMAGE = {
 };
 const EMPTY_IMAGE = { ...IMAGE, src: "", width: null, height: null };
 
+// ImageField is controlled; the harness owns its value the way PostForm's image dialog owns its
+// draft.
 function Harness({ initialValue, serverErrors = {} }) {
   const [value, setValue] = useState(initialValue);
   return (

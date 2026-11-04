@@ -1,9 +1,5 @@
-// CredentialRevealModal: one-time reveal of API key and webhook secret. Blocks Esc, closes only
-// via its Close button, and never persists the values beyond the modal.
-//
-// The parent mounts it with the raw API response and unmounts it in onClose; nothing here is
-// copied into Context, a hook or storage, so the values are gone once it closes. Kept generic
-// (website + credentials only) so key rotation can reuse it later.
+// CredentialRevealModal: the one-time reveal of a new website's API key and webhook secret, which
+// blocks Esc and closes only with its Close button.
 
 "use client";
 
@@ -12,6 +8,9 @@ import { useModalDialog } from "../_hooks/useModalDialog";
 
 import styles from "../_styling/credentialRevealModal.module.css";
 
+// The parent mounts it with the raw API response and unmounts it in onClose. Nothing here is copied
+// into Context, a hook or storage, so the values are gone once it closes. Website and credentials
+// only, so key rotation can reuse it.
 export default function CredentialRevealModal({
   website,
   credentials,

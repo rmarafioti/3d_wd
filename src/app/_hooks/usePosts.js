@@ -1,7 +1,5 @@
-// usePosts (site owner): post creation, status changes and deletion. It fetches nothing, so it
-// exposes just create, setStatus and remove. The dashboard calls them directly and refetches its
-// list (from useWebsites) after each; the post page changes status through usePost and deletes
-// through remove, so both pages share one status request and one delete request.
+// usePosts (site owner): a post's mutations, create, setStatus and remove. It fetches nothing; the
+// caller refetches the list it affects.
 
 "use client";
 

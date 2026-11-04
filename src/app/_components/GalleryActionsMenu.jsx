@@ -1,8 +1,5 @@
-// GalleryActionsMenu (site owner): the ⋮ menu at the end of each gallery's row on /dashboard (the
-// shared ActionsMenu), like PostActionsMenu: View, Edit (the gallery page with its Edit form open),
-// Status ("Status to publish" on a draft, "Status to draft" on a published gallery:
-// onStatusChange, which saves straight away, since it can be undone) and Delete (onDelete, whose
-// confirmation the dashboard owns). Its list opens from GalleryTable's actions cell.
+// GalleryActionsMenu (site owner): a gallery row's ⋮ menu on /dashboard: View, Edit, the status
+// item (saved straight away) and Delete, whose confirmation the dashboard owns.
 
 "use client";
 

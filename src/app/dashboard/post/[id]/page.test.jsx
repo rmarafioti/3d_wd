@@ -1,10 +1,5 @@
-// Tests for the single post page's own wiring (docs/flows.md → Get a Post by ID, Draft / Publish,
-// Edit a Post): the body in order with line breaks kept, the 404 view, the Published switch
-// (off moves the post to draft and on publishes it straight away, with no dialogs, the pill following and the page
-// staying put), a failed status change leaving the switch as it was, closing the form after an edit with no success dialog, and
-// Delete Post (docs/flows.md → Delete a Post): confirmed, it sends the DELETE and returns to
-// /dashboard; cancelled, it sends nothing; failed, it shows the message and stays. And ?edit=1 (the
-// dashboard's ⋮ menu → Edit) opening the Edit form, then dropping itself from the address.
+// Tests for the post page's own wiring: the body, the 404 view, the Published switch, closing Edit,
+// Delete Post, and ?edit=1 opening the Edit form.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -288,7 +283,7 @@ describe("Post page", () => {
     await setup({}, "edit=1");
 
     expect(
-      screen.getByRole("dialog", { name: "Edit Post" }),
+      await screen.findByRole("dialog", { name: "Edit Post" }),
     ).toBeInTheDocument();
     expect(router.replace).toHaveBeenCalledWith("/dashboard/post/p1");
   });

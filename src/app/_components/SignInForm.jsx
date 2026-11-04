@@ -1,6 +1,5 @@
-// SignInForm: Google sign-in button (inside GoogleOAuthProvider), the "Signing in…" dialog,
-// the login error dialog, and the session-expired message. On success, routes once on the
-// returned role; the role is not stored anywhere.
+// SignInForm: the Google sign-in button, the "Signing in…" dialog that turns into a login error,
+// and the session-expired message.
 
 "use client";
 
@@ -29,6 +28,7 @@ export default function SignInForm({ expired }) {
         method: "POST",
         body: { credential },
       });
+      // Routes once on the returned role; the role is not stored anywhere.
       router.replace(HOME_BY_ROLE[role]);
     } catch (err) {
       setError(err);

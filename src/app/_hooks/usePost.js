@@ -1,7 +1,5 @@
-// usePost(id) (site owner): a single post.
-// Returns { data, loading, error } plus update and setStatus. Both mutations store the Post the
-// API returns in data, so the page shows the server's copy without a second request. setStatus
-// sends through usePosts, so the post page and the dashboard's ⋮ menu share one status request.
+// usePost(id) (site owner): a single post. Returns { data, loading, error } plus update and
+// setStatus, which both store the Post the API returns, so the page needs no second request.
 
 "use client";
 
@@ -13,6 +11,7 @@ import { usePosts } from "./usePosts";
 export function usePost(id) {
   const path = `/api/siteOwner/posts/${encodeURIComponent(id)}`;
   const { data, loading, error, setData } = useApiResource(path);
+  // Through usePosts, so the post page and the dashboard's ⋮ menu share one status request.
   const { setStatus: sendStatus } = usePosts();
 
   // payload: the full edit form { postName, header, subHeader, postDate, body }.

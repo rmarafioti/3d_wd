@@ -1,6 +1,4 @@
-// Tests for ConfirmDialog, the shared confirmation gate for destructive actions (Delete Post,
-// cancelling a post): it shows its message, the confirm button calls onConfirm, Cancel (or its
-// cancelLabel) or Esc call onClose, and it has no X.
+// Tests for ConfirmDialog: its message, its confirm and cancel buttons, Esc, and no X.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

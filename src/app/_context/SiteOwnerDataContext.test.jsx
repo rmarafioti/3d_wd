@@ -1,6 +1,5 @@
-// Tests for SiteOwnerDataContext (docs/flows.md → Get All Websites): the dashboard layout stays
-// mounted across /dashboard pages, so returning to /dashboard from a post or gallery page fetches
-// the websites again, keeping the rows meanwhile; the first page doesn't fetch twice.
+// Tests for SiteOwnerDataContext: returning to /dashboard from another page refetches the websites,
+// keeping the rows meanwhile, and the first page doesn't fetch twice.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

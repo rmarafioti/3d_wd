@@ -1,13 +1,9 @@
-// contentSecurityPolicy: the two Content Security Policies proxy.js sets, split by page type.
-// Session pages render per request and get a nonce policy: only scripts carrying that request's
-// nonce, or added by one of them ('strict-dynamic'), run. Static pages are prerendered, so their
-// inline scripts can't carry a nonce; they get a fixed policy, which is safe only because a static
-// page shows no user content and holds no session. Any page not in STATIC_PATHS gets the nonce
-// policy, so a forgotten page fails loudly (its scripts blocked) rather than quietly weak.
-// On production both policies also allow Sentry's ingest origin in connect-src, so a page can
-// report its errors (_lib/sentry.js); with Sentry off, it isn't listed.
+// contentSecurityPolicy: the two Content Security Policies proxy.js sets, a nonce policy for
+// session pages and a fixed one for static pages.
 
 // The static pages. A page joins this list only if it renders no user content and needs no session.
+// Any other page gets the nonce policy, so a forgotten page fails loudly (its scripts blocked)
+// rather than quietly weak.
 export const STATIC_PATHS = ["/"];
 
 const GOOGLE_SIGN_IN = "https://accounts.google.com/gsi/";
@@ -49,7 +45,7 @@ export function sessionPolicy(nonce) {
     // No nonce here: a nonce would make browsers ignore 'unsafe-inline', which the style="…"
     // attributes of React, next/image and the Google button need.
     `style-src 'self' 'unsafe-inline' ${GOOGLE_SIGN_IN}style`,
-    // blob: for a picked image shown from memory before Publish uploads it.
+    // blob: for a picked image shown from memory before Submit uploads it.
     "img-src 'self' data: blob: https://res.cloudinary.com",
     "font-src 'self'",
     `connect-src ${connectSources.join(" ")}`,
@@ -66,7 +62,8 @@ export function staticPolicy() {
 
   return toHeader([
     "default-src 'self'",
-    // Next's prerendered HTML carries inline scripts, which can't have a nonce.
+    // Next's prerendered HTML carries inline scripts, which can't have a nonce. 'unsafe-inline' is
+    // safe only because a static page shows no user content and holds no session.
     `script-src 'self' 'unsafe-inline'${devEval()}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",

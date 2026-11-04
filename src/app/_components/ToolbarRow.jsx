@@ -1,9 +1,5 @@
-// ToolbarRow: one row of the review view's toolbar in Create / Edit Post (PostToolbar) and Create /
-// Edit a Gallery (GalleryToolbar): what the row is (children), its ⋮ menu (the shared ActionsMenu,
-// named by menuLabel, with items) and, under it, the backend's message for that part, if any.
-// label, for one of the post's or gallery's own fields, names the field before its value
-// ("Header: A walk"), so the row says which field it is; the row stays one line, cut off with an
-// ellipsis, so a label never widens the toolbar.
+// ToolbarRow: one row of a review view's toolbar (PostToolbar, GalleryToolbar): what the row is,
+// its ⋮ menu and, under it, the backend's message for that part, if any.
 
 "use client";
 
@@ -11,6 +7,8 @@ import ActionsMenu from "./ActionsMenu";
 
 import styles from "../_styling/postToolbar.module.css";
 
+// label, for one of the post's or gallery's own fields, names the field before its value
+// ("Header: A walk").
 export default function ToolbarRow({
   label,
   menuLabel,

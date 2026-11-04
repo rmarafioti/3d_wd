@@ -1,16 +1,5 @@
 // LinkPanel (site owner): the panel for adding a link to a paragraph, or editing one from its
-// links list (docs/flows.md → Paragraph formatting). Link text, Link URL, and a Bold toggle:
-// links are bold by default, and bold is the only look a link can be given (the toolbar's Bold
-// and Italic never touch a link). Like the other forms: each field's message (the contract's) shows once it
-// has been left, and Add link / Update link stay disabled until both fields are valid. Update
-// link also waits for a change (text, URL or look), so an unchanged link isn't rewritten.
-// - Link text is locked when it came from highlighted words, so the site owner sees exactly
-//   which words become the link; otherwise it is typed here (always, when editing).
-// - aroundLevel: the bold / italic of a larger run the link sits in (typed by hand, or a link
-//   added inside bold words). The link takes that look on and can't have one of its own inside
-//   it (formats don't nest), so the Bold toggle shows it and is disabled, with a note.
-// - A link's own italic (only possible typed by hand) is kept as it is when Bold is switched.
-// onSave receives { text, url, level }, trimmed; the parent writes the markup.
+// links list: Link text, Link URL and a Bold toggle. onSave gets { text, url, level }, trimmed.
 
 "use client";
 
@@ -29,6 +18,9 @@ const AROUND_NOTES = {
   3: "Bold and italic from the words around it.",
 };
 
+// textLocked: the link text came from highlighted words, so the site owner sees exactly which
+// words become the link. aroundLevel: the bold / italic of a larger run the link sits in; the link
+// takes that look on and can't have one of its own (formats don't nest), so Bold is disabled.
 export default function LinkPanel({
   mode,
   initial,
@@ -50,6 +42,7 @@ export default function LinkPanel({
     text.trim() !== initial.text ||
     url.trim() !== initial.url ||
     level !== initial.level;
+  // An unchanged link isn't rewritten.
   const canSave = isValid && (mode === "add" || isChanged);
 
   function touch(field) {
@@ -99,6 +92,7 @@ export default function LinkPanel({
       {touched.url && errors.url && <p className="fieldError">{errors.url}</p>}
 
       <div className={styles.formatButtons}>
+        {/* Flips only the bold bit, so a hand-typed italic link keeps its italic. */}
         <button
           type="button"
           aria-label="Bold link"
@@ -117,7 +111,7 @@ export default function LinkPanel({
         </p>
       )}
 
-      {/* Cancel on the left, the action on the right, as in every dialog (Rich, 2026-11-02). */}
+      {/* Cancel on the left, the action on the right, as in every dialog. */}
       <div className={styles.linkDraftButtons}>
         <button type="button" onClick={onCancel}>
           Cancel

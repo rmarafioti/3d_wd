@@ -1,3 +1,5 @@
+// ESLint config: Next.js's core-web-vitals rules, with its default ignores restated.
+
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 

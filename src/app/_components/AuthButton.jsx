@@ -1,6 +1,4 @@
-// AuthButton: Navbar client island. "Sign in" link when no user in context, "Sign out" when there
-// is one. className replaces the purple button look, for Sign out listed like a link in the phone
-// menu.
+// AuthButton: the Navbar's "Sign in" link with no user in context, or its "Sign out" button.
 
 "use client";
 
@@ -9,6 +7,7 @@ import { useAuth } from "../_hooks/useAuth";
 
 import styles from "../_styling/navbar.module.css";
 
+// className replaces the purple button look, so the phone menu can list Sign out like a link.
 export default function AuthButton({ className = styles.signButton }) {
   const { user, setUser } = useAuth();
 

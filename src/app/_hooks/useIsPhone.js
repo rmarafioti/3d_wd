@@ -1,7 +1,5 @@
-// useIsPhone: true at phone width, the one breakpoint the styling uses everywhere
-// (max-width: 667px), and it follows the window as it is resized. For layouts that behave
-// differently on a phone, not only look different (the post preview is a separate view there).
-// Not a data hook, so it returns a boolean rather than { data, loading, error }.
+// useIsPhone: true at the styling's one phone breakpoint, following the window as it resizes, for
+// what a stylesheet can't change (the Google sign-in button's width). Returns a boolean.
 
 "use client";
 
@@ -19,8 +17,8 @@ function isPhoneNow() {
   return window.matchMedia(PHONE_QUERY).matches;
 }
 
-// The dashboards only render on the client, so the server answer is never shown; false keeps
-// the server render on the desktop layout.
+// The server has no window, so it renders the desktop layout; the client's answer takes over once
+// the page hydrates.
 function isPhoneOnServer() {
   return false;
 }

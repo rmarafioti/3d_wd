@@ -1,9 +1,5 @@
-// Audit Events page (/admin/auditEvents): the read-only audit log, one UTC month at a time,
-// newest first, with previous and next month controls that step only through the months that
-// have events, "Load more" for the month's later pages,
-// and a "Hide my sign-ins" switch (off by default) that hides only the admin's own sign-in and
-// sign-out rows. Role-gated by the admin layout. A Client Component on purpose: per-user data is
-// only ever fetched client-side.
+// Audit Events page: the read-only audit log, one UTC month at a time. A Client Component on
+// purpose, since per-user data is only ever fetched client-side.
 
 "use client";
 

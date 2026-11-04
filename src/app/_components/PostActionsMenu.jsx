@@ -1,9 +1,5 @@
-// PostActionsMenu (site owner): the ⋮ menu at the end of each post's row on /dashboard (the shared
-// ActionsMenu), with shortcuts to what the post page offers: View, Edit (the post page with its
-// Edit form open), Status ("Status to publish" on a draft, "Status to draft" on a published post,
-// worded to match the table's Status column: onStatusChange, which saves straight away, since it
-// can be undone) and Delete (onDelete, whose confirmation the dashboard owns). Its list opens from
-// PostTable's actions cell.
+// PostActionsMenu (site owner): a post row's ⋮ menu on /dashboard, with shortcuts to what the post
+// page offers. The dashboard owns the status request and the delete's confirmation.
 
 "use client";
 
@@ -15,6 +11,7 @@ export default function PostActionsMenu({ post, onStatusChange, onDelete }) {
   const items = [
     { label: "View", href: postPath },
     { label: "Edit", href: `${postPath}?edit=1` },
+    // Worded to match the table's Status column.
     {
       label: isPublished ? "Status to draft" : "Status to publish",
       onClick: () => onStatusChange(post, isPublished ? "draft" : "published"),

@@ -1,7 +1,5 @@
-// CreateAccountForm (admin): Site Owner Name, Site Owner Email and the WebsitePicker →
-// POST /api/admin/accounts. Frontend validation messages and backend errors render below
-// Submit; backend field messages render next to their field. On success it shows the one-time
-// CredentialRevealModal (new website) or a confirmation dialog (existing website), then clears.
+// CreateAccountForm (admin): the Create an Account form (POST /api/admin/accounts), then the
+// one-time credentials reveal for a new website or a confirmation for an existing one.
 
 "use client";
 
@@ -17,7 +15,7 @@ import { isBlank, isValidEmail, validateWebsite } from "../_lib/validation";
 
 import styles from "../_styling/dashPages.module.css";
 
-// Frontend checks, in display order. UX only — the backend re-validates everything.
+// Frontend checks, in display order. UX only: the backend re-validates everything.
 function validate({ name, email, website }) {
   const errors = {};
   if (isBlank(name)) errors.name = "A site owner name is required";

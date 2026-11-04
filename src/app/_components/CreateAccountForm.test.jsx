@@ -1,6 +1,5 @@
-// Tests for Create an Account (docs/flows.md → Create an Account), run through the real
-// useAccounts hook so the request the form sends is checked against docs/api.md: validation
-// and Submit gating, both payload shapes, backend errors, and both success dialogs.
+// Tests for CreateAccountForm through the real useAccounts hook: validation and Submit gating, both
+// payload shapes, backend errors and both success dialogs.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";

@@ -1,28 +1,5 @@
-// ParagraphField (site owner): one paragraph's fields in the paragraph dialogs of Create / Edit
-// Post: its format buttons, the textarea with its character count, the Link panel, and the list
-// of the paragraph's links (docs/flows.md → Paragraph formatting).
-// The format buttons work like a text editor's:
-// - with words highlighted, Bold / Italic switch their bit of the run around them: **a** with
-//   Italic becomes ***a***, then Bold off leaves *a*, and with no bit left the markers go;
-// - with only the cursor, Bold / Italic put an empty pair of markers there with the cursor
-//   between them, so what is typed next is formatted. With the cursor in a run's words (or an
-//   empty pair), they switch their bit for the whole run: Bold then Italic gives ******, and
-//   Bold in ***words*** leaves *words*. With the cursor in a run's markers, or just outside them,
-//   a click moves it back into the words. A new pair is only made away from any run;
-// - Link opens the Link panel to add a link, showing the highlighted words as its text (or a
-//   Link text field to type into). New links are bold by default.
-// Ctrl / Cmd + B, I and K press them from the keyboard.
-// Links are managed from the list under the textarea (a disclosure, closed to start with), not
-// inside the text: each one's Edit opens the Link panel filled in (its text, URL and bold) and
-// closes it again, and Delete removes the link but keeps its words, then closes the list.
-// Bold, on or off in its panel, is the only look a link takes: the toolbar never formats a link,
-// so while the cursor is inside one, or a highlight covers any part of one, all three buttons
-// are disabled. The list is read from the text on every render, so it always matches what is
-// typed, links typed by hand included.
-// The text's own message (a bad link, too long) shows as soon as it applies, since the buttons
-// change the text without leaving the field; "Paragraph is required." shows once it has been
-// left, otherwise the server's message shows.
-
+// ParagraphField: one paragraph's fields in the Create / Edit Post paragraph dialogs: its format
+// buttons, the textarea with its count, the Link panel and the list of the paragraph's links.
 "use client";
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
@@ -122,8 +99,11 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
   const [linksOpen, setLinksOpen] = useState(false);
 
   const error = validateParagraph(value).text;
+  // The text's own message (a bad link, too long) shows as soon as it applies, since the buttons
+  // change the text without leaving the field; "Paragraph is required." waits until it is left.
   const showError = touched || !isBlank(value.text);
   const message = showError && error ? error : serverError;
+  // Read from the text on every render, so the list matches what is typed, hand-typed links too.
   const links = linksInParagraph(value.text);
   const formatState = selection && formatStateAt(value.text, selection);
   const buttonsDisabled = !selection || touchesLink(links, selection);
@@ -204,7 +184,8 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
     );
   }
 
-  // Bold or Italic with only the cursor (see the comment at the top). With the cursor touching a
+  // Bold or Italic with only the cursor. Away from any run it puts an empty pair of markers there,
+  // with the cursor between them, so what is typed next is formatted. With the cursor touching a
   // run, the click always acts on that run, never adds new markers beside it.
   function toggleAtCaret({ run }, bit, caret) {
     if (!run) {

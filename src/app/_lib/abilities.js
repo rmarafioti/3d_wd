@@ -1,12 +1,22 @@
-// abilities: the catalog of abilities the Client Portal offers a website (docs/api.md → Notes,
-// Abilities). The API lists only the abilities a website has; the frontend keeps every kind and
-// its label, so a kind the website doesn't have can offer "+ Add". Posts are every website's from
-// the start and can't be removed; Photo Galleries are added and can be.
+// abilities: the catalog of ability kinds and their labels, and the helpers that read a website's
+// abilities: pill words, the pending request form and the request dialog's copy.
 
+// The API lists only the abilities a website has, so the frontend keeps every kind, and a kind the
+// website doesn't have can offer "+ Add".
 export const ABILITY_KINDS = [
   { kind: "posts", label: "Posts", removable: false },
   { kind: "galleries", label: "Photo Galleries", removable: true },
 ];
+
+// Each word abilityPillLabel gives, with its pill's tone. A prompt takes the look of the state it
+// stands for, so no new colours: "Add ?" an added ability's plain white, "Turn On ?" off's red.
+export const ABILITY_PILL_TONES = {
+  added: "plain",
+  "Add ?": "plain",
+  live: "green",
+  off: "red",
+  "Turn On ?": "red",
+};
 
 // The website's ability of that kind, or undefined while it hasn't been added (or was removed).
 // website: one from GET /api/siteOwner/websites or GET /api/admin/accounts.
@@ -20,10 +30,10 @@ export function abilityLabel(kind) {
 
 // The word on an ability's pill (docs/api.md → Notes, Abilities): its status, "added" or "live"
 // (whether its code is wired into the client website), or "off" while live and turned off. Where
-// its content goes is placement, shown by PlacementPill (issue #71). With prompts (the site owner's
+// its content goes is placement, shown in a pill of its own. With prompts (the site owner's
 // Abilities aside), the pill also says what can be done next: "Add ?" for an ability the website
-// hasn't added (undefined), and "Turn On ?" in place of "off" (Rich, 2026-11-03). The admin can do
-// neither, so the admin's list keeps "off".
+// hasn't added (undefined), and "Turn On ?" in place of "off". The admin can do neither, so the
+// admin's list keeps "off".
 export function abilityPillLabel(ability, { prompts = false } = {}) {
   if (!ability) return prompts ? "Add ?" : null;
   if (ability.status === "live" && !ability.turnedOn) {
@@ -34,7 +44,7 @@ export function abilityPillLabel(ability, { prompts = false } = {}) {
 
 // Posts wait for their request form once the website has a post and either the form was never
 // sent (placement null) or every post was deleted after it was, so the oldest post now is newer
-// than the form (Rich, 2026-11-02; the backend's rule, docs/api.md → Notes, Abilities). Posts
+// than the form (the backend's rule, docs/api.md → Notes, Abilities). Posts
 // backfilled live without a form (placement live, requestedAt null) wait for nothing.
 function postsPending(website) {
   const ability = findAbility(website, "posts");
@@ -48,7 +58,7 @@ function postsPending(website) {
 }
 
 // The first request form still waiting to be sent: a website's posts (postsPending), or a
-// gallery whose own form hasn't been sent (each gallery says where it goes, Rich 2026-11-02). The
+// gallery whose own form hasn't been sent (each gallery says where it goes). The
 // dashboard shows the required request dialog for it, so it comes back after a reload until it is
 // sent. Returns { website, ability } for posts, { website, gallery } for a gallery, or null.
 export function pendingRequest(websites) {

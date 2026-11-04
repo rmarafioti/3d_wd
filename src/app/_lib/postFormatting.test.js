@@ -1,6 +1,5 @@
-// Tests for postFormatting: findLinks lists every link the backend's scan does, and both scans
-// stay fast on long paragraphs of unmatched markup (the backend uses the same 50 ms limit). How
-// parseParagraph renders is tested through FormattedText against the contract's table.
+// Tests for postFormatting: findLinks matches the backend's scan, and both scans stay fast on long
+// unmatched markup. parseParagraph's rendering is tested through FormattedText.
 
 import { describe, expect, it } from "vitest";
 import { findLinks, parseParagraph } from "./postFormatting";
@@ -27,6 +26,7 @@ describe("findLinks", () => {
   });
 });
 
+// The backend's test uses the same 50 ms limit.
 describe("speed on long unmatched markup", () => {
   it.each([
     ["["],

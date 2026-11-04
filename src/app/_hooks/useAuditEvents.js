@@ -1,8 +1,5 @@
-// useAuditEvents(month) (admin): one UTC month ("YYYY-MM") of audit events, newest first, a page
-// at a time (GET /api/admin/auditEvents). A null month fetches nothing and stays loading, for a
-// caller still finding out which month to show. Returns { data, loading, error } plus hasMore, loadMore,
-// loadingMore and loadMoreError. Its own fetch rather than useApiResource, which holds a single
-// response and can't append pages.
+// useAuditEvents(month) (admin): GET /api/admin/auditEvents, one UTC month a page at a time.
+// Returns { data, loading, error } plus hasMore, loadMore, loadingMore and loadMoreError.
 
 "use client";
 
@@ -14,6 +11,7 @@ function pathFor(month, cursor) {
   return cursor ? `${path}&cursor=${encodeURIComponent(cursor)}` : path;
 }
 
+// Its own fetch rather than useApiResource, which holds a single response and can't append pages.
 export function useAuditEvents(month) {
   // Each result remembers the month it belongs to, so switching months shows "Loading…" at once
   // and a result for another month is never shown as this one's.
@@ -25,6 +23,8 @@ export function useAuditEvents(month) {
 
   useEffect(() => {
     shownMonth.current = month;
+    // A null month fetches nothing and stays loading, for a caller still finding out which month
+    // to show.
     if (!month) return;
     // Ignore a response that arrives after this effect was cleaned up (the month changed, or
     // React Strict Mode ran the effect twice in development).

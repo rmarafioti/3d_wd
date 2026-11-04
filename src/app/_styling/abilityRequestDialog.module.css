@@ -9,7 +9,7 @@
   margin-bottom: 1rem;
 }
 
-/* Space between the field and Submit (Rich, 2026-11-02). A field message under it takes this
+/* Space between the field and Submit. A field message under it takes this
    over, as the global .fieldError rule does for every field. */
 .noteField {
   margin-bottom: 1rem;

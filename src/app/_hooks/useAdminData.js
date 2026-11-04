@@ -1,5 +1,5 @@
-// useAdminData (admin): reads AdminDataContext, returns { accounts, websites } — the unchanged
-// results of useAccounts() and useAllWebsites().
+// useAdminData (admin): reads AdminDataContext: { accounts, websites }, the results of useAccounts()
+// and useAllWebsites().
 
 "use client";
 

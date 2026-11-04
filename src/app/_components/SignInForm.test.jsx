@@ -1,6 +1,5 @@
-// Tests for SignInForm (docs/flows.md → Login): the expired message, the "Signing in…" dialog
-// (with no X until it turns into an error), routing on the returned role, and the not-authorized message with its "contact us" link.
-// Google's button is replaced by a plain button that hands back a credential.
+// Tests for SignInForm: the expired message, the "Signing in…" dialog, routing on the role and the
+// login errors. Google's button is replaced by a plain button that hands back a credential.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";

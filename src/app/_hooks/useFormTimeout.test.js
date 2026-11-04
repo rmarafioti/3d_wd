@@ -1,7 +1,5 @@
-// Tests for useFormTimeout (docs/flows.md → Form timeout): onTimeout once 20 hours have passed,
-// checked when the tab is shown again (a laptop waking from sleep) as well as every minute, and
-// GET /api/auth/me on every return to the tab, so an expired session sends the site owner to
-// sign-in. The 20-hour interval check itself is tested through PostForm.
+// Tests for useFormTimeout: the timeout on returning to the tab, and the session check each return.
+// The every-minute check itself is tested through PostForm.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";

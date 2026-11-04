@@ -1,14 +1,5 @@
-// postFormatting: the one reader of paragraph markup (docs/api.md → Paragraph formatting).
-// A paragraph's text holds ***bold and italic***, **bold**, *italic* and [link text](url), and
-// the formats may contain links; everything else is plain text.
-// - findLinks lists every link for validation, matching the backend's scan link for link.
-// - parseParagraph splits the text into the segments a renderer draws, left to right.
-// - formatRunAround and formatsAtCaret find the markup around a selection or the cursor, so the
-//   editor's buttons can show it as on and change it.
-// - linksInParagraph lists a paragraph's links for the editor's links list, and linkMarkup
-//   writes one back.
-// Every scan reads each character about once, so a long paragraph of unmatched [ or * can't
-// freeze the editor while the site owner types.
+// postFormatting: the one reader of paragraph markup (docs/api.md → Paragraph formatting). Every
+// scan reads each character about once, so a long run of unmatched [ or * can't freeze the editor.
 
 // The index of the first character from `start` that passes `isStop`, or text.length.
 function scanTo(text, start, isStop) {

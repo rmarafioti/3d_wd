@@ -1,15 +1,5 @@
-// AbilitiesAside (site owner): the Abilities panel at the top right of /dashboard, built like the
-// admin's Accounts aside. Closed by default; its toggle opens, over the page content, each of the
-// site owner's websites with every ability in the catalog (Posts, Photo Galleries): its pill
-// (AbilityPill, with prompts: "Add ?" while not added, "Turn On ?" while turned off; for Posts,
-// then a "requested" PlacementPill while they wait to be placed) and a ⋮ menu with what its state
-// allows: "Edit placement" once the posts request form was sent (Feature 13), "+ Add" while not
-// added, Turn On / Turn Off once live, and Remove once added (Photo Galleries only). On / off is a
-// menu choice, not a switch (Rich, 2026-11-02). Owns those requests and their dialogs, as
-// AccountsAside owns Link a Website, so they stay open if the panel closes; onChange (the
-// dashboard's refetch) runs after each success. Add and Turn On / Off save straight away, since
-// each is undone in one motion; Remove deletes the website's galleries, so it asks first. A
-// gallery's own request form is edited on its page.
+// AbilitiesAside (site owner): the Abilities panel on /dashboard, each website's abilities with
+// their pills and a ⋮ menu of what each ability's state allows.
 
 "use client";
 
@@ -18,15 +8,16 @@ import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 import { useAbilities } from "../_hooks/useAbilities";
 import {
   ABILITY_KINDS,
+  ABILITY_PILL_TONES,
+  abilityPillLabel,
   findAbility,
   postsRequestCopy,
 } from "../_lib/abilities";
-import AbilityPill from "./AbilityPill";
 import AbilityRequestDialog from "./AbilityRequestDialog";
-import PlacementPill from "./PlacementPill";
 import ActionsMenu from "./ActionsMenu";
 import ConfirmDialog from "./ConfirmDialog";
 import MessageDialog from "./MessageDialog";
+import Pill from "./Pill";
 
 import asideStyles from "../_styling/accountsAside.module.css";
 import styles from "../_styling/abilitiesAside.module.css";
@@ -48,6 +39,8 @@ function restoreByDate() {
 export default function AbilitiesAside({ websites, onChange }) {
   const abilities = useAbilities();
   const [open, setOpen] = useState(false);
+  // The aside owns its requests and their dialogs, as AccountsAside owns Link a Website, so they
+  // stay open if the panel closes.
   // The ability whose Remove confirmation is open, or null.
   const [removing, setRemoving] = useState(null);
   // The posts request form being edited, { website, ability }, or null.
@@ -80,6 +73,8 @@ export default function AbilitiesAside({ websites, onChange }) {
   }
 
   // What the ability's state allows (docs/flows.md → Abilities aside). An empty list shows no ⋮.
+  // Add and Turn On / Off save straight away, since each is undone in one motion; Remove deletes
+  // the website's galleries, so it asks first.
   function menuItems(website, entry, ability) {
     if (!ability) {
       return [
@@ -141,19 +136,25 @@ export default function AbilitiesAside({ websites, onChange }) {
                 {ABILITY_KINDS.map((entry) => {
                   const ability = findAbility(website, entry.kind);
                   const items = menuItems(website, entry, ability);
+                  const pillLabel = abilityPillLabel(ability, {
+                    prompts: true,
+                  });
                   return (
                     <li
                       key={entry.kind}
                       className={`${styles.ability} ${styles.abilityRow} ${asideStyles.fullWidth}`}
                     >
                       <span className={styles.abilityName}>{entry.label}</span>
-                      <AbilityPill ability={ability} prompts />
+                      <Pill
+                        label={pillLabel}
+                        tone={ABILITY_PILL_TONES[pillLabel]}
+                      />
                       {/* Posts waiting to be placed: a second pill only then, since once the admin
-                          sets them live the status pill already reads "live" (Rich, 2026-11-03).
-                          Each gallery's placement is on its page. */}
+                          sets them live the status pill already reads "live". Each gallery's
+                          placement is on its page. */}
                       {entry.kind === "posts" &&
                         ability?.placement === "requested" && (
-                          <PlacementPill placement="requested" />
+                          <Pill label="requested" tone="purple" />
                         )}
                       {/* Always there, empty without a ⋮, so every row's pill lines up. */}
                       <span className={styles.menu}>

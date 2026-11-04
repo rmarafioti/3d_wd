@@ -1,7 +1,5 @@
-// useAbilities (site owner): a website's abilities (docs/api.md → Notes, Abilities): add one, send
-// its request form or edit it, turn it on or off, and remove it. It fetches nothing, like useGalleries: the
-// abilities come with each website from useWebsites, which the dashboard refetches after each.
-// Each returns the API's data and throws the ApiError on failure.
+// useAbilities (site owner): add, request, edit the request, turn on or off and remove a website's
+// abilities. It fetches nothing: the abilities come with each website from useWebsites.
 
 "use client";
 

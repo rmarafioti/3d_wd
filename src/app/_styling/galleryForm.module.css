@@ -1,7 +1,3 @@
-/* The pieces of Create / Edit a Gallery that posts don't have: an image's Crops section, the crop
-   dialog, a crop's small preview and the preview's captions. Everything else reuses postForm,
-   postPreview and postToolbar. */
-
 /* The Crops section, under the caption in an image's dialog, set apart by a light grey line. */
 .crops {
   width: 100%;
@@ -35,7 +31,7 @@
   margin-bottom: 1rem;
 }
 
-/* A crop's picture with its buttons beside it, stacked in a column (Rich, 2026-11-02). */
+/* A crop's picture with its buttons beside it, stacked in a column, to save space. */
 .cropBody {
   display: flex;
   align-items: flex-start;

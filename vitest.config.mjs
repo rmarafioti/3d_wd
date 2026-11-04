@@ -1,5 +1,5 @@
-// Vitest config (see CLAUDE.md → Unit Tests). jsdom stands in for the browser; every mock and
-// stubbed global is reset after each test so tests never share state.
+// Vitest config: jsdom stands in for the browser, and every mock and stubbed global is reset after
+// each test so tests never share state.
 
 import { transformWithOxc } from "vite";
 import { defineConfig } from "vitest/config";

@@ -1,9 +1,6 @@
 // @vitest-environment node
-// Tests for proxy.js (docs/flows.md → Proxy): a request to / or /sign-in carrying a session cookie
-// is redirected to /dashboard; every page gets its Content Security Policy by page type (a fixed
-// one for a static page, a fresh nonce for every other page, also set on the request so Next can
-// stamp it on its scripts); and the matcher covers pages, not the API, assets or prefetches.
-// Runs in Node, where NextRequest lives.
+// Tests for proxy.js: the signed-in redirect, each page type's Content Security Policy, and the
+// matcher. Runs in Node, where NextRequest lives.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";

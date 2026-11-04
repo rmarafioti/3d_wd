@@ -1,7 +1,5 @@
-// Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with
-// messages checked word for word (docs/flows.md for Create an Account, the backend's field
-// messages for posts, paragraphs, images and galleries). Paragraph links use docs/api.md → Paragraph
-// formatting → Rejected examples, row for row.
+// Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with its
+// message word for word, and the Paragraph formatting → Rejected examples row for row.
 
 import { describe, expect, it } from "vitest";
 import {

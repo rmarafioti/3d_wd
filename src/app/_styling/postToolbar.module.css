@@ -1,5 +1,5 @@
-/* The post toolbar in the review view of Create / Edit Post: a list of the post's parts, then
-   PostForm's status and Submit. The toolbar itself has no padding, so each row's line runs its
+/* The review view's toolbar (PostToolbar, GalleryToolbar): a list of the post's or gallery's
+   parts, then the status and Submit. The toolbar itself has no padding, so each row's line runs its
    full width; the rows, the heading, the messages and the footer each pad their own content 1rem
    in from either side. */
 .toolbar {

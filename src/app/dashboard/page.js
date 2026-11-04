@@ -1,12 +1,5 @@
-// Site owner dashboard: each website with its post table and gallery table, Create a Post and
-// Create a Gallery (opened by the Navbar's links, ?create=post or ?create=gallery), and the
-// shortcuts from each row's ⋮ menu that save from here: Status (straight away, then a refetch so
-// the row's pill follows) and Delete (its confirmation, then a refetch so the post or gallery
-// leaves its table). The Abilities aside sits over the top right, and galleries show only for a
-// website with the Photo Galleries ability. While a request form waits to be sent (posts with a
-// post and no placement yet, or after a new first post; a gallery with no message sent), the
-// required request dialog is open.
-// A Client Component on purpose: per-user data is only ever fetched client-side.
+// Site owner dashboard: the websites' post and gallery tables, the Create forms, the rows' ⋮ saves,
+// the Abilities aside and the request dialog. Client-side, so no user data is server-rendered.
 
 "use client";
 
@@ -95,8 +88,8 @@ export default function DashboardPage() {
     if (createParam) router.replace("/dashboard");
   }, [createParam, router]);
 
-  // No success dialog: the new row appearing in its table shows it was created (Rich decided
-  // 2026-10-30). The list keeps its rows while it refetches.
+  // No success dialog: the new row appearing in its table shows it was created. The list keeps its
+  // rows while it refetches.
   function handleCreated() {
     setCreating(null);
     websites.refetch();

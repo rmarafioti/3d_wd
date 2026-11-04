@@ -1,7 +1,5 @@
-// Tests for _lib/sentry.js (issue #61): Sentry is off without its DSN, an unexpected error reaches
-// Sentry scrubbed (the page's path only: no query string, cookies, headers, user or breadcrumbs),
-// and an ApiError, which the UI already shows, sends nothing. Events go to a recording transport
-// in place of Sentry's network.
+// Tests for _lib/sentry.js: off without its DSN, an unexpected error sent scrubbed, and an ApiError
+// sending nothing.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as Sentry from "@sentry/browser";

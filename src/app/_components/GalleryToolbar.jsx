@@ -1,19 +1,5 @@
-// GalleryToolbar (site owner): the list beside the preview in Create / Edit a Gallery's review
-// view, one row for every part of the gallery, each with a ⋮ menu (ToolbarRow), then its children:
-// GalleryForm's Published switch (Create only) and Submit (docs/flows.md → Create a Gallery). The
-// gallery's own fields and its images are two lists, with an "Images" heading between them, as
-// PostToolbar does with its "Body".
-// - Gallery name: Edit.
-// - Title and copy: Edit and Delete, or only Add while empty.
-// - Each image, in order, shown by its icon and alt text: Edit, a Move up and a Move down arrow
-//   where it can move that way (they keep the menu open), and Delete, except on the only image.
-// - Mobile shape (mobileShape, the gallery's, while any image has a mobile crop), in its own list
-//   under the images, just above Submit: Edit, which changes it for every image.
-// Each of the gallery's own fields names itself before its value ("Title: Inside"), unless it is
-// empty, where its row's words ("No title") already do.
-// Holds no gallery state: every action is a callback to GalleryForm. A backend field message
-// shows under the row it belongs to, and cropIssues (crops.js) shows what the gallery's crops still
-// lack: under "Images", and under each image that lacks it ("Needs a thumbnail crop.").
+// GalleryToolbar (site owner): the review view's list of the gallery's fields, images and mobile
+// shape, each row with a ⋮ menu; it holds no gallery state, calling back to GalleryForm.
 
 "use client";
 
@@ -99,7 +85,7 @@ export default function GalleryToolbar({
           return (
             <ToolbarRow
               key={field}
-              // While empty, the row's own words ("No header") already name the field.
+              // While empty, the row's own words ("No title") already name the field.
               label={isEmpty ? undefined : label}
               menuLabel={`Actions for ${name}`}
               items={items}

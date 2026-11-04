@@ -1,6 +1,4 @@
-// Admin dashboard (/admin): no section shows until the admin picks an action from the Navbar's
-// links (Create an Account, Audit Events), each its own page (Rich, 2026-11-03). The Accounts
-// aside is the admin layout's, on every /admin route.
+// Admin dashboard (/admin): a prompt to pick an action from the Navbar's links, each its own page.
 
 import styles from "../_styling/dashPages.module.css";
 

@@ -1,10 +1,7 @@
-// shrinkImage: re-encodes a picked photo in the browser before it is uploaded (docs/api.md →
-// Endpoints, Notes), so a phone's 3 to 8 MB original goes up as well under 1 MB. Its long side is
-// scaled to fit 2500 px, never up, since Cloudinary keeps nothing larger anyway (the signed
-// c_limit,w_2500,h_2500). Re-encoding also drops the photo's metadata, including the GPS location
-// phone photos carry. A PNG stays PNG, so a logo keeps its transparency; jpg and webp become JPEG
-// (Rich decided 2026-11-01). Every photo is re-encoded, however small, so metadata never goes up.
+// shrinkImage: re-encodes a picked photo in the browser before it is uploaded, so a phone's 3 to
+// 8 MB original goes up well under 1 MB, without its metadata (docs/api.md → Endpoints, Notes).
 
+// Cloudinary keeps nothing larger anyway (the signed c_limit,w_2500,h_2500).
 const MAX_SIDE = 2500;
 const JPEG_QUALITY = 0.85;
 
@@ -26,6 +23,8 @@ export async function shrinkImage(file) {
     return file;
   }
 
+  // Every photo is re-encoded, however small, so its metadata (a phone photo's GPS location among
+  // it) never goes up.
   try {
     const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
@@ -35,6 +34,7 @@ export async function shrinkImage(file) {
       .getContext("2d")
       .drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
+    // A PNG stays PNG, so a logo keeps its transparency; jpg and webp become JPEG.
     const isPng = file.type === "image/png";
     const blob = await encode(canvas, isPng ? "image/png" : "image/jpeg");
     if (!blob) return file;

@@ -1,16 +1,5 @@
-// PostToolbar (site owner): the list beside the preview in Create / Edit Post's review view, one
-// row for every part of the post, each with a ⋮ menu (ActionsMenu), then its children: PostForm's
-// Published switch (Create only) and Submit (docs/flows.md → Create a Post). The post's own fields
-// and its body are two lists, with a "Body" heading between them so the two read apart.
-// - Post name: Edit.
-// - Date, header and sub header: Edit and Delete, or only Add while empty.
-// - Each body element, in order, shown by its icon and its first words (a paragraph) or its alt
-//   text (an image): Edit, a Move up and a Move down arrow where it can move that way (they keep
-//   the menu open, so it can move several places), and Delete, except on the only paragraph.
-// Each of the post's own fields names itself before its value ("Header: A walk"), unless it is
-// empty, where its row's words ("No header") already do.
-// Holds no post state: every action is a callback to PostForm. A backend field message shows under
-// the row it belongs to.
+// PostToolbar (site owner): the review view's list of the post's fields and body elements, each row
+// with a ⋮ menu; it holds no post state, calling back to PostForm.
 
 "use client";
 

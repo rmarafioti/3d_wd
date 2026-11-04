@@ -153,7 +153,7 @@ A helper used far above where it is defined without reason, state declared far f
 
 ### Step 5: Comments are necessary and true (Checklist 5)
 
-Every comment in a reviewed file, against the code next to it, and each JS / JSX file's header against what the file does now. CSS files need no header comment (`CLAUDE.md` → In-line comments), though a CSS rule whose reason isn't obvious needs its own. Finding: a comment that is untrue, restates the code, or is missing on a JS / JSX file's header or a non-obvious block.
+Every comment in a reviewed file, against the code next to it, and each JS / JSX file's header against what the file does now. CSS files need no header comment (`CLAUDE.md` → In-line comments), though a CSS rule whose reason isn't obvious needs its own. Finding: a comment that is untrue, restates the code, carries history (issue numbers, dates, who decided), or is missing on a JS / JSX file's header or a non-obvious block; a header longer than two lines.
 
 ### Step 6: Docs match code — whole repo (Checklist 6)
 

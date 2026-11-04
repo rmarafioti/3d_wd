@@ -1,5 +1,4 @@
-// Tests for usePost(id): fetching one post, update (full-form PATCH) and setStatus (draft /
-// published), and that both mutations show the server's returned Post.
+// Tests for usePost(id): fetching one post, update and setStatus, each showing the returned Post.
 
 import { describe, expect, it } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";

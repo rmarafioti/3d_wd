@@ -1,5 +1,5 @@
-// Tests for the admin layout's wiring (docs/flows.md → Admin Dashboard): the page and the Accounts
-// aside share one AdminDataContext, so an account created in the page shows in the open aside.
+// Tests for AdminLayout's wiring: the page and the Accounts aside share one AdminDataContext, so an
+// account created in the page shows in the open aside.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

@@ -1,9 +1,4 @@
-// Single post view: full post details, Edit Post, Delete Post, and the Published switch next to
-// the status pill. Switching it off (draft) or on (publish) saves straight away, with no
-// confirmation and no success dialog: the pill and the switch change once the request succeeds; a
-// failure shows a dialog. Delete Post can't be undone from the app, so it asks first
-// (ConfirmDialog), then returns to /dashboard once the post is deleted. The dashboard's ⋮ menu
-// links here with ?edit=1 to open the Edit form straight away.
+// Single post page: the post's details, its Published switch, Edit Post and Delete Post.
 // A Client Component on purpose: per-user data is only ever fetched client-side.
 
 "use client";
@@ -18,7 +13,7 @@ import PostForm, { postToFormValues } from "../../../_components/PostForm";
 import MessageDialog from "../../../_components/MessageDialog";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Toggle from "../../../_components/Toggle";
-import StatusPill from "../../../_components/StatusPill";
+import Pill from "../../../_components/Pill";
 import FormattedText from "../../../_components/FormattedText";
 
 import styles from "../../../_styling/postPage.module.css";
@@ -88,10 +83,9 @@ export default function PostPage() {
         <p>Website: {post.websiteName}</p>
         <h1>Post Name: {post.postName}</h1>
         <div className={styles.statusRow}>
-          <StatusPill
-            active={post.status === "published"}
-            onLabel="published"
-            offLabel="draft"
+          <Pill
+            label={post.status}
+            tone={post.status === "published" ? "green" : "red"}
             className={styles.statusPill}
           />
           <Toggle
@@ -182,7 +176,7 @@ export default function PostPage() {
             initialValues={postToFormValues(post)}
             onSubmit={update}
             // No success dialog: usePost already holds the API's updated copy, so the page shows
-            // the edit as the form closes (Rich decided 2026-10-30).
+            // the edit as the form closes.
             onSuccess={() => setEditing(false)}
             onClose={() => setEditing(false)}
           />

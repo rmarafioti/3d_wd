@@ -1,16 +1,5 @@
-// ActionsMenu: the shared ⋮ menu, used by each post's and gallery's row on /dashboard
-// (PostActionsMenu, GalleryActionsMenu) and by each row of the toolbar in Create / Edit Post and
-// Create / Edit a Gallery (ToolbarRow). A disclosure, like the Accounts aside, not an ARIA menu:
-// plain links and buttons, reached with Tab. Closed by default; it closes on Esc (focus back on
-// ⋮), on a click outside it, and once an item is picked, unless the item is marked keepOpen (the
-// toolbars' move arrows, so an element or image can be moved several places). Its list opens from
-// the nearest positioned ancestor.
-//
-// label names the ⋮ button for screen readers ("Actions for First Post!"). className and
-// listClassName add a class to the menu itself (the ⋮ and its list) and to the open list, for a
-// caller that lays them out differently. Each item is
-// { label, href } for a link or { label, onClick } for a button; an item with an Icon shows only
-// the icon, named by its label for screen readers and showing its title on hover.
+// ActionsMenu: the shared ⋮ menu of the dashboard's tables and the review toolbars, a disclosure
+// of links and buttons (not an ARIA menu), its list opening from the nearest positioned ancestor.
 
 "use client";
 
@@ -20,6 +9,11 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 
 import styles from "../_styling/actionsMenu.module.css";
 
+// label names the ⋮ button for screen readers ("Actions for First Post!"). className and
+// listClassName add a class to the menu itself (the ⋮ and its list) and to the open list, for a
+// caller that lays them out differently. Each item is { label, href } for a link or
+// { label, onClick } for a button; an item with an Icon shows only the icon, named by its label.
+// keepOpen keeps the menu open after a click, so a move arrow can move an element several places.
 export default function ActionsMenu({
   label,
   items,

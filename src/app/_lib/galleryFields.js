@@ -1,10 +1,7 @@
-// The gallery's own fields as Create / Edit a Gallery shows them (docs/flows.md → Create a
-// Gallery), shared by GalleryForm (each field's input, in its step and in its own dialog) and
-// GalleryToolbar (each field's row), so a field reads the same everywhere: label, its name in
-// sentences ("Edit title", "Actions for copy"), its limit, its help text, and its toolbar row
-// while empty. The limits match docs/api.md → Validation rules (checked in validation.js's
-// validateGallery).
+// galleryFields: the gallery's own fields (label, name in sentences, limit, help text, empty row),
+// shared by GalleryForm and GalleryToolbar so a field reads the same everywhere.
 
+// The limits match docs/api.md → Validation rules (validateGallery checks them).
 export const GALLERY_FIELDS = {
   galleryName: {
     label: "Gallery Name",

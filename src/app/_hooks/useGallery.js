@@ -1,8 +1,5 @@
-// useGallery(id) (site owner): a single gallery, like usePost.
-// Returns { data, loading, error } plus update, setStatus and editRequest. Each stores the Gallery
-// the API returns in data, so the page shows the server's copy without a second request.
-// setStatus and editRequest send through useGalleries, so the gallery page and the dashboard
-// share one request for each.
+// useGallery(id) (site owner): GET /api/siteOwner/galleries/:id, returning { data, loading, error }
+// plus update, setStatus and editRequest, each storing the Gallery the API returns in data.
 
 "use client";
 
@@ -14,6 +11,8 @@ import { useGalleries } from "./useGalleries";
 export function useGallery(id) {
   const path = `/api/siteOwner/galleries/${encodeURIComponent(id)}`;
   const { data, loading, error, setData } = useApiResource(path);
+  // setStatus and editRequest send through useGalleries, so the gallery page and the dashboard
+  // share one request for each.
   const { setStatus: sendStatus, editRequest: sendEditRequest } =
     useGalleries();
 

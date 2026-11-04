@@ -1,17 +1,14 @@
-// Toggle: the shared on/off switch for every on / off state (a post's status now; add-ons and
-// accounts or websites later). A native <button role="switch">, so keyboard, focus and disabled
-// come built in. Fully controlled: the caller passes checked (the saved value) and onChange
-// receives the requested value; the switch only moves when the caller's checked changes. Named by
-// label (aria-label): name it for what "on" means ("Published"), not the setting ("Status").
-// offLabel / onLabel are optional words either side of the switch, hidden from screen readers
-// because the switch already announces its own on/off state. statusColors fills the track with
-// StatusPill's colours (green on, red off) for a switch that sets a status shown in a pill (a
-// post's Published switch); other switches keep the plain grey track.
+// Toggle: the shared on/off switch, a native <button role="switch"> the caller controls: it moves
+// only when the caller's checked changes.
 
 "use client";
 
 import styles from "../_styling/toggle.module.css";
 
+// label names it for what "on" means ("Published"), not the setting ("Status"). offLabel / onLabel
+// are words either side, hidden from screen readers since the switch announces its own state.
+// statusColors fills the track with Pill's green (on) and red (off), for a switch that sets a
+// status shown in a pill.
 export default function Toggle({
   label,
   offLabel,

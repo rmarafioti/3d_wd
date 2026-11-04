@@ -1,15 +1,5 @@
-// PostStepDialog (site owner): the dialog every part of Create / Edit Post opens in: the steps
-// (Post Name, the optional details, the first paragraph), the review view, and each dialog the
-// review view opens on top of itself to add or edit one part of the post (docs/flows.md → Create a
-// Post). Create / Edit a Gallery uses it the same way, and for its crop dialogs. Opens when
-// mounted; the parent unmounts it.
-//
-// Its title stays put while its content scrolls beneath it. With a primaryLabel ("Next",
-// "Insert", "Save") it ends in a Cancel and primary button row, and has no X: an X beside Cancel
-// would look like a second, different way out (Rich, 2026-10-30). The review view, the large
-// dialog with the preview, has no Cancel at all: its X (withCloseButton) is its one way out. Cancel, the X
-// and Esc all call onCancel and never close the dialog themselves, because the parent may ask
-// "Are you sure…?" first and keep it open.
+// PostStepDialog (site owner): the dialog every step and part of the post and gallery forms opens
+// in: a fixed title over scrolling content, then a Cancel / primary row or an X. Opens when mounted.
 
 "use client";
 
@@ -33,7 +23,8 @@ export default function PostStepDialog({
   const dialogRef = useModalDialog();
   const titleId = useId();
 
-  // Esc fires the cancel event; it is stopped so the parent decides whether the dialog goes.
+  // Cancel, the X and Esc all call onCancel and never close the dialog themselves, since the parent
+  // may ask "Are you sure…?" first and keep it open. Esc's cancel event is stopped for that.
   function handleCancelEvent(event) {
     event.preventDefault();
     onCancel();
@@ -49,6 +40,8 @@ export default function PostStepDialog({
     >
       <div className={styles.dialogHeader}>
         <h2 id={titleId}>{title}</h2>
+        {/* Only the review view, which has no Cancel, has an X: beside Cancel it would look like
+            a second, different way out. */}
         {withCloseButton && (
           <DialogCloseButton dialogRef={dialogRef} onClick={onCancel} />
         )}

@@ -1,11 +1,5 @@
-// GalleryPreview (site owner): the gallery as it will read on the client website, drawn live from
-// Create / Edit a Gallery's current, unsaved values, in the review view beside the GalleryToolbar:
-// the title, the copy (with its line breaks), then the images in order, each with its caption
-// under it, side by side and wrapping onto as many rows as they need.
-// Every image is complete, since it only joins the gallery through its dialog's Insert. A picked
-// image shows from memory (its object URL) before it is uploaded. Images show whole: how the
-// website lays them out, and where it uses the crops, is up to the website. Next.js <Image> at
-// their size, unoptimized, as in PostPreview.
+// GalleryPreview (site owner): the gallery as it will read on the client website, drawn from the
+// Create / Edit a Gallery form's unsaved values.
 
 import Image from "next/image";
 import { isBlank } from "../_lib/validation";
@@ -23,8 +17,11 @@ export default function GalleryPreview({ title, copy, images }) {
       )}
       {/* As many images to a row as the preview's width allows, wrapping onto the next row. */}
       <div className={galleryStyles.previewImages}>
+        {/* Every image is complete, since it only joins through its dialog's Insert. Each shows
+            whole: where the website uses the crops is up to the website. */}
         {images.map((image) => (
           <figure key={image.key} className={galleryStyles.previewFigure}>
+            {/* Unoptimized, so an object URL needs no host list, as in PostPreview. */}
             <Image
               src={image.src}
               width={image.width}

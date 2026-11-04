@@ -1,5 +1,5 @@
-// Tests for useAccounts: the admin account list, createAccount and linkWebsite, and the
-// one-time rule that credentials in a mutation response never land in hook state.
+// Tests for useAccounts: the account list, createAccount, linkWebsite, and credentials never
+// landing in hook state.
 
 import { describe, expect, it } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
