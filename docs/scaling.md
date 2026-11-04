@@ -1,16 +1,11 @@
 # Scaling
 
-The frontend's rules for changing the app after the MVP is deployed. Imported from `CLAUDE.md` via `@docs/scaling.md`. The shared rules live in the backend repo's `docs/scaling.md`, which is the source of truth for schema and migrations, the expand → migrate → contract process, API contract rules, the new-feature template, performance, running more than one instance, and environments and deployment. This file covers only what the frontend must do to follow them. It restates a backend rule only word for word, with its backend → N reference; references below read "backend → N", meaning section N of the backend's `docs/scaling.md`.
+The frontend's rules for changing the app since launch. Imported from `CLAUDE.md` via `@docs/scaling.md`. The shared rules are in the backend's `docs/scaling.md`, the source of truth: launch (§0), classifying a change (§1), schema rules (§2), expand → migrate → contract (§3), API contract rules and the deploy order (§4), the new-feature template (§5), performance and pagination (§6), running more than one instance (§7), environments and staging (§8), and docs, tests and review (§9). This file holds only what the frontend does to follow them; "backend → N" means section N of the backend's `docs/scaling.md`.
 
-## 0. Launched
+## 1. Before planning
 
-- Backend → 0, word for word: "Production launched on 2026-10-28, with Stevie The Dog as its first client website (`docs/launch-record.md`). Before then, breaking changes were made in place, with no versioned public path, no expand → migrate → contract, and test rows dropped; older entries in `CLAUDE.md` that cite §0 refer to that. From launch on, every rule below applies, and a breaking or data-changing change goes through expand → migrate → contract (Section 3)."
-- On the frontend this means: since launch, section 3's deploy order applies to every contract change, and a breaking change goes through expand → migrate → contract (backend → 3).
-
-## 1. Classify the change first
-
-- Before planning, state whether the change is **additive**, **breaking** or **data-changing**, using the backend's definitions (backend → 1).
-- The plan for any breaking change says so in its first lines.
+- State whether the change is **additive**, **breaking** or **data-changing** (backend → 1). The plan for a breaking change says so in its first lines.
+- Since launch (2026-10-28), a breaking or data-changing change goes through expand → migrate → contract (backend → 0, 3).
 
 ## 2. Reading responses and building requests
 
@@ -18,53 +13,27 @@ The frontend's rules for changing the app after the MVP is deployed. Imported fr
 - **Build request bodies field by field**, as `toWebsitePayload` (`WebsitePicker.jsx`) and `toPayload` (`PostForm.jsx`) do. Never spread a response object back into a request, so a field the backend doesn't expect is never sent.
 - **A new enum value** (for example a new role) is handled in the frontend before the backend starts returning it: `HOME_BY_ROLE` in `_lib/roles.js` and anything else that switches on it (backend → 2).
 
-## 3. Deploy order for contract changes
+## 3. Contract changes, on this side
 
-- The backend deploys first and accepts both the old and the new shape; then the frontend deploys (backend → 4).
-- A merge to `main` doesn't deploy production: both repos are released by `npm run release` in the backend repo (`docs/deploy.md` §8), which releases the backend first and the frontend only once the backend's is live.
+- The backend releases first (`npm run release` does it in that order, `docs/deploy.md` §8; backend → 4). `docs/api.md` is copied in the same piece of work (`docs/process.md` → Cross-Repo Handoff).
 - The frontend never sends a field the deployed backend doesn't accept yet, and never relies on a response field the deployed backend doesn't send yet.
-- A breaking change is split into steps (backend → 3). The frontend's part is the step where reads switch to the new shape and the frontend is updated.
-- Before the backend removes anything (the contract step in backend → 3), the frontend has stopped reading or sending it and that frontend is deployed.
+- In a breaking change, the frontend's step is the one where reads switch to the new shape. Before the backend removes anything, the frontend has stopped reading or sending it, and that frontend is released.
 
-## 4. `docs/api.md` stays a copy
-
-- `docs/api.md` stays identical to the API Contract section of the backend's `docs/endpoints.md`.
-- It changes in the same piece of work as the backend, with a cross-repo handoff (`CLAUDE.md` → Cross-Repo Handoff).
-
-## 5. Error messages are contract
+## 4. Error messages are contract
 
 - A backend message is displayed exactly as `error.message` arrives through `apiFetch`.
 - A frontend string that mirrors a backend message (such as "Your session expired, please sign in again.") is never reworded on its own. It changes only together with the backend.
 
-## 6. Validation mirrors the backend
+## 5. Validation mirrors the backend
 
 - A new or changed validation rule changes `_lib/validation.js` and the backend together.
 - When the backend tightens a rule (a breaking change), the backend's rejection must still show as a field error from `error.fields` (`CLAUDE.md` → Code Review, item 8).
 
-## 7. Pagination
+## 6. Pagination
 
-- The shape is defined in backend → 6: `?limit=&cursor=`, response `{ data: [...], nextCursor }`, `nextCursor` is `null` on the last page, default limit 50, max 100.
-- `GET /api/admin/auditEvents` is the first endpoint built this way, paged from day one, with a `month` filter beside the cursor. On the frontend, `apiFetch(path, { paginated: true })` returns `{ data, nextCursor }` instead of `data`, and `useAuditEvents` appends each page ("Load more"). A later paginated list reuses both.
-- The first candidates are the admin accounts list and the post summaries in the site owner websites list. (`GET /api/public/posts` is called only by client websites, never by the frontend; a breaking change to it goes to a new versioned path, backend → 4.)
+- The shape is backend → 6. `GET /api/admin/auditEvents` is the first paginated endpoint: `apiFetch(path, { paginated: true })` returns `{ data, nextCursor }` instead of `data`, and `useAuditEvents` appends each page ("Load more"). A later paginated list reuses both.
 - Adding pagination to an existing endpoint is a breaking change, so it arrives through a contract change and a handoff. Build paging into the hooks (`useApiResource` and its callers) only then, not ahead of time.
 
-## 8. New features
+## 7. Environment variables
 
-Follow the backend's template (backend → 5). On the frontend side:
-
-- New work after the MVP is tracked as numbered features in `CLAUDE.md`, each one its own branch → plan → approval → build → verify → PR, the same rhythm as the MVP Build Order (`docs/history.md`; backend → 9).
-- Spec first: `docs/api.md`, and `docs/flows.md` for UI flows.
-- The backend deploys first (section 3).
-- Data goes through a new hook in `_hooks/` with the `{ data, loading, error }` shape.
-- Every new data view handles loading, error, empty and backend-rejection states (`CLAUDE.md` → Code Review, item 8).
-- Tests per `CLAUDE.md` → Unit Tests.
-
-## 9. Environments
-
-- A staging environment is built and tested end to end before the first production deploy: the `staging` environment in the backend's `render.yaml`, with its own database (API `https://api-staging.3dwebdev.com`) and `https://staging.3dwebdev.com` on Vercel, deployed from `main` on every merge (backend → 8). It is kept after launch and its cost reassessed (backend `CLAUDE.md` → Current progress → Next); if it is ever deleted, it is added back from production before the first breaking change. Setup is in `docs/deploy.md`.
-- A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy.
-
-## 10. Keeping this file in step
-
-- A change to a backend rule this file depends on (deploy order, pagination shape, classification) updates this file in the same piece of work, with a handoff.
-- After a change to the contract, the schema or a flow, run the Documentation Sync audit (`CLAUDE.md`) once both repos have merged it (backend → 9; the audit is run from the backend repo, see `CLAUDE.md` → Documentation Sync).
+- A new `NEXT_PUBLIC_*` variable goes in `.env.example` (with a comment), the env table in `README.md`, and Vercel before the code that reads it is deployed. `NEXT_PUBLIC_*` values are inlined at build time, so changing one in Vercel needs a redeploy (`docs/deploy.md` §3).

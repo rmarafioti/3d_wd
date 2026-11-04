@@ -58,7 +58,7 @@ Covered:
 - `.github/workflows/`, `.github/reminders/`
 - `CLAUDE.md`, `docs/`, `README.md`
 
-Copies, checked only for being identical to the backend's (step 6), never reviewed line by line, since a change to them is made in the backend first: `.claude/hooks/` and `docs/api.md`.
+Copies, checked only for being identical to the backend's (step 6), never reviewed line by line, since a change to them is made in the backend first: `.claude/hooks/`, `docs/process.md` and `docs/api.md`.
 
 A `diff` review covers only that branch's diff, plus anything the diff duplicates or makes dead elsewhere. It is mandatory on every code update (`CLAUDE.md` → Workflow Checklist).
 
@@ -168,6 +168,7 @@ Every comment in a reviewed file, against the code next to it, and each JS / JSX
   ```
   git -C ../3d_wd_backend show origin/main:.claude/hooks/guard.js | diff - .claude/hooks/guard.js
   git -C ../3d_wd_backend show origin/main:.claude/hooks/guard.test.js | diff - .claude/hooks/guard.test.js
+  git -C ../3d_wd_backend show origin/main:docs/process.md | diff - docs/process.md
   ```
 
   and `docs/api.md`'s `## API Contract` section against the same section of the backend's `docs/endpoints.md` at `origin/main`, each cut from its `## API Contract` heading to the next `## ` heading (the backend's file goes on with other sections; `<scratchpad>` is the session's scratchpad directory):
