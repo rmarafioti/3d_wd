@@ -1,10 +1,5 @@
-// AccountsAside (admin): the Accounts panel at the top right of every /admin route, below the
-// Navbar, rendered by the admin layout. Closed by default; its toggle opens the AccountList over
-// the page content. Owns the Link a Website flow started from each account: the form dialog,
-// then the one-time CredentialRevealModal (new website) or a confirmation dialog (existing
-// website). That flow lives outside the panel, so its dialogs stay open if the panel closes. Also
-// owns setting an ability or a gallery's placement live: a confirmation first, since the app
-// can't undo it.
+// AccountsAside: the admin's Accounts panel on every /admin route, with the Link a Website flow and
+// the confirmations for setting an ability or a gallery live.
 
 "use client";
 
@@ -23,14 +18,15 @@ import styles from "../_styling/accountsAside.module.css";
 export default function AccountsAside() {
   const { accounts, websites } = useAdminData();
   const [open, setOpen] = useState(false);
-  // The account whose Link a Website dialog is open, or null.
+  // The account whose Link a Website dialog is open, or null. The flow's dialogs live outside the
+  // panel, so they stay open if the panel closes.
   const [linkingAccount, setLinkingAccount] = useState(null);
   // { accountName, response } from a successful link, held only while its result dialog is
   // open. The response may contain the one-time credentials, so it is set back to null the
   // moment that dialog closes.
   const [linkResult, setLinkResult] = useState(null);
   // What is being set live, whose confirmation is open: { ability, website } or
-  // { gallery, website }, or null.
+  // { gallery, website }, or null. It asks first, since the app can't undo going live.
   const [settingLive, setSettingLive] = useState(null);
   // A failed Set live's message, held only while its dialog is open.
   const [setLiveError, setSetLiveError] = useState(null);
@@ -64,8 +60,7 @@ export default function AccountsAside() {
   }
 
   // Photo Galleries goes live once its component is wired, before any gallery is placed; posts
-  // and each gallery once they show on the website and the client approved them (issue #71).
-  // Wording for Rich to confirm in the browser.
+  // and each gallery once they show on the website and the client approved them.
   function setLiveMessage({ ability, gallery, website }) {
     if (gallery) {
       return `Set ${gallery.galleryName} live on ${website.websiteName}? Only do this once it shows on their website and they have approved it.`;

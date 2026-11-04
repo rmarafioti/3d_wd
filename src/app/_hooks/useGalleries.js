@@ -1,8 +1,5 @@
-// useGalleries (site owner): gallery creation, status changes, deletion and each gallery's
-// request form, like usePosts. It fetches nothing, so it exposes just create, setStatus, remove,
-// request and editRequest. The dashboard calls them directly and refetches its list (from
-// useWebsites) after each; the gallery page changes status and edits its request form through
-// useGallery and deletes through remove, so both pages share one request for each.
+// useGalleries (site owner): a gallery's mutations, create, setStatus, remove, request and
+// editRequest. It fetches nothing; the caller refetches the list it affects.
 
 "use client";
 
@@ -49,8 +46,8 @@ export function useGalleries() {
     [],
   );
 
-  // A change of mind: edits the gallery's request form already sent, which puts the galleries
-  // ability back to requested. Returns the updated Gallery. Throws the ApiError on failure.
+  // A change of mind: edits the gallery's request form already sent, which puts the gallery's
+  // placement back to requested. Returns the updated Gallery. Throws the ApiError on failure.
   const editRequest = useCallback(
     (id, requestNote) =>
       apiFetch(`/api/siteOwner/galleries/${encodeURIComponent(id)}/request`, {

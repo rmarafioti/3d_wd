@@ -1,8 +1,5 @@
-// Global error: Next renders this in place of the root layout when a render error reaches the top
-// of the app. It reports the error to Sentry (production only, _lib/sentry.js), since a caught
-// render error never reaches the browser's global error handlers, then shows Next's own default
-// error page, the same one shown without this file. It replaces the root layout, so it renders
-// its own <html> and <body>.
+// Global error: shown by Next in place of the root layout when a render error reaches the top of
+// the app. It reports the error to Sentry, then shows Next's default error page.
 
 "use client";
 
@@ -11,10 +8,13 @@ import NextError from "next/error";
 import { reportError } from "./_lib/sentry";
 
 export default function GlobalError({ error }) {
+  // A caught render error never reaches the browser's global error handlers, so it is reported
+  // here.
   useEffect(() => {
     reportError(error);
   }, [error]);
 
+  // It replaces the root layout, so it renders its own <html> and <body>.
   return (
     <html lang="en">
       <body>

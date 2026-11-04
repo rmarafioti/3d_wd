@@ -1,10 +1,5 @@
-// SiteOwnerDataContext: the site owner's websites (useWebsites), fetched by the dashboard layout and
-// shared by everything under /dashboard, like AdminDataContext for /admin. The layout stays
-// mounted across /dashboard pages, so returning to /dashboard fetches them again: a post or
-// gallery changed or deleted on its own page (and an ability that moved with it) shows as it is
-// now, the list keeping its rows meanwhile. The layout
-// also tells the Navbar, through NavContext, whether a gallery can be created, so its "Create a
-// Gallery" link shows once some website has Photo Galleries.
+// SiteOwnerDataContext: the site owner's websites (useWebsites), fetched once by the dashboard
+// layout and shared by everything under /dashboard.
 
 "use client";
 
@@ -27,6 +22,8 @@ export function SiteOwnerDataProvider({ children }) {
     websites.data?.some((website) => findAbility(website, "galleries")),
   );
 
+  // The layout stays mounted across /dashboard pages, so returning to /dashboard fetches again: a
+  // post or gallery changed or deleted on its own page shows as it is, the list keeping its rows.
   useEffect(() => {
     if (!arrived.current) {
       arrived.current = true;
@@ -35,6 +32,8 @@ export function SiteOwnerDataProvider({ children }) {
     if (pathname === "/dashboard") refetch();
   }, [pathname, refetch]);
 
+  // The Navbar sits above the dashboards, so it learns through NavContext whether to show its
+  // "Create a Gallery" link.
   useEffect(() => {
     setCanCreateGallery(canCreateGallery);
   }, [canCreateGallery, setCanCreateGallery]);

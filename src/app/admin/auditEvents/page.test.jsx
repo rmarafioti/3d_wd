@@ -1,6 +1,5 @@
-// Tests for the Audit Events page (docs/flows.md → Audit Events), through the real
-// useAuditEvents, useAuditEventMonths and apiFetch: the month it opens on, the table, the month
-// controls stepping only through months with events, Load more, every state, and "Hide my sign-ins" hiding only the admin's own sign-in and sign-out rows.
+// Tests for the Audit Events page, through the real hooks and apiFetch: the month controls, the
+// table, Load more, every state and "Hide my sign-ins".
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";

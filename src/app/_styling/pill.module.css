@@ -1,29 +1,27 @@
-/* Never bold, even in a bold heading or row (Rich, 2026-11-03). */
+/* Never bold, even in a bold heading or row. */
 .pill {
   padding: 0.2rem 0.5rem;
   border-radius: 25px;
   font-weight: normal;
 }
 
-/* .live, .off, .requested and .added are an ability's four states (AbilityPill). */
-.active,
-.live {
+/* Colours, not states: each caller picks the tone for its words. */
+.green {
   background-color: rgb(15, 174, 15);
   color: white;
 }
 
-.inactive,
-.off {
+.red {
   background-color: red;
   color: white;
 }
 
-.requested {
+.purple {
   background-color: rgb(117, 99, 236);
   color: white;
 }
 
-.added {
+.plain {
   background-color: white;
   color: black;
   border: 1px solid lightgray;

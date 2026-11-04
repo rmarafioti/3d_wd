@@ -1,6 +1,5 @@
-// AdminDataContext: the admin's accounts and websites, fetched once by the admin layout and shared
-// by everything under /admin. The Accounts aside (in the layout) and Create an Account (in the
-// page) both read and refresh the same lists, so a change made in one shows in the other.
+// AdminDataContext: the admin's accounts and websites, fetched once by the admin layout, so the
+// Accounts aside and the pages under /admin read and refresh the same lists.
 
 "use client";
 

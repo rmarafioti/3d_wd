@@ -1,11 +1,5 @@
-// ImageField: one image's fields in the Add / Edit image dialog of Create / Edit Post. The site
-// owner picks a file (jpg, png or webp, at most 10 MB, checked before it is kept) and writes its
-// alt text. A picked file stays in the browser until Submit (docs/flows.md → Post body dialogs):
-// it is shown from an object URL, and its size is read by loading that URL, so src, width and
-// height are set together once it loads. An existing image shows from its src until another file
-// is picked. The image it replaces may still be the post's (the dialog can be cancelled), so this
-// field never lets go of an object URL it didn't load: PostForm does, once the dialog closes.
-// Once a file is picked, blank alt text shows a note saying it is needed to insert the image.
+// ImageField: one image's file picker (jpg, png or webp, at most 10 MB) and alt text, in the post
+// and gallery image dialogs. A picked file stays in the browser, shown from an object URL.
 
 "use client";
 
@@ -56,6 +50,8 @@ export default function ImageField({ value, onPatch, serverErrors }) {
     setFileError(error);
     if (error) return;
 
+    // Only an object URL this field loaded is let go of here. The image it replaces may still be the
+    // post's or gallery's (the dialog can be cancelled), so the form lets go of that one.
     releaseObjectUrl(loadingUrl.current);
     const url = URL.createObjectURL(file);
     loadingUrl.current = url;

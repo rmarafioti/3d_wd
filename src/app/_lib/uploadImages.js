@@ -1,8 +1,5 @@
-// uploadImages: sends a post's or gallery's new images to 3DWD's Cloudinary account on Submit
-// (docs/api.md → Endpoints, Notes). It shrinks each picked file in the browser (shrinkImage), signs
-// once through apiFetch (our API: cookie and CSRF header), then posts each file straight to
-// Cloudinary. This is the one fetch outside apiFetch:
-// the upload goes to Cloudinary, not our API, so it carries no credentials and no CSRF header.
+// uploadImages: Submit's image uploads for a post or gallery, each picked file shrunk, one signature
+// from our API, then each file to Cloudinary.
 
 import { apiFetch } from "./apiFetch";
 import { shrinkImage } from "./shrinkImage";
@@ -20,7 +17,8 @@ class UploadError extends Error {
 }
 
 // One file to Cloudinary. Every entry of `fields` is sent unchanged (an extra or renamed signed
-// parameter breaks the signature), then the file as "file".
+// parameter breaks the signature), then the file as "file". This is the one fetch outside
+// apiFetch: it goes to Cloudinary, not our API, so it carries no credentials and no CSRF header.
 async function uploadOne(uploadUrl, fields, file) {
   const form = new FormData();
   for (const [name, value] of Object.entries(fields)) form.append(name, value);
@@ -79,8 +77,8 @@ async function uploadImages(websiteId, files, onProgress) {
 // images: a form's images, each { src, file? }, where a picked image's src is its object URL and
 // file the File the site owner picked. Uploads the picked ones and returns a Map from each one's
 // object URL to its stored { src, width, height }, reporting each step to onProgress (see
-// uploadImages); with nothing picked it signs nothing and reports nothing. The form swaps them in itself, so it can keep anything else on the image
-// (a gallery scales its crops).
+// uploadImages); with nothing picked it signs nothing and reports nothing. The form swaps them in
+// itself, so it can keep anything else on the image (a gallery scales its crops).
 export async function uploadPicked(websiteId, images, onProgress) {
   const picked = images.filter((image) => image.file);
   if (picked.length === 0) return new Map();

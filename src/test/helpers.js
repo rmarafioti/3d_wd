@@ -1,6 +1,5 @@
-// Test helpers for the browser edges our code touches. mockFetch is the only fake network
-// (see CLAUDE.md → Unit Tests): the real apiFetch runs on top of it, so tests cover the actual
-// request the app sends and how it reads the response.
+// Test helpers for the browser edges our code touches. mockFetch is the only fake network, so the
+// real apiFetch runs on top of it and tests cover the request the app actually sends.
 
 import { vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
@@ -14,8 +13,9 @@ import { fireEvent } from "@testing-library/react";
 //   [route, route, ...]     answered in order; the last one repeats
 //   (call) => route         computed per call; may return a Promise to hold the response back
 // Returns { calls }: every request as { method, path, headers, credentials, body }, with body
-// parsed from JSON, or a FormData body (an upload to Cloudinary) as an object of its entries. An unknown route answers 500 with a message naming it, so a missing route
-// shows up in the failing assertion instead of hiding behind the generic error.
+// parsed from JSON, or a FormData body (an upload to Cloudinary) as an object of its entries. An
+// unknown route answers 500 with a message naming it, so a missing route shows up in the failing
+// assertion instead of hiding behind the generic error.
 function readBody(body) {
   if (body === undefined) return undefined;
   if (body instanceof FormData) return Object.fromEntries(body.entries());

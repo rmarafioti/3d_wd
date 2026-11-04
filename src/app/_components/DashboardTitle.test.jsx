@@ -1,5 +1,5 @@
-// Tests for DashboardTitle (docs/flows.md → App Shell): nothing with no user, "Admin Dashboard"
-// for an admin, "{name}'s Dashboard" for a site owner.
+// Tests for DashboardTitle: nothing with no user, "Admin Dashboard" for an admin, "{name}'s
+// Dashboard" for a site owner.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

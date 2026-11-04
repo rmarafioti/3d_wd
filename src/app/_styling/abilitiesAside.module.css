@@ -3,7 +3,7 @@
 }
 
 /* Like the admin's "Abilities" heading: the lighter line under it, meeting the aside's border.
-   The same space above and below, as each ability row has (Rich, 2026-11-02). */
+   The same space above and below, as each ability row has. */
 .websiteHeader {
   padding-block: 0.5rem;
   font-size: 1rem;
@@ -34,7 +34,7 @@
 /* The ⋮ cell runs the row's full height, like the post table's actions cell, so the row has no
    space above or below of its own; the name and pill keep theirs. Its sides keep .fullWidth's
    0.5rem gutter, so the cell stands off the aside's right edge (the screen's) as the text does
-   off its left (Rich, 2026-11-02). Two classes, so it wins over .ability. */
+   off its left. Two classes, so it wins over .ability. */
 .ability.abilityRow {
   padding-block: 0rem;
 }
@@ -51,7 +51,7 @@
 }
 
 /* The ⋮'s cell, like the post table's actions cell: a line on its left that, with the row's lines
-   above and below, boxes it, and the ⋮ centred inside (Rich, 2026-11-02). Kept, at one width,
+   above and below, boxes it, and the ⋮ centred inside. Kept, at one width,
    with or without a ⋮, so every row's pill lines up. */
 .abilityRow > .menu {
   align-self: stretch;

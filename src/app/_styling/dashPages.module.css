@@ -16,8 +16,7 @@
 }
 
 /* The account list and everything nested in it span the panel's width, so the panel (which
-   centres its content) never re-centres them, and their spacing stays put, as a disclosure opens
-   (Rich, 2026-11-02). */
+   centres its content) never re-centres them, and their spacing stays put, as a disclosure opens. */
 .accountList,
 .disclosure,
 .accountDetails,
@@ -37,18 +36,18 @@
 
 /* "Abilities", and each ability's row (its name, pill and switch) while its items are open, are
    set apart from what follows by a lighter line than the one under each ability, so the headings
-   read as part of it (Rich, 2026-11-02). Closed, an ability shows only the line under it. */
+   read as part of it. Closed, an ability shows only the line under it. */
 .abilitiesHeader,
 .abilityDetails[open] > .abilityHeader {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgb(230, 230, 230);
 }
 
-/* Every disclosure's summary in the account list (an account, Websites, an ability, a gallery): a
+/* Every disclosure's summary in the account list (a website, an ability, a gallery): a
    full-width row like an .itemRow, so a pill lines up with theirs at the right edge. A flex summary
    loses the browser's open / closed marker (hidden below for Safari too), so .marker draws it, the
    same triangle at the same size on every one: the Accounts toggle's, pointing right when closed
-   and down when open (Rich, 2026-11-02). */
+   and down when open. */
 .summaryRow {
   display: flex;
   align-items: center;
@@ -77,7 +76,7 @@
 }
 
 /* No global summary margin under an ability's row, so it has the same space above and below its
-   text as the site owner's ability rows (Rich, 2026-11-02). */
+   text as the site owner's ability rows. */
 .abilityHeader {
   margin-bottom: 0rem;
 }
@@ -89,7 +88,7 @@
 }
 
 /* A website, post or gallery: its name at the left and its status pill at the right, so every
-   row's pill lines up; and an opened gallery's label and value, the same way (Rich, 2026-11-02). */
+   row's pill lines up; and an opened gallery's label and value, the same way. */
 .itemRow {
   display: flex;
   align-items: center;
@@ -142,7 +141,7 @@
 }
 
 /* The tables' width (postTable.module.css), so a website with no posts or galleries doesn't
-   shrink the section (Rich, 2026-11-03). */
+   shrink the section. */
 .siteOwnerAccount {
   width: 30rem;
   max-width: 100%;

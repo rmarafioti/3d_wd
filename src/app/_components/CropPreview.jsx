@@ -1,13 +1,5 @@
-// CropPreview (site owner): a small picture of one gallery image crop, the part of the image a
-// thumbnail or a phone will show (docs/flows.md → Gallery image dialog). It draws from the full
-// image, with no extra request: a box in the crop's proportions shows the image scaled and moved
-// so only the crop is in view. crop is in the pixels of an image sized width × height, the picked
-// file's size or the stored size, whichever src is.
-// The image's size and position are computed from the crop, so they are inline styles: no class
-// can hold them (the same reason as pre-line on post paragraphs). max-width is inline too: a page's
-// own image rule (the gallery page's .postImage img { max-width: 50% }) has the same specificity
-// as a module class, so which one won depended on stylesheet order, and the scaled image was
-// squeezed to half the box. Inline always wins.
+// CropPreview (site owner): a small picture of one gallery image's crop, drawn from the full image
+// in a box of the crop's proportions. crop is in the pixels of an image sized width × height.
 
 import Image from "next/image";
 
@@ -25,6 +17,9 @@ export default function CropPreview({ src, width, height, crop, alt }) {
         height={height}
         alt={alt}
         unoptimized
+        // Computed from the crop, so no class can hold them. max-width is inline too: a page's own
+        // image rule (the gallery page's .postImage img) has a module class's specificity, so
+        // stylesheet order could squeeze the scaled image to half the box. Inline always wins.
         style={{
           maxWidth: "none",
           width: `${(width / crop.width) * 100}%`,

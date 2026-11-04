@@ -1,13 +1,5 @@
 // AbilityRequestDialog (site owner): the request form saying where on the website an ability's
-// content should appear (docs/flows.md → Request dialog): the website's posts, once they have a
-// first post, or each new gallery. heading and message say which; onSubmit sends the trimmed note
-// (the ability's or the gallery's request route), then onSent runs.
-// Two modes:
-// - The first form, without onCancel: required. It has no X and no Cancel, and blocks Esc, so the
-//   only way out is sending it. The dashboard mounts it while the form is pending and unmounts it
-//   once onSent's refetch shows it sent.
-// - An edit, with onCancel (a change of mind, Feature 13): it starts from initialNote, Cancel and
-//   Esc close it, and Submit waits until the note has changed (Rich, 2026-11-02).
+// content or a gallery should appear, sent for the first time or edited.
 
 "use client";
 
@@ -21,6 +13,8 @@ import styles from "../_styling/abilityRequestDialog.module.css";
 
 const REQUEST_NOTE_MAX = 1000;
 
+// Without onCancel it is the first form, which is required: no X, no Cancel and Esc blocked, so
+// sending it is the only way out. With onCancel it is an edit of the note already sent.
 export default function AbilityRequestDialog({
   heading,
   message,
@@ -33,7 +27,7 @@ export default function AbilityRequestDialog({
   const titleId = useId();
   const noteId = useId();
   const countId = useId();
-  // A gallery whose form was sent before Feature 12 has no note, so its edit starts empty.
+  // A gallery whose form was sent before notes were kept has no note, so its edit starts empty.
   const [requestNote, setRequestNote] = useState(initialNote ?? "");
   const [touched, setTouched] = useState(false);
   const [sending, setSending] = useState(false);

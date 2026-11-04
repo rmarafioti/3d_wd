@@ -1,11 +1,5 @@
-// LinkWebsiteDialog (admin): "Link a website to [Account Name]", a native <dialog> holding the
-// WebsitePicker → POST /api/admin/accounts/:id/websites. Frontend validation messages and backend
-// errors render below Submit; backend field messages render next to their field. Nothing picked
-// or typed is cleared on failure.
-//
-// Opens when mounted; the parent unmounts it in onClose (the X or Esc) or after
-// onSuccess. The API response is handed straight to onSuccess and never kept here, because it
-// may contain the one-time credentials.
+// LinkWebsiteDialog (admin): the "Link a website to [Account Name]" dialog, a WebsitePicker and
+// Submit. Opens when mounted; the parent unmounts it in onClose or after onSuccess.
 
 "use client";
 
@@ -50,6 +44,7 @@ export default function LinkWebsiteDialog({
     setSubmitting(true);
     setServerError(null);
     try {
+      // Handed straight to onSuccess and never kept here: it may hold the one-time credentials.
       const response = await linkWebsite(account.id, toWebsitePayload(website));
       onSuccess(response);
     } catch (err) {

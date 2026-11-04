@@ -1,7 +1,5 @@
-// WebsiteList (site owner): each of the owner's websites on /dashboard, under a "Website: {name}"
-// heading, with its posts (PostTable) and then its galleries (GalleryTable), each under its own
-// heading. Galleries show only once the website has the Photo Galleries ability. The dashboard owns every request and confirmation: onPostStatusChange and onDeletePost
-// go to the post rows' menus, onGalleryStatusChange and onDeleteGallery to the gallery rows'.
+// WebsiteList (site owner): each website on /dashboard with its post table and, once it has Photo
+// Galleries, its gallery table. The dashboard owns every request and confirmation.
 
 import PostTable from "./PostTable";
 import GalleryTable from "./GalleryTable";

@@ -1,7 +1,5 @@
-// useModalDialog: for a native <dialog> that opens as soon as its component mounts. Returns
-// the ref to put on the <dialog>; on mount it opens it with showModal(). The parent unmounts
-// the component to get rid of it. A modal <dialog> never closes on an outside click; Esc
-// closes it unless the component handles the cancel event (CredentialRevealModal does).
+// useModalDialog: returns the ref for a native <dialog> that opens with showModal() as soon as its
+// component mounts; the parent unmounts the component to close it for good.
 
 "use client";
 

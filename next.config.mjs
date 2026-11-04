@@ -1,9 +1,5 @@
-// Next.js config. In local development, /api/* is rewritten to the local backend
-// (API_PROXY_TARGET) so the frontend and backend appear same-origin and the session
-// cookie lands on localhost:3000, where proxy.js can see it. API_PROXY_TARGET is not
-// set in production, so no rewrite exists there.
-// Every route also gets the security headers below. The Content Security Policy, which differs
-// by page type, is set by proxy.js.
+// Next.js config: the security headers every route gets, and the local-only rewrite of /api/* to
+// the backend. The Content Security Policy differs by page type, so proxy.js sets it.
 
 const SECURITY_HEADERS = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -29,6 +25,9 @@ const nextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
+  // Local development only: /api/* goes to the local backend, so the two appear same-origin and the
+  // session cookie lands on localhost:3000, where proxy.js can see it. API_PROXY_TARGET is never set
+  // on Vercel, so no rewrite exists there.
   async rewrites() {
     if (!process.env.API_PROXY_TARGET) return [];
     return [

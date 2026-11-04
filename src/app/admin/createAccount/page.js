@@ -1,7 +1,5 @@
-// Create an Account (/admin/createAccount, the Navbar's "Create an Account" link): the form. The
-// Accounts list and Link a Website live in the Accounts aside, which the admin layout renders on
-// every /admin route; both read the same data from AdminDataContext. A Client Component on purpose: per-user data is only ever fetched
-// client-side.
+// Create an Account page (admin): the form, reading AdminDataContext. A Client Component, so no
+// per-user data is server-rendered.
 
 "use client";
 

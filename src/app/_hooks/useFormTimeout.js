@@ -1,11 +1,5 @@
-// useFormTimeout(onTimeout): times out an open Create / Edit Post form (docs/flows.md → Form
-// timeout). Not a data hook. onTimeout is called once the form has been open for 20 hours. The
-// wall clock is checked every minute and whenever the tab is shown again, rather than one long
-// timer, so a laptop waking from sleep still times out on time.
-//
-// The session can expire first, and the browser can't read when (the cookie is httpOnly). So
-// whenever the tab is shown again, GET /api/auth/me checks it: an expired session's 401 makes
-// apiFetch load /sign-in?expired=1, which clears the form. Any other error is left for Publish.
+// useFormTimeout(onTimeout): calls onTimeout once an open Create / Edit form has been open for 20
+// hours (docs/flows.md → Form timeout). Not a data hook.
 
 "use client";
 
@@ -22,6 +16,8 @@ export function useFormTimeout(onTimeout) {
     onTimeoutRef.current = onTimeout;
   });
 
+  // The wall clock is checked every minute and whenever the tab is shown again, rather than one
+  // long timer, so a laptop waking from sleep still times out on time.
   useEffect(() => {
     const openedAt = Date.now();
     let timedOut = false;
@@ -35,6 +31,9 @@ export function useFormTimeout(onTimeout) {
     function handleVisibilityChange() {
       if (document.visibilityState !== "visible") return;
       checkTime();
+      // The session can expire first, and the browser can't read when (the cookie is httpOnly), so
+      // /me checks it: an expired session's 401 makes apiFetch load /sign-in?expired=1, which
+      // clears the form. Any other error is left for Submit.
       if (!timedOut) apiFetch("/api/auth/me").catch(() => {});
     }
 

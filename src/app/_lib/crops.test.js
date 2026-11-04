@@ -1,9 +1,5 @@
-// Tests for scaleCrop (docs/api.md → Notes, Crops): a crop picked on the browser's file is scaled
-// to the size Cloudinary stored, rounded to whole pixels, kept inside the image, and kept in the
-// shape the backend checks (a square thumbnail, a mobile crop at least as tall as it is wide). And
-// what GalleryForm's flow tests can't easily reach: sameShape's allowance for whole-pixel rounding,
-// cropIssues marking the mobile crops that differ from the gallery's first, and reshapeCrop at an
-// image's edges.
+// Tests for crops.js: scaleCrop to Cloudinary's stored size, and the edges GalleryForm's flow tests
+// can't easily reach in sameShape, cropIssues and reshapeCrop.
 
 import { describe, expect, it } from "vitest";
 import {

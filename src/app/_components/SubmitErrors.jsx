@@ -1,6 +1,5 @@
-// SubmitErrors: the messages shown below Submit in Create an Account and Link a Website, which
-// docs/flows.md gives the same error display. Frontend messages show only for fields the admin
-// has left (errors filtered by touched), followed by the backend's error.message.
+// SubmitErrors: the messages below Submit in Create an Account and Link a Website: frontend
+// messages for the fields the admin has left, then the backend's error.message.
 
 export default function SubmitErrors({ errors, touched, serverError }) {
   return (

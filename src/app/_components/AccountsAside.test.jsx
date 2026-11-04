@@ -1,9 +1,5 @@
-// Tests for AccountsAside (docs/flows.md → Admin Dashboard, Link a Website): closed by default and
-// toggled open; the Link a Website dialog opens for the clicked account, an existing-website link
-// confirms with that account's name, and a new-website link opens the one-time reveal and
-// refreshes the website list on close. Switching an ability live asks first, then sets it live and
-// refetches, sends nothing when cancelled, and shows a failure in a dialog; a requested gallery's
-// Live switch does the same through its placement route.
+// Tests for AccountsAside: opening and closing, Link a Website for the clicked account, and the
+// Live switches for an ability and a requested gallery.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";

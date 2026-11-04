@@ -1,9 +1,5 @@
-// Tests for AbilitiesAside (docs/flows.md → Abilities aside): closed by default; each website's
-// abilities with their pills ("Add ?" while not added, "Turn On ?" while turned off) and a ⋮ menu offering only what the state
-// allows (Edit placement once the posts form was sent, "+ Add", Turn On / Turn Off once live,
-// Remove for Photo Galleries only); Add and Turn Off save straight away; Remove asks first, naming
-// the last day to add it back; a failure shows in a dialog; the posts form's edit opens
-// prefilled, saves only a changed note, and can be cancelled.
+// Tests for AbilitiesAside: its pills, the ⋮ menu each ability's state allows, saving, Remove's
+// confirmation, failures, and editing the posts placement.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";

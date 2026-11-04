@@ -1,14 +1,12 @@
 // FormattedText: renders one paragraph's text with its formatting (docs/api.md → Paragraph
-// formatting): <b> for bold, <i> for italic, <b><i> for both, and <a> for a link, inside any
-// format around it, opening in a new tab like every other external link on the dashboard. It
-// builds elements from parseParagraph and never sets raw HTML, so <, > and & in the text show as
-// typed. Line breaks are kept by the caller's white-space: pre-line.
-// A link is only built for an https:// URL; any other shows its characters as typed (rule 7).
-// Saved posts can't hold one (saving rejects it), but unsaved text in the preview can.
+// formatting), building elements and never raw HTML, so <, > and & in the text show as typed.
 
 import { isHttpsUrl } from "../_lib/validation";
 import { parseParagraph } from "../_lib/postFormatting";
 
+// A link is only built for an https:// URL; any other shows its characters as typed (rule 7).
+// Saved posts can't hold one (saving rejects it), but unsaved text in the preview can. A link opens
+// in a new tab, like every other external link on the dashboard.
 function renderLink(segment, key) {
   if (!isHttpsUrl(segment.url)) return `[${segment.text}](${segment.url})`;
   return (

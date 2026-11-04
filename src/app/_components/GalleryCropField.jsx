@@ -1,13 +1,5 @@
-// GalleryCropField (site owner): the Crops section of a gallery image's Add / Edit dialog
-// (docs/flows.md → Gallery image dialog): a row for the square thumbnail crop and one for the
-// mobile crop, each optional. A row says what its crop is for, shows the crop (CropPreview) once
-// there is one, and has a button to crop (or edit the crop) in CropDialog, and Remove crop,
-// stacked beside the crop's picture rather than under it, to save space (Rich, 2026-11-02).
-// Nothing can be cropped until an image is picked. rules (cropRules) are what the gallery's other
-// images ask of this one: a crop any of them has is marked required here, and a mobile crop is
-// cropped in their shape (GalleryForm holds Insert until both are met). Holds only which crop
-// dialog is open: each crop goes back to GalleryForm's working copy through onPatch, so the
-// image's Cancel still drops it.
+// GalleryCropField: the Crops section of a gallery image's dialog, a thumbnail row and a mobile row,
+// each opening CropDialog.
 
 "use client";
 
@@ -40,21 +32,24 @@ const CROPS = [
   },
 ];
 
-// image: the dialog's working copy; rules: cropRules for it; serverErrors: its backend messages by
-// path within the image ({ thumbnailCrop: "…", "mobileCrop.x": "…" }).
+// image: the dialog's working copy; rules: cropRules for it, what the gallery's other images ask of
+// this one (a crop any of them has is required, and a mobile crop is cropped in their shape);
+// serverErrors: its backend messages by path within the image ({ thumbnailCrop: "…",
+// "mobileCrop.x": "…" }).
 export default function GalleryCropField({
   image,
   rules,
   onPatch,
   serverErrors,
 }) {
-  // The CROPS entry whose dialog is open, or null.
+  // The CROPS entry whose dialog is open, or null. It is the only state here: each crop goes back to
+  // GalleryForm's working copy through onPatch, so the image's Cancel still drops it.
   const [cropping, setCropping] = useState(null);
   const hasImage = !isBlank(image.src);
 
-  // A mobile crop of another shape than the other images' (only from a gallery saved before the
-  // rule, since a later mobile crop is cropped in their shape), then the backend's message for the crop
-  // or one of its numbers (thumbnailCrop.x…).
+  // A mobile crop of another shape than the other images' (possible only in a gallery saved before
+  // every mobile crop had to share one shape, since a new one is cropped in theirs), then the
+  // backend's message for the crop or one of its numbers (thumbnailCrop.x…).
   function errorFor(field) {
     if (
       field === "mobileCrop" &&

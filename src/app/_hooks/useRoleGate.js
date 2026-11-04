@@ -1,7 +1,5 @@
-// useRoleGate(requiredRole): used once by each dashboard layout. Calls GET /api/auth/me,
-// stores the user in AuthContext when their role matches, and otherwise redirects to the
-// dashboard for their role. UX only — the backend enforces access on every request.
-// Returns { data, loading, error }.
+// useRoleGate(requiredRole): each dashboard layout's role gate, from GET /api/auth/me. UX only, the
+// backend enforces access on every request. Returns { data, loading, error }.
 
 "use client";
 

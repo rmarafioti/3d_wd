@@ -1,13 +1,5 @@
-// crops: a gallery image's two optional crops (docs/api.md → Notes, Crops), the square thumbnail
-// and the mobile crop (at least as tall as it is wide), each { x, y, width, height } in the stored
-// image's pixels. The crop tool works on the image the browser shows: a picked file at its own
-// size, or a stored image at its stored size. Cloudinary scales a file larger than 2500 × 2500
-// down as it stores it, so a crop picked on such a file is scaled to the stored size after upload
-// (scaleCrop), rounded to whole pixels and kept inside the image, in the shape the backend checks.
-// A gallery's crops are consistent (Rich, 2026-10-31): every image has a thumbnail crop or none
-// does, every image has a mobile crop or none does, and every mobile crop has one shape. cropRules
-// says what an image's dialog must follow, cropIssues what the gallery as a whole still lacks, and
-// reshapeCrop redraws a mobile crop when the gallery's shape changes.
+// crops: a gallery image's thumbnail and mobile crops, in the stored image's pixels, and the rules
+// that keep a gallery's crops consistent (docs/api.md → Notes, Crops).
 
 // The shapes the mobile crop offers, as width / height, 4:5 first (the default).
 export const MOBILE_SHAPES = [
@@ -24,6 +16,8 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+// The crop tool works on the image the browser shows, and Cloudinary may store it smaller, so a
+// new image's crops are scaled to the stored size after upload.
 // crop: in the pixels of an image sized `from` ({ width, height }). Returns it in the pixels of the
 // same image sized `to`, or null for no crop. Cloudinary scales both sides by one factor, so one
 // scale serves x and y. With `from` and `to` the same, it only rounds and fits the crop, which

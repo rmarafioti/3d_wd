@@ -1,12 +1,5 @@
-// Tests for AccountList (docs/flows.md → Get All Accounts): loading, error and empty states; each
-// website a disclosure named by the website, holding its URL and its site owners (name, email,
-// status and a ⋮ offering "Link a Website", which passes the account up), two owners of one website under it
-// once, an account with no website left out; then the website's Abilities: each a disclosure,
-// closed by default, named by its name, status pill, posts' placement pill and Live switch (Photo
-// Galleries while added, posts while their placement is requested), holding its items and request
-// note: posts by name and status, galleries by name and status, each opening to its placement
-// (with its own Live switch while requested once Photo Galleries is live), photo count and crop
-// flags.
+// Tests for AccountList: its states, the websites with their site owners and ⋮, and each website's
+// abilities with their pills, items, request notes and Live switches.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";

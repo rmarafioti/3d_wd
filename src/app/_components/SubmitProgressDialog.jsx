@@ -1,8 +1,5 @@
-// SubmitProgressDialog: native <dialog> shown over Create / Edit Post and Create / Edit a Gallery
-// while Submit runs (docs/flows.md → Create a Post), naming the step under way ("Preparing
-// photos…", "Uploading photos (1 of 3)…", "Saving your post…") with three animated dots. It has
-// no X and blocks Esc, since a step can't be stopped part way; the parent unmounts it when Submit
-// ends, with a success or an error.
+// SubmitProgressDialog: the dialog over the post and gallery forms while Submit runs, naming the
+// step under way with three animated dots. The parent unmounts it when Submit ends.
 
 "use client";
 
@@ -16,8 +13,9 @@ export default function SubmitProgressDialog({ message }) {
   const messageId = useId();
 
   return (
-    // closedby="none" stops Chrome closing on a repeated Esc, which it allows even when the cancel
-    // event is prevented. A modal <dialog> never closes on an outside click.
+    // No X, and Esc is blocked, since a step can't be stopped part way. closedby="none" stops Chrome
+    // closing on a repeated Esc, which it allows even when the cancel event is prevented. A modal
+    // <dialog> never closes on an outside click.
     <dialog
       ref={dialogRef}
       closedby="none"

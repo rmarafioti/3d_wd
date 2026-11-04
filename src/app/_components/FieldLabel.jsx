@@ -1,8 +1,5 @@
-// FieldLabel: a post field's label, its optional help note, and its character count, laid out so
-// the count always sits right above the field, at its right edge: on a line of its own under the
-// note when there is one (so the note keeps its full width), on the label's line when there isn't.
-// Used by PostForm's fields and ImageField's Alt Text. (ParagraphField puts its count beside its
-// format buttons, which sit above its textarea.)
+// FieldLabel: a field's label, optional help note and character count, with the count always right
+// above the field at its right edge.
 
 import styles from "../_styling/postForm.module.css";
 
@@ -18,6 +15,7 @@ export default function FieldLabel({ htmlFor, label, note, count }) {
           <i>*{note}</i>
         </p>
       )}
+      {/* Under the note, on a line of its own, so the note keeps its full width. */}
       {note && count && <div className={styles.countRow}>{count}</div>}
     </>
   );

@@ -1,11 +1,5 @@
-// Navbar: site navigation in two rows (Rich, 2026-11-03). The top row holds HomeLink,
-// DashboardTitle and AuthButton. Once signed in, a second row under a line holds the dashboard's
-// links: the admin's Create an Account and Audit Events, the site owner's Create a Post and, once
-// some website has Photo Galleries (NavContext), Create a Gallery, which open their form on
-// /dashboard (?create=). At phone width the links row and the top row's Sign out are hidden, and a
-// hamburger opens them as a menu over the page, above the asides. The menu is a disclosure, like
-// ActionsMenu: it closes on Esc (focus back on the hamburger), on a click outside it, and once a
-// link is picked. Signed out (the landing and sign-in pages) it is the top row alone.
+// Navbar: the home link, dashboard title and Sign in / out, then the signed-in user's links, which
+// at phone width move into a hamburger menu.
 
 "use client";
 

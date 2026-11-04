@@ -1,13 +1,5 @@
-// Tests for PostForm, Create a Post and Edit a Post as a run of dialogs (docs/flows.md → Create a
-// Post): the steps (Website only with several websites, Next and Insert disabled until valid), the
-// cancel gate, the review view's Add button limits and its toolbar (moves where an element can
-// move, no Delete on the only paragraph, Add on an empty optional field, edits that only change
-// the post on Insert / Save, a cancelled image edit keeping the post's image), Edit opening on the
-// review view, the request payload (body in order, blank → null, image ids kept across a move, no
-// client key), backend errors on their toolbar rows and dropped once the body shifts, image
-// uploads on Submit (docs/api.md → Endpoints, Notes: each file shrunk, one signature, each new file
-// to Cloudinary, nothing saved if one fails, no second upload on a retry), the progress dialog and
-// the 20-hour form timeout.
+// Tests for PostForm, Create and Edit a Post: the steps, the cancel gate, the review view and its
+// toolbar, the request payload, backend errors, image uploads on Submit and the form timeout.
 
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";

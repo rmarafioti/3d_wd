@@ -1,9 +1,7 @@
-// The post's own fields as Create / Edit Post shows them (docs/flows.md → Create a Post), shared
-// by PostForm (each field's input, in its step and in its own dialog) and PostToolbar (each
-// field's row), so a field reads the same everywhere: label, its name in sentences ("Edit sub
-// header", "Actions for sub header"), its limit, its help text, and its toolbar row while empty.
-// The limits match docs/api.md → Validation rules (checked in validation.js's validatePost).
+// postFields: the post's own fields as Create / Edit Post shows them, shared by PostForm and
+// PostToolbar so a field reads the same in its dialog and its toolbar row.
 
+// The limits match docs/api.md → Validation rules (checked in validation.js's validatePost).
 export const POST_FIELDS = {
   postName: {
     label: "Post Name",

@@ -1,7 +1,5 @@
-// Tests for WebsiteList and the PostTable and GalleryTable it renders (docs/flows.md → Get All
-// Websites (site owner)): a heading per website with its post table and gallery table, each post
-// row's created date, linked post name, indicator and actions menu, each gallery row's linked name
-// and slug, and the empty states.
+// Tests for WebsiteList and the PostTable and GalleryTable it renders: each website's tables, their
+// rows and the empty states.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";

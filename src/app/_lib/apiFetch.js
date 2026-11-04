@@ -1,7 +1,5 @@
-// apiFetch: the only place `fetch` is called. Prefixes NEXT_PUBLIC_API_BASE_URL, sends
-// credentials: 'include', JSON, X-CSRF-Protection on POST/PATCH/DELETE, unwraps { data } (or
-// returns { data, nextCursor } for a paginated list), throws the { error } envelope, and handles
-// 401 (session expiry).
+// apiFetch: the only place our API is fetched, with the session cookie, JSON and the CSRF header,
+// unwrapping { data }, throwing the { error } envelope as an ApiError and handling a 401.
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const GENERIC_MESSAGE = "Something went wrong, please try again.";

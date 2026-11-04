@@ -1,5 +1,5 @@
-// shrinkImage: the photo re-encoded to fit 2500 px before upload, keeping its orientation, as
-// PNG for a PNG and JPEG otherwise, and the picked file itself when the browser can't shrink it.
+// Tests for shrinkImage: fitting 2500 px with its orientation kept, PNG or JPEG output, and the
+// picked file when the browser can't shrink it.
 
 import { describe, expect, it } from "vitest";
 import { imageFile, stubImageShrinking } from "../../test/helpers";

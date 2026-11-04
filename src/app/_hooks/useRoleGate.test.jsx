@@ -1,5 +1,4 @@
-// Tests for useRoleGate: the layout-level role check (CLAUDE.md → Role-gating). A matching role
-// fills AuthContext; any other role is redirected to its own dashboard while loading stays on.
+// Tests for useRoleGate: a matching role fills AuthContext, any other is sent to its own dashboard.
 
 import { describe, expect, it, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";

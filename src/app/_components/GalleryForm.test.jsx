@@ -1,14 +1,5 @@
-// Tests for GalleryForm, Create a Gallery and Edit a Gallery as a run of dialogs (docs/flows.md →
-// Create a Gallery): the steps (a taken name refused before submit, in any case, while another
-// website's names don't count; the first image's step), the review view (no Delete on the only
-// image, the 30-image limit), the crop dialog (the mobile shapes, a new file clearing the crops),
-// consistent crops across the gallery (every image or none has each crop, one mobile shape set by
-// the first mobile crop and changed from the toolbar, with Submit and Insert waiting for them),
-// Submit (each file shrunk, one signature, each new file to Cloudinary, then crops scaled to
-// Cloudinary's stored size, and the progress dialog's save step), Edit's payload (ids kept, stored crops sent as they are, its own name allowed), the
-// backend's 409 under Submit, a crop's field message on its row and in its dialog, and the cancel
-// gate. react-easy-crop is third-party UI, so a stub stands in for it and reports the crop the
-// test sets.
+// Tests for GalleryForm, Create and Edit a Gallery: the steps, the review view, the crop dialogs,
+// consistent crops, Submit's uploads and scaled crops, Edit's payload and backend errors.
 
 import { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -25,6 +16,7 @@ import {
   stubObjectUrls,
 } from "../../test/helpers";
 
+// react-easy-crop is third-party UI, so a stub stands in for it and reports the crop the test sets.
 // What the stub cropper reports, in the shown image's natural pixels, and the aspect it was given.
 const cropper = vi.hoisted(() => ({ pixels: null, aspects: [] }));
 

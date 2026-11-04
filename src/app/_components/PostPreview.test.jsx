@@ -1,6 +1,4 @@
-// Tests for PostPreview (docs/flows.md → Post preview): the header, sub header and date only when
-// set, the date first, paragraphs with their formatting, and images (a picked file shown from its
-// object URL).
+// Tests for PostPreview: which fields show and in what order, formatted paragraphs, and images.
 
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";

@@ -1,10 +1,5 @@
-// WebsitePicker: shared by Create an Account and Link a Website. The admin types a new website's
-// name and URL, or chooses an existing website from the list below them (Rich, 2026-11-02);
-// reports { websiteId } or { websiteName, websiteUrl }.
-//
-// Controlled: the parent form owns `value` ({ websiteId, websiteName, websiteUrl }) so it can
-// validate and clear it. Choosing an existing website fills and locks the name and URL fields
-// above; choosing "Choose a website" again clears and unlocks them.
+// WebsitePicker: a new website's name and URL, or an existing website chosen from the list, for
+// Create an Account and Link a Website.
 
 "use client";
 
@@ -20,6 +15,8 @@ export function toWebsitePayload({ websiteId, websiteName, websiteUrl }) {
   return { websiteName: websiteName.trim(), websiteUrl: websiteUrl.trim() };
 }
 
+// Controlled: the parent form owns value ({ websiteId, websiteName, websiteUrl }), so it can
+// validate and clear it.
 export default function WebsitePicker({
   websites,
   value,

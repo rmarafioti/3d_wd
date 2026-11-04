@@ -1,6 +1,5 @@
-// Tests for LinkWebsiteDialog (docs/flows.md → Link a Website), run through the real
-// useAccounts hook: the request path and body, that an error keeps the picker, and Close.
-// The title is covered by the admin page tests.
+// Tests for LinkWebsiteDialog, through the real useAccounts: the request, an error keeping the
+// picker, and Close. The title is covered by the admin page tests.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";

@@ -1,27 +1,15 @@
-// AccountList (admin): every website with a site owner, each a disclosure named by the website,
-// closed by default, so the open aside first reads as a list of website names, each with its
-// status pill at the right of its row. A website can have more than one site owner, so the list is
-// by website, not account (Rich, 2026-11-03). Opened: the website's URL, then each site owner
-// linked to it (name, email, status and a ⋮ beside the status offering "Link a Website", which
-// links another website to that account; AccountsAside owns the dialog it opens, onLink receives
-// the account), then an "Abilities" section: each ability the website has, a disclosure closed by
-// default whose summary holds its name, its status pill (AbilityPill), for posts waiting to be
-// placed a "requested" PlacementPill, and a Live switch while it can be set live (onSetLive; gone
-// once live, since the app can't undo it). Opened: its items by name with their status pills; for
-// posts, then the site owner's request note. The items are the posts, or the galleries, each a
-// disclosure holding its placement and, while requested with Photo Galleries live, its own Live
-// switch (onSetGalleryLive), then its photo count, whether its images have thumbnail and mobile
-// crops (which Cloudinary never shows, Rich 2026-10-31) and its own request note. AccountsAside
-// owns both switches' confirmations. Every row with a pill has its name at the left and its pill
-// at the right. Never shows post content or gallery images: names, statuses, counts, yes / no and
-// the site owner's notes only.
+// AccountList (admin): every website with a site owner, each a disclosure holding its URL, its site
+// owners with a ⋮ to link a website, and its abilities with their items and Live switches.
 
 import { GoTriangleRight } from "react-icons/go";
-import { ABILITY_KINDS, findAbility } from "../_lib/abilities";
-import AbilityPill from "./AbilityPill";
-import PlacementPill from "./PlacementPill";
+import {
+  ABILITY_KINDS,
+  ABILITY_PILL_TONES,
+  abilityPillLabel,
+  findAbility,
+} from "../_lib/abilities";
 import ActionsMenu from "./ActionsMenu";
-import StatusPill from "./StatusPill";
+import Pill from "./Pill";
 import Toggle from "./Toggle";
 
 import styles from "../_styling/dashPages.module.css";
@@ -47,11 +35,7 @@ function RequestNote({ note }) {
 // A post's or gallery's "published" / "draft" pill, as on the dashboard's tables.
 function ItemStatus({ status }) {
   return (
-    <StatusPill
-      active={status === "published"}
-      onLabel="published"
-      offLabel="draft"
-    />
+    <Pill label={status} tone={status === "published" ? "green" : "red"} />
   );
 }
 
@@ -72,9 +56,9 @@ function PostItems({ posts }) {
 
 // Each gallery's summary opens from its name: its placement once its request message is sent,
 // with a Live switch while requested once Photo Galleries is live (the backend needs the ability
-// live first; Rich, 2026-11-03), then the photo count and the crop flags, Yes only when every image
-// has that crop (the backend's rule), each a row with its label at the left and its value at the
-// right, like the rows with a pill.
+// live first), then the photo count and the crop flags, Yes only when every image has that crop
+// (the backend's rule), each a row with its label at the left and its value at the right, like the
+// rows with a pill. The flags are there because crops aren't files, so Cloudinary never shows them.
 function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
   if (galleries.length === 0) {
     return <p className={styles.noItems}>No galleries yet.</p>;
@@ -96,7 +80,10 @@ function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
                 <div className={styles.itemRow}>
                   <dt className={styles.key}>Placement:</dt>
                   <dd className={styles.pillGroup}>
-                    <PlacementPill placement={gallery.placement} />
+                    <Pill
+                      label={gallery.placement}
+                      tone={gallery.placement === "live" ? "green" : "purple"}
+                    />
                     {galleriesLive && gallery.placement === "requested" && (
                       <Toggle
                         label={`${gallery.galleryName} live on ${website.websiteName}`}
@@ -127,7 +114,7 @@ function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
   );
 }
 
-// Whether the admin can set an ability live now (docs/api.md → Notes, Abilities, issue #71): Photo
+// Whether the admin can set an ability live now (docs/api.md → Notes, Abilities): Photo
 // Galleries while still added, once its component is wired (no request needed); posts while their
 // placement is requested, one switch setting their placement and status live together. Going live
 // can't be undone, so a live ability has nothing to switch.
@@ -149,6 +136,7 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
         {ABILITY_KINDS.map(({ kind, label }) => {
           const ability = findAbility(website, kind);
           if (!ability) return null;
+          const pillLabel = abilityPillLabel(ability);
           return (
             <li
               key={kind}
@@ -166,12 +154,15 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
                     {label}
                   </span>
                   <span className={styles.pillGroup}>
-                    <AbilityPill ability={ability} />
+                    <Pill
+                      label={pillLabel}
+                      tone={ABILITY_PILL_TONES[pillLabel]}
+                    />
                     {/* Posts waiting to be placed, as on the site owner's aside: once set live the
-                        status pill already reads "live" (Rich, 2026-11-03). Each gallery's
-                        placement is in its dropdown. */}
+                        status pill already reads "live". Each gallery's placement is in its
+                        dropdown. */}
                     {kind === "posts" && ability.placement === "requested" && (
-                      <PlacementPill placement="requested" />
+                      <Pill label="requested" tone="purple" />
                     )}
                     {canSetLive(kind, ability) && (
                       // A click on the switch would also open or close the disclosure it
@@ -199,7 +190,7 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
                   />
                 )}
                 {/* Under the posts, since it says where they go on the website. Each gallery has its
-                    own, inside its dropdown (Rich, 2026-11-02). */}
+                    own, inside its dropdown. */}
                 {kind === "posts" && <RequestNote note={ability.requestNote} />}
               </details>
             </li>
@@ -211,10 +202,9 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
 }
 
 // The API lists accounts, each with its websites, but a website can have more than one site owner,
-// so the list is by website (Rich, 2026-11-03): each website once, with the accounts linked to it,
-// sorted by name. Its abilities, posts and galleries are the website's, the same on every account
-// that has it, so the first account's copy is used. An account with no website isn't listed: it
-// doesn't count yet (Rich, 2026-11-03).
+// so the list is by website: each website once, with the accounts linked to it, sorted by name.
+// Its abilities, posts and galleries are the website's, the same on every account that has it, so
+// the first account's copy is used. An account with no website isn't listed: it doesn't count yet.
 function websitesWithOwners(accounts) {
   const byId = new Map();
   for (const account of accounts) {
@@ -229,6 +219,8 @@ function websitesWithOwners(accounts) {
   );
 }
 
+// Shows names, statuses, counts, yes / no and the site owner's notes only, never post content or
+// gallery images.
 export default function AccountList({
   accounts,
   loading,
@@ -253,7 +245,10 @@ export default function AccountList({
             <summary className={`${styles.key} ${styles.summaryRow}`}>
               <GoTriangleRight aria-hidden="true" className={styles.marker} />
               <span className={styles.summaryName}>{website.websiteName}</span>
-              <StatusPill active={website.active} />
+              <Pill
+                label={website.active ? "active" : "inactive"}
+                tone={website.active ? "green" : "red"}
+              />
             </summary>
             <div className={styles.accountDetails}>
               <a
@@ -273,7 +268,10 @@ export default function AccountList({
                     <span className={abilityStyles.abilityName}>
                       Site Owner:
                     </span>
-                    <StatusPill active={account.active} />
+                    <Pill
+                      label={account.active ? "active" : "inactive"}
+                      tone={account.active ? "green" : "red"}
+                    />
                     <span className={abilityStyles.menu}>
                       <ActionsMenu
                         label={`Actions for ${account.name}`}

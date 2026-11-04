@@ -1,10 +1,5 @@
-// Tests for the single gallery page's own wiring (docs/flows.md → Get a Gallery by ID, Edit a
-// Gallery, Gallery Draft / Publish, Delete a Gallery): the slug, "None" for empty fields and crops
-// and a crop's picture, the 404 view, the Published switch saving straight away through the
-// gallery status route, Delete Gallery confirmed then back to /dashboard, and ?edit=1 opening the
-// Edit form, which fetches the websites for the names already taken and closes after a save with
-// no success dialog; once its request form was sent, its placement and its edit (prefilled,
-// cancellable, the page showing the saved note).
+// Tests for the single gallery page's own wiring: its fields, the 404 view, the Published switch,
+// Delete Gallery, ?edit=1 opening Edit, and the placement with its edit.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -150,7 +145,7 @@ describe("Gallery page", () => {
     );
 
     expect(
-      screen.getByRole("dialog", { name: "Edit Gallery" }),
+      await screen.findByRole("dialog", { name: "Edit Gallery" }),
     ).toBeInTheDocument();
     await waitFor(() =>
       expect(

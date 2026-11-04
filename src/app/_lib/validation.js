@@ -1,6 +1,5 @@
-// validation: the frontend copy of the rules in docs/api.md → Validation rules. UX only —
-// the backend re-validates everything and its rejections must still be shown. Every check
-// trims first, so a field holding only spaces counts as empty.
+// validation: the frontend copy of docs/api.md → Validation rules, UX only (the backend re-checks).
+// Every check trims first, so a field holding only spaces counts as empty.
 
 import { findLinks } from "./postFormatting";
 
@@ -76,8 +75,8 @@ export function imageFileError(file) {
 
 // Validates one image element (the Add / Edit image dialog's Insert). Returns
 // { fieldName: message } for each failure. src is set together with width and height (a picked
-// file's once it loads, or the stored image's), so an image with a src always has its size. The src message is the form's own; the
-// alt text messages match the backend's word for word.
+// file's once it loads, or the stored image's), so an image with a src always has its size. The
+// src message is the form's own; the alt text messages match the backend's word for word.
 export function validateImage({ src, altText }) {
   const errors = {};
   if (isBlank(src)) errors.src = "Choose an image.";

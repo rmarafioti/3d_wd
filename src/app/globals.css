@@ -196,7 +196,7 @@ dialog::backdrop {
     padding: 1rem;
   }
 
-  /* No focus ring on a tapped field at phone width (Rich, 2026-11-03): the keyboard and the caret
+  /* No focus ring on a tapped field at phone width: the keyboard and the caret
      already show where typing goes. Desktop keeps it for keyboard users. */
   input:focus,
   select:focus,

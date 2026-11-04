@@ -1,7 +1,5 @@
-// MobileShapePicker (site owner): the Shape choices for a gallery's mobile crops (MOBILE_SHAPES:
-// 4:5, 3:4, 9:16, 1:1), as a radio group. Shown in the gallery's first mobile crop dialog, where
-// each choice previews live on the photo, and in the "Edit mobile shape" dialog, which changes the
-// shape for every image (docs/flows.md → Consistent crops). value is a MOBILE_SHAPES entry.
+// MobileShapePicker (site owner): the Shape radio group for a gallery's mobile crops, shared by the
+// first mobile crop dialog and "Edit mobile shape". value is a MOBILE_SHAPES entry.
 
 "use client";
 

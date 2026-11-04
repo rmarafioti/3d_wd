@@ -1,5 +1,5 @@
-/* Two rows (Rich, 2026-11-03): the top row, then, once signed in, the links under a line. Column
-   rather than the global nav's row; positioned, so the phone menu opens under it. */
+/* Two rows: the top row, then, once signed in, the links under a line. Column rather than the
+   global nav's row; positioned, so the phone menu opens under it. */
 .nav {
   position: relative;
   flex-direction: column;
@@ -35,7 +35,7 @@
 
 /* The row keeps its 1rem sides and the gap between links. It has no padding above or below:
    each link's taller padding gives the row its height instead, so a link's gray highlight meets
-   the lines over and under the row (Rich, 2026-11-03). */
+   the lines over and under the row. */
 .links {
   display: flex;
   gap: 0.5rem;
@@ -50,7 +50,7 @@
 .navLink {
   display: block;
   width: auto;
-  /* 1rem above and below: the row's old 0.5rem plus the link's own. */
+  /* 1rem above and below, so the link alone gives the row its height. */
   padding: 1rem 0.5rem;
   border-radius: 0px;
   color: black;

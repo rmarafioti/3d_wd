@@ -1,30 +1,5 @@
-// PostForm (site owner): Create a Post and Edit a Post, as a short run of dialogs (docs/flows.md →
-// Create a Post). One component for both, so the post's values, validation and payload building
-// live in one place; every dialog is a PostStepDialog, and the parts below it (PostToolbar,
-// ParagraphField, ImageField) hold no post state of their own.
-//
-// mode "create" walks the steps: the Post Name (with the Website dropdown when the site owner has
-// more than one website; with one it is chosen silently), then the optional date, header and sub
-// header, then the first paragraph, then the review view. mode "edit" opens straight on the
-// review view, with the post loaded. The review view shows the Add buttons (Add Paragraph, Add
-// Image), the PostPreview and the PostToolbar (every part of the post with its ⋮ menu), with the
-// Published switch (Create only) and Submit under the toolbar's list. Adding or editing one part
-// opens its own dialog on top, working on a copy (editing) that only changes the post on Insert /
-// Save, so its Cancel leaves the post as it was. The first paragraph is that same paragraph
-// dialog, as a step of its own.
-//
-// Cancelling the post (Cancel or Esc on a step, or the X or Esc on the review view) drops everything, so it
-// asks first ("Are you sure…?"), except on the first step, where only a name is lost, and in Edit
-// before anything has changed.
-//
-// Submit first uploads any newly picked images (uploadPicked: each file shrunk, one signature,
-// then each file to Cloudinary) and swaps their Cloudinary src, width and height into the body,
-// then saves: POST /api/siteOwner/posts with the status, or PATCH /api/siteOwner/posts/:id with
-// the full form. If an upload fails nothing is saved; images already uploaded keep their
-// Cloudinary src, so trying again doesn't upload them twice. While it works, SubmitProgressDialog
-// names each step ("Preparing photos…", "Uploading photos (1 of 3)…", "Saving your post…").
-// useFormTimeout clears the form after 20 hours. The parent unmounts it in onClose or after
-// onSuccess.
+// PostForm: Create a Post and Edit a Post, one flow of PostStepDialogs holding all of a post's state,
+// its validation, image upload and save. The parent unmounts it in onClose or after onSuccess.
 
 "use client";
 
@@ -306,7 +281,8 @@ export default function PostForm({
 
   // --- Cancelling the post --------------------------------------------------------------------
 
-  // Cancel or Esc on a step or the first paragraph; the X or Esc on the review view.
+  // Cancel or Esc on a step or the first paragraph; the X or Esc on the review view. It asks first,
+  // except on the first step, where only a name is lost, and in Edit before anything has changed.
   function requestCancel() {
     if (step === "name" || (!isCreate && !changed)) {
       onClose();
@@ -397,7 +373,8 @@ export default function PostForm({
 
   // Uploads every image with a picked file and returns the body with their Cloudinary src, width
   // and height in place of the file. The same swap goes into the form, as a functional update
-  // that skips an image whose file was changed or deleted meanwhile.
+  // that skips an image whose file was changed or deleted meanwhile. If a save then fails, the
+  // uploaded images keep their Cloudinary src, so trying again doesn't upload them twice.
   async function uploadNewImages() {
     const newImages = body.filter((element) => element.file);
     if (newImages.length === 0) return body;

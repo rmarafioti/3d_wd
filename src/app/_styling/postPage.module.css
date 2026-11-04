@@ -116,7 +116,7 @@ its height follows its stored proportions. */
 }
 
 /* Sized to its text, so "Edit placement" stays on one line; every other button keeps the global
-   140px (Rich, 2026-11-02). */
+   140px. */
 .editRequestButton {
   width: auto;
 }

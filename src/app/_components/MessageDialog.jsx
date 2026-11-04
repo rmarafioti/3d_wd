@@ -1,6 +1,5 @@
-// MessageDialog: native <dialog> for a one-line success or error message. Opens when mounted;
-// closes with its X (DialogCloseButton) or Esc (native), never on an outside click. The parent
-// unmounts it in onClose.
+// MessageDialog: a native <dialog> for a one-line success or error message. Opens when mounted;
+// the parent unmounts it in onClose.
 
 "use client";
 

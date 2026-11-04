@@ -1,13 +1,13 @@
-// Tests for FormattedText (docs/api.md → Paragraph formatting): every Rendering examples row, and
+// Tests for FormattedText: every Rendering examples row of docs/api.md → Paragraph formatting, and
 // only https:// links becoming <a>.
-// These compare the rendered HTML, not roles: the markup is the behaviour here, and the contract's
-// table is written as HTML. The new-tab attributes are the renderer's own choice (rule 7), so
-// they are stripped before comparing.
 
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import FormattedText from "./FormattedText";
 
+// These compare the rendered HTML, not roles: the markup is the behaviour here, and the contract's
+// table is written as HTML. The new-tab attributes are the renderer's own choice (rule 7), so
+// they are stripped before comparing.
 function renderedHtml(text) {
   const { container } = render(
     <p>

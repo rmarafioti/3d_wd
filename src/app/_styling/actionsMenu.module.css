@@ -39,7 +39,7 @@
   text-decoration: none;
 }
 
-/* Highlights the item under the pointer, or reached with Tab (Rich, 2026-10-30). */
+/* Highlights the item under the pointer, or reached with Tab. */
 .menuItem:hover,
 .menuItem:focus-visible {
   background-color: lightgray;

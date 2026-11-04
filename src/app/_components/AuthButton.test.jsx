@@ -1,7 +1,5 @@
-// Tests for AuthButton (docs/flows.md → App Shell, Sign Out): "Sign in" with no user; "Sign out"
-// logs out, clears the user and goes home with a full page load, even when the logout request
-// fails. A full load (not a client-side route) is what stops the router cache from replaying the
-// proxy's signed-in redirect back to /dashboard.
+// Tests for AuthButton: "Sign in" with no user, and "Sign out" logging out, clearing the user and
+// going home with a full page load, even when the logout request fails.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";

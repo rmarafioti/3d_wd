@@ -1,33 +1,5 @@
-// GalleryForm (site owner): Create a Gallery and Edit a Gallery, as a short run of dialogs
-// (docs/flows.md → Create a Gallery), built like PostForm so the two flows read the same. One
-// component for both, so the gallery's values, validation and payload building live in one place;
-// every dialog is a PostStepDialog, and the parts below it (GalleryToolbar, GalleryPreview,
-// ImageField, GalleryCropField) hold no gallery state of their own.
-//
-// mode "create" walks the steps: the Gallery Name (with the Website dropdown when the site owner
-// has more than one website), then the optional title and copy, then the first image, then the
-// review view. mode "edit" opens straight on the review view, with the gallery loaded. The review
-// view shows Add Image, the GalleryPreview and the GalleryToolbar, with the Published switch
-// (Create only) and Submit under the toolbar's list. Adding or editing one part opens its own
-// dialog on top, working on a copy that only changes the gallery on Insert / Save. The gallery's
-// mobile shape is the first mobile crop's; its toolbar row opens "Edit mobile shape", whose Save
-// reshapes every mobile crop (reshapeCrop).
-//
-// A gallery's name is unique on its website, ignoring case: a name the website's other galleries
-// have (from GET /api/siteOwner/websites) is refused before submit, and the backend's 409 is the
-// fallback, shown under Submit.
-//
-// Cancelling the gallery asks first ("Are you sure…?"), except on the first step, where only a
-// name is lost, and in Edit before anything has changed.
-//
-// Submit first uploads any newly picked images (uploadPicked), swaps in Cloudinary's src, width and
-// height, and scales each new image's crops from the picked file's size to the stored size
-// (scaleCrop), then saves: POST /api/siteOwner/galleries with the status, or
-// PATCH /api/siteOwner/galleries/:id with the full form. If an upload fails nothing is saved;
-// images already uploaded keep their Cloudinary src, so trying again doesn't upload them twice.
-// While it works, SubmitProgressDialog names each step, ending in "Saving your gallery…".
-// useFormTimeout clears the form after 20 hours. The parent unmounts it in onClose or after
-// onSuccess.
+// GalleryForm (site owner): Create and Edit a Gallery as one run of PostStepDialogs. It holds all
+// of the gallery's state, its validation, the image uploads and the save.
 
 "use client";
 
@@ -430,7 +402,8 @@ export default function GalleryForm({
   // Uploads every image with a picked file and returns the images with their Cloudinary src, width
   // and height in place of the file, and their crops scaled from the picked file's size to the
   // stored size. The same swap goes into the form, as a functional update that skips an image
-  // whose file was changed or deleted meanwhile, so a retry sends the stored crops as they are.
+  // whose file was changed or deleted meanwhile, so a retry neither uploads an image twice nor
+  // re-scales its stored crops.
   async function uploadNewImages() {
     const newImages = images.filter((image) => image.file);
     if (newImages.length === 0) return images;

@@ -1,6 +1,5 @@
-// useAccounts (admin): all site owner accounts with their websites (each with its abilities and
-// gallery summaries). Returns { data, loading, error, refetch } plus createAccount, linkWebsite,
-// setAbilityLive and setGalleryLive.
+// useAccounts (admin): every site owner account with its websites. Returns { data, loading, error,
+// refetch } plus createAccount, linkWebsite, setAbilityLive and setGalleryLive.
 
 "use client";
 

@@ -1,13 +1,9 @@
-// PostTable (site owner): one website's posts on /dashboard, in a table (published and draft,
-// newest first as the API returns them): Created, Post Name (linking to /dashboard/post/{id}),
-// Status, and each row's PostActionsMenu. Created, not the optional Post Date: every post has one,
-// and Post Date is only what the site owner shows on their website. onStatusChange(post, status)
-// and onDelete(post) are passed to each menu; the dashboard owns the requests and the delete's
-// confirmation. WebsiteList renders it under the website's "Posts" heading.
+// PostTable (site owner): one website's posts on /dashboard, a row each with its ⋮ menu. The
+// dashboard owns the requests behind onStatusChange and onDelete, and the delete's confirmation.
 
 import Link from "next/link";
 
-import StatusPill from "./StatusPill";
+import Pill from "./Pill";
 import PostActionsMenu from "./PostActionsMenu";
 
 import styles from "../_styling/postTable.module.css";
@@ -19,6 +15,8 @@ export default function PostTable({ posts, onStatusChange, onDelete }) {
     <table className={styles.table}>
       <thead>
         <tr>
+          {/* Created, not the optional Post Date: every post has one, and Post Date is only what
+          the site owner shows on their website. */}
           <th scope="col" className={styles.createdColumn}>
             Created
           </th>
@@ -40,10 +38,9 @@ export default function PostTable({ posts, onStatusChange, onDelete }) {
               <Link href={`/dashboard/post/${post.id}`}>{post.postName}</Link>
             </td>
             <td>
-              <StatusPill
-                active={post.status === "published"}
-                onLabel="published"
-                offLabel="draft"
+              <Pill
+                label={post.status}
+                tone={post.status === "published" ? "green" : "red"}
               />
             </td>
             {/* Positioned, so the menu's list opens from this cell's edges. */}

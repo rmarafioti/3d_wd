@@ -1,7 +1,5 @@
-// Tests for WebsitePicker (docs/flows.md → WebsitePicker): "Choose a website" by default, picking
-// an existing website fills and locks the fields, switching back clears and unlocks them, and
-// backend field messages show next to their fields. toWebsitePayload is covered through the
-// CreateAccountForm payload tests.
+// Tests for WebsitePicker: the default choice, picking an existing website locks the fields, going
+// back unlocks them, and backend field messages. toWebsitePayload is covered by CreateAccountForm's.
 
 import { useState } from "react";
 import { describe, expect, it } from "vitest";

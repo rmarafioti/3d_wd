@@ -1,7 +1,5 @@
-// Site owner layout (client): calls GET /api/auth/me, stores the user in AuthContext,
-// redirects admins to /admin. UX only — the backend enforces access.
-// Once the role is confirmed, it provides the site owner's websites (SiteOwnerDataContext) to every
-// /dashboard route, which also tells the Navbar whether Create a Gallery shows.
+// Site owner layout (client): role-gates /dashboard (UX only, the backend enforces access), then
+// provides the site owner's websites to every /dashboard route (SiteOwnerDataContext).
 
 "use client";
 

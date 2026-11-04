@@ -1,5 +1,4 @@
-// Tests for Toggle, the shared on/off switch: an accessible switch reporting its state, its
-// off / on words either side, asking for the opposite value on click or keyboard, inert while
+// Tests for Toggle: its switch state and words, asking for the opposite value, inert while
 // disabled, and never submitting its form.
 
 import { describe, expect, it, vi } from "vitest";

@@ -22,7 +22,7 @@
 }
 
 /* Open: runs the height of the viewport; the toggle stays at the top and the list scrolls. */
-/* 300px fits a row's name, pill, switch and ⋮ side by side (Rich, 2026-11-02). */
+/* 300px fits a row's name, pill, switch and ⋮ side by side. */
 .open {
   width: 300px;
   height: 100vh;
@@ -34,7 +34,7 @@
 
 /* For a block with a line under it: undoes the aside's 0.5rem side padding (.aside) so the line
    meets the aside's left border, and adds it back inside, so the text stays where it was. Nested
-   blocks line up too, since the content of each stays on the same edge (Rich, 2026-11-02). */
+   blocks line up too, since the content of each stays on the same edge. */
 .fullWidth {
   margin-inline: -0.5rem;
   padding-inline: 0.5rem;
@@ -43,7 +43,7 @@
 
 /* Spans the aside's full width, its content kept on the same edge (as .fullWidth does), so the
    .fullWidth lines inside reach the aside's border within the panel rather than past it, and the
-   panel never scrolls sideways (Rich, 2026-11-02). */
+   panel never scrolls sideways. */
 .panel {
   display: flex;
   flex-direction: column;
@@ -73,8 +73,7 @@
 }
 
 /* Open: a line under the header, so the list scrolling under it reads as passing behind it. It
-   meets the aside's left border, as the list's lines do (.fullWidth); the text stays put
-   (Rich, 2026-11-02). */
+   meets the aside's left border, as the list's lines do (.fullWidth); the text stays put. */
 .open .toggle {
   margin-inline: -0.5rem;
   padding-left: 0.5rem;

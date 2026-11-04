@@ -1,7 +1,5 @@
-// Tests for ParagraphField (docs/flows.md → Paragraph formatting): its Bold / Italic / Link
-// buttons and their shortcuts, the Link panel, the links list with its Edit and Delete, and the
-// messages for a bad link. ParagraphField is controlled; the harness owns its value the way
-// PostForm's paragraph dialogs own their draft.
+// Tests for ParagraphField: its format buttons and shortcuts, the Link panel, the links list and
+// the messages for a bad link.
 
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
@@ -10,6 +8,8 @@ import userEvent from "@testing-library/user-event";
 import ParagraphField from "./ParagraphField";
 import { selectText } from "../../test/helpers";
 
+// ParagraphField is controlled; the harness owns its value the way PostForm's paragraph dialogs
+// own their draft.
 function Harness({ initialText }) {
   const [value, setValue] = useState({ type: "paragraph", text: initialText });
   return (

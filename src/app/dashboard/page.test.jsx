@@ -1,13 +1,5 @@
-// Tests for the site owner dashboard's own wiring (docs/flows.md → Create a Post, Post actions
-// menu): the form opens from the Navbar's ?create=post once the websites have loaded, and drops
-// the query; a create closes it and refetches the list with no
-// success dialog; a row's ⋮ → Status to draft saves straight away and refetches, or shows a failure
-// in a dialog; a row's ⋮ → Delete confirms, deletes and refetches, sends nothing when cancelled,
-// and shows a failure in a dialog. A gallery row's ⋮ (docs/flows.md → Gallery actions menu) saves
-// its status and deletes through the gallery routes; ?create=gallery opens its form. Galleries
-// show only with the Photo Galleries ability (docs/flows.md → Abilities), and the required request
-// dialog opens for the posts once they have a first post (again after every post was deleted),
-// and for each new gallery.
+// Tests for the site owner dashboard's wiring: the ?create= forms, the post and gallery rows' ⋮
+// menus, the Galleries table by ability, and the required request dialogs.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -96,7 +88,7 @@ describe("Dashboard page", () => {
     search = "create=post";
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("No posts yet.");
+    await screen.findByRole("dialog", { name: "Name your post" });
     const websiteGets = () =>
       calls.filter((call) => call.path === "/api/siteOwner/websites");
 

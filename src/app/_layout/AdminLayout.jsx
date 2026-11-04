@@ -1,8 +1,5 @@
-// Admin layout (client): calls GET /api/auth/me, stores the user in AuthContext,
-// redirects site owners to /dashboard. UX only — the backend enforces access.
-// Once the role is confirmed, it provides the admin data (AdminDataContext) to every admin route
-// and renders the Accounts aside over the top right of the page, inside the layout's wrapper so it
-// starts below the Navbar.
+// AdminLayout: role-gates /admin (site owners go to /dashboard; UX only, the backend enforces access),
+// then provides the admin data and renders the page with the Accounts aside.
 
 "use client";
 

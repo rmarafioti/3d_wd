@@ -1,6 +1,5 @@
-// HomeLink: Navbar client island, the "3D Web Dev" link. It leads to the signed-in user's
-// dashboard, or to the landing page when no one is signed in. AuthContext is filled only by the
-// role-gated dashboard layouts, so on the landing and sign-in pages it always leads to /.
+// HomeLink: the Navbar's "3D Web Dev" link, to the signed-in user's dashboard or, signed out, to /.
+// AuthContext is filled only by the dashboard layouts, so on the landing and sign-in pages it is /.
 
 "use client";
 

@@ -1,6 +1,5 @@
-// AuditEventTable (admin): the Audit Events page's read-only table, one row per audit event in
-// the order given (newest first). Times show in the admin's local time, metadata as compact
-// "key: value" pairs, and a field the event doesn't have as an empty cell.
+// AuditEventTable (admin): the Audit Events page's read-only table, one row per audit event, with
+// local times and metadata as "key: value" pairs.
 
 import styles from "../_styling/auditEvents.module.css";
 
