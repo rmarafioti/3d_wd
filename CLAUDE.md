@@ -72,20 +72,19 @@ root
 
 \*underscore all folders that are excluded from routing. Every tested file has its `*.test.js(x)` next to it (see Unit Tests).
 
-## Current progress (as of 2026-11-03)
+## Current progress (as of 2026-11-04)
 
 - **Now:**
   - **Live since 2026-10-28:** the frontend at `https://3dwebdev.com` (Vercel Pro) and the API at `https://api.3dwebdev.com` (Render). Stevie The Dog is the first client website. Features 1 to 13 and issue #67 (with backend #71, placement apart from status) are live, the latest release `release-2026-11-03-3`.
   - **How work runs:** from a GitHub issue Rich writes (Issue Workflow); breaking changes through expand → migrate → contract (`docs/scaling.md` §0, §3); a merge to `main` deploys staging, and Rich releases production with `npm run release` in the backend repo, backend first, each release tagged (Releases).
   - **Staging** (`https://staging.3dwebdev.com`, `https://api-staging.3dwebdev.com`) is kept, following `main`.
-  - **In progress:** issue #69 (with backend issue #73), the audit cleanup before `build-spec`: this repo's session docs trimmed (`docs/trim-session-docs`), then the legacy fields and the shared process (Next 3 and 4).
+  - **In progress:** issue #69 (with backend issue #73), the audit cleanup before `build-spec`: the session docs trimmed (`docs/trim-session-docs`) and post `active` dropped (`chore/drop-legacy-fields`); the shared process is next (Next 3).
 - **Next:**
   1. Rich checks a post with three phone photos on Stevie's production site submits in a few seconds (Feature 11).
   2. Stevie's galleries: Rich wires the gallery component into the Stevie The Dog site, which renders a gallery from `GET /api/public/galleries/:slug` (in its own repo, with its own handoff), then sets Photo Galleries live and its gallery live.
-  3. Backend `chore/drop-legacy-fields` (#73): drops post `active` (Feature 8's contract step; nothing here reads or sends it), the unused ability `requested` and the request email cap. This repo then copies `docs/api.md` on the same branch name, from its linked issue.
-  4. Backend `docs/shared-process` (#73, with #69 items 10 and 11): Issue Workflow, Version Control, Releases, the shared Reminders and the handoff rules move into a `docs/process.md` identical in both repos; Planned Later here points to the backend's, and `docs/scaling.md` keeps only frontend rules.
-  5. #69's code items, each on its own branch: one `Pill` component (item 17) and shorter header comments (item 19).
-  6. Onboarding the four client websites waiting for launch.
+  3. Backend `docs/shared-process` (#73, with #69 items 10 and 11): Issue Workflow, Version Control, Releases, the shared Reminders and the handoff rules move into a `docs/process.md` identical in both repos; Planned Later here points to the backend's, and `docs/scaling.md` keeps only frontend rules.
+  4. #69's code items, each on its own branch: one `Pill` component (item 17) and shorter header comments (item 19).
+  5. Onboarding the four client websites waiting for launch.
 - **Pending notes:**
   - Four client websites are waiting to onboard.
   - Staging is kept, following `main`, with the `production` branch beside it. Its cost ($13.30/month for Render staging) is reassessed later; if it is ever deleted, it is added back from production before the first breaking change (`docs/scaling.md` §9).
@@ -99,11 +98,11 @@ root
 
 One entry per merged piece of work, newest first, in one or two sentences: the PR holds the decisions and why. Only the last five stay here; when one drops out, move it to the top of `docs/history.md` → Progress. Add an entry on every branch, and update Now, Next and Pending notes to match (Workflow Checklist → Step rhythm). An entry cites its issue, such as `fix/x` (issue #42), since the PR number isn't known when it is committed.
 
+- **2026-11-04** `chore/drop-legacy-fields` (issue #70; backend issue #73, the lead): `docs/api.md` copies the contract after the backend drops post `active` (Feature 8's contract step), the unused ability `requested` and the request email cap; `flows.md` stops calling `active` legacy. Nothing in `src/` read or sent it. Docs only.
 - **2026-11-03** `docs/trim-session-docs` (issue #69; backend issue #73, the lead): what loads every session is cut, with no rule lost. The progress table becomes this list, Now short bullets and each Feature one line, with the older entries, the MVP Build Order and the Features as recorded moved word for word to `docs/history.md`; the dialog rule is stated once, decision attributions go, the tree and hook list are cut, Code Review's Scope and Output live only in `/code-sweep`, and the Workflow Checklist's repeated checks become the self-review. Docs only.
 - **2026-11-03** `fix/onboarding-ui` (issue #67; backend issue #71 leads item 3): UI adjustments before onboarding (the two-row Navbar with its phone menu, `/admin/createAccount`, the Accounts aside by website), and an ability's `status` apart from where its content goes (`placement`), a breaking contract change released with the backend's.
 - **2026-11-03** `docs/master-doc-scope` (issue #65; backend issue #62, the lead): the master doc is no longer a copy of the repos; only its Proposal and Build vs Buy tabs stay current. Docs only.
 - **2026-11-02** `feat/ability-emails` (issue #63; backend issue #65, the lead): Feature 13, Request emails: a sent request message can be edited ("Edit placement"), and the backend emails the admin each time one is sent or edited.
-- **2026-11-02** `chore/production-alerts` (issue #61; backend issue #50, the lead): Sentry for the frontend, production only, scrubbed to the error and the page's path, never an `apiFetch` error.
 
 ## Features
 
@@ -116,7 +115,7 @@ New work after the MVP Build Order, numbered and named the same as in the backen
 5. **Image uploads** (`feat/image-uploads`): images uploaded to 3DWD's Cloudinary on Submit, and the 20-hour form timeout.
 6. **Admin audit log view** (`feat/admin-audit-log`, issue #38): `/admin/auditEvents`, one UTC month at a time.
 7. **Delete a post** (`feat/delete-post`, issue #42): soft delete, and the dashboard's post table with its ⋮ menu.
-8. **Post status** (`feat/post-status`, issue #44): `draft` / `published`; this repo reads and sends only `status`, and the backend drops `active` in #73 (Next 3).
+8. **Post status** (`feat/post-status`, issue #44): `draft` / `published`; `active` dropped in #73 (`chore/drop-legacy-fields`).
 9. **Streamlined post flow** (`feat/streamlined-post-flow`, issue #46, frontend only): step dialogs and a review view with a toolbar.
 10. **Photo galleries** (`feat/photo-gallery`, issue #51): galleries of up to 30 images with optional, consistent crops.
 11. **Faster photo submit** (`feat/faster-photo-submit`, issue #55, the frontend leads): photos shrunk before upload, the Submit progress dialog, 16px form fields.
