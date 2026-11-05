@@ -373,13 +373,18 @@ export default function PostForm({
 
   // Uploads every image with a picked file and returns the body with their Cloudinary src, width
   // and height in place of the file. The same swap goes into the form, as a functional update
-  // that skips an image whose file was changed or deleted meanwhile. If a save then fails, the
-  // uploaded images keep their Cloudinary src, so trying again doesn't upload them twice.
+  // that skips an image whose file was changed or deleted meanwhile, before any upload error is
+  // thrown. So when some uploads or the save fail, the uploaded images keep their Cloudinary src,
+  // and trying again uploads only the rest.
   async function uploadNewImages() {
     const newImages = body.filter((element) => element.file);
     if (newImages.length === 0) return body;
 
-    const storedBySrc = await uploadPicked(websiteId, newImages, setProgress);
+    const { storedBySrc, error } = await uploadPicked(
+      websiteId,
+      newImages,
+      setProgress,
+    );
 
     function swap(element) {
       const image = storedBySrc.get(element.src);
@@ -387,8 +392,11 @@ export default function PostForm({
       const { file: _file, ...rest } = element;
       return { ...rest, ...image };
     }
-    newImages.forEach(releaseImage);
+    newImages
+      .filter((element) => storedBySrc.has(element.src))
+      .forEach(releaseImage);
     setValues((current) => ({ ...current, body: current.body.map(swap) }));
+    if (error) throw error;
     return body.map(swap);
   }
 

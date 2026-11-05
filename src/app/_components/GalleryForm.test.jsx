@@ -75,17 +75,22 @@ const SIGNATURE = {
   fields: { folder: "3dwd-dev/steviethedog", signature: "0a1b2c" },
 };
 
-// The sign endpoint and Cloudinary, which stores a 4000 × 3000 file at 2500 × 1875.
-function mockUploads() {
+// Cloudinary's answer for the nth upload: a 4000 × 3000 file stored at 2500 × 1875.
+function stored(n) {
+  return {
+    body: {
+      secure_url: `${FOLDER_URL}/stored${n}.jpg`,
+      width: 2500,
+      height: 1875,
+    },
+  };
+}
+
+// The sign endpoint and Cloudinary, answering uploads in order (the last one repeats).
+function mockUploads(uploads = [stored(1)]) {
   return mockFetch({
     "POST /api/siteOwner/uploads/sign": { body: { data: SIGNATURE } },
-    [`POST ${UPLOAD_URL}`]: {
-      body: {
-        secure_url: `${FOLDER_URL}/stored1.jpg`,
-        width: 2500,
-        height: 1875,
-      },
-    },
+    [`POST ${UPLOAD_URL}`]: uploads,
   }).calls;
 }
 
@@ -156,6 +161,9 @@ async function walkToFirstImage(user, galleryName = "Inside") {
   await user.click(button("Next"));
   await user.click(button("Next"));
 }
+
+// A 1600 px square crop on a picked 4000 × 3000 file.
+const SQUARE = { x: 0, y: 0, width: 1600, height: 1600 };
 
 // From an open image dialog: crop with the stub reporting `pixels`, then Save.
 async function crop(user, imageDialog, action, pixels) {
@@ -323,6 +331,55 @@ describe("GalleryForm submit", () => {
         },
       ],
     });
+  });
+
+  it("keeps an image that uploaded when another fails, and scales its crop only once across the retry", async () => {
+    const loads = stubImageLoading();
+    stubObjectUrls();
+    stubImageShrinking({ width: 4000, height: 3000 });
+    const calls = mockUploads([
+      stored(1),
+      {
+        status: 400,
+        body: { error: { message: "Image file format gif not allowed" } },
+      },
+      stored(2),
+    ]);
+    const onSubmit = vi.fn().mockResolvedValue(GALLERY);
+    const { user, onSuccess } = renderCreate({ onSubmit });
+    await walkToFirstImage(user);
+    const firstDialog = dialog("Add your first image");
+    await pickImage(user, firstDialog, loads, "Stevie");
+    await crop(user, firstDialog, "Crop thumbnail", SQUARE);
+    await user.click(button("Insert", firstDialog));
+    await user.click(button("Add Image"));
+    const secondDialog = dialog("Add an image");
+    await pickImage(user, secondDialog, loads, "Ball");
+    await crop(user, secondDialog, "Crop thumbnail", SQUARE);
+    await user.click(button("Insert", secondDialog));
+    await user.click(button("Submit"));
+    expect(
+      await screen.findByText(
+        "1 of your 2 images couldn't be uploaded. Press Submit to try it again.",
+      ),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(calls.filter((call) => call.path === UPLOAD_URL)).toHaveLength(3);
+    // The 1600 px square drawn on the picked 4000 × 3000 file is 1000 px on the stored 2500 × 1875.
+    const scaled = { x: 0, y: 0, width: 1000, height: 1000 };
+    expect(
+      onSubmit.mock.calls[0][0].images.map(({ src, thumbnailCrop }) => ({
+        src,
+        thumbnailCrop,
+      })),
+    ).toEqual([
+      { src: `${FOLDER_URL}/stored1.jpg`, thumbnailCrop: scaled },
+      { src: `${FOLDER_URL}/stored2.jpg`, thumbnailCrop: scaled },
+    ]);
   });
 
   it("shows the backend's 409 under Submit and keeps everything entered", async () => {
