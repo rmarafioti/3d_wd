@@ -63,7 +63,7 @@ Lint enforces the rules marked **(lint)** (`eslint.config.mjs`, each message nam
 `_lib/apiFetch.js` is the only place our API is fetched: it sets `credentials: 'include'` and the CSRF header on every write, unwraps `{ data }`, throws the `{ error }` envelope and handles 401 (its header, and `docs/api.md` → Conventions). Leaving off `credentials: 'include'` or the CSRF header fails silently or with a confusing 403 — that's why it lives in one place. The one other `fetch` is the image upload to Cloudinary in `_lib/uploadImages.js`, which goes to Cloudinary rather than our API, so it carries no credentials and no CSRF header, and its signature still comes from our API through `apiFetch`.
 
 **Never send Sentry anything a user typed or sent (lint, for the imports and calls):**
-Every event goes through `_lib/sentry.js`, the only file that imports Sentry, whose `dataCollection` and `scrubEvent` keep only the error and the page's path: no query string, cookies, headers, user or breadcrumbs. Never call `Sentry.setUser`, `setExtra` or `setContext` with user data, add breadcrumbs, or turn on tracing or Session Replay. Never report an `ApiError`: the UI shows it, and the backend reports its own 500s. Sentry's SDK sends its events itself (its own `fetch` to the ingest origin, allowed in `connect-src` on production only); that is not a call to our API.
+Every event goes through `_lib/sentry.js`, the only file that imports Sentry, whose `dataCollection` and `scrubEvent` keep only the error and the page's path: no query string, cookies, headers, user or breadcrumbs. Never call `Sentry.setUser`, `setExtra` or `setContext` with user data, add breadcrumbs, or turn on tracing or Session Replay. Never report an `ApiError`: the UI shows it, and the backend reports its own 500s. The one event with tags is `reportUploadFailure`'s, for image uploads that failed after their retries: counts and failure reasons only, never a file, its name or the upload URL and fields. Sentry's SDK sends its events itself (its own `fetch` to the ingest origin, allowed in `connect-src` on production only); that is not a call to our API.
 
 **Never store the session token, or try to read it, in JS at all (lint):**
 No localStorage, no sessionStorage, no `document.cookie`, no attempt to inspect it. It's httpOnly by design specifically so JS can't touch it; any code that tries is fighting the architecture, not working with it. `proxy.js` only checks whether the `session` cookie _exists_ — it never decodes it.
@@ -310,7 +310,7 @@ root
 │       ├── _lib/
 │       │   ├── apiFetch.js       *the only place our API is fetched
 │       │   ├── contentSecurityPolicy.js *STATIC_PATHS and the nonce and static policies proxy.js sets
-│       │   ├── uploadImages.js   *Submit's image uploads: each file shrunk, one signature, then each file to Cloudinary
+│       │   ├── uploadImages.js   *Submit's image uploads: each file shrunk, one signature, then each file to Cloudinary, 3 at a time, retried
 │       │   ├── postFormatting.js *the one reader of paragraph markup
 │       │   ├── sentry.js         *Sentry error reporting, production only, and the event scrub
 │       │   └── validation.js     *frontend copy of the docs/api.md validation rules
@@ -336,7 +336,7 @@ root
 
 \*underscore all folders that are excluded from routing. Every tested file has its `*.test.js(x)` next to it (see Unit Tests).
 
-## Current progress (as of 2026-11-04)
+## Current progress (as of 2026-11-05)
 
 - **Now:**
   - **Live since 2026-10-28:** the frontend at `https://3dwebdev.com` (Vercel Pro) and the API at `https://api.3dwebdev.com` (Render). Stevie The Dog is the first client website. Features 1 to 13 and issue #67 (with backend #71, placement apart from status) are live, the latest release `release-2026-11-03-3`.
@@ -359,11 +359,11 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-05** `fix/upload-resilience` (issue #79, frontend only): Submit uploads new photos 3 at a time, retries one that fails on the network or with a 5xx twice (after 1s, then 3s), keeps every photo that uploaded when another fails so the next Submit uploads only the rest, says how many failed, and reports the failure to Sentry with counts and reasons only.
 - **2026-11-04** `docs/v1-trim` (issue #77; backend issue #77, the lead): only `docs/process.md` is imported, with a Read before table in its place; `CLAUDE.md` is ordered by weight, each rule said once with no history inside it, and the launch checklist moves to `docs/history.md`. New ESLint rules (proven by `eslint.config.test.mjs`) enforce `apiFetch` only, no browser storage or cookie reads, no raw HTML, Sentry only through `_lib/sentry.js`, no em dash in UI text and a static landing page. Also records the Feature 11 phone-photo check as confirmed on production.
 - **2026-11-04** `chore/audit-follow-ups` (issue #75, frontend only): `StatusPill`, `AbilityPill` and `PlacementPill` become one `Pill({ label, tone })`, with the ability pill's tones in `_lib/abilities.js`; every JS / JSX header is cut to one or two lines and history leaves every comment; the tests of a dialog that opens on load wait for it with `findByRole`. No behaviour change.
 - **2026-11-04** `docs/shared-process` (issue #73; backend issue #73, the lead): Issue Workflow, Cross-Repo Handoff, Version Control, Releases and the shared Reminders rule move into `docs/process.md`, an identical copy of the backend's; Planned Later and Documentation Sync become pointers, `docs/scaling.md` keeps only frontend rules, and the guard hook copy points at `docs/process.md`. Docs only.
 - **2026-11-04** `chore/drop-legacy-fields` (issue #70; backend issue #73, the lead): `docs/api.md` copies the contract after the backend drops post `active` (Feature 8's contract step), the unused ability `requested` and the request email cap; `flows.md` stops calling `active` legacy. Nothing in `src/` read or sent it. Docs only.
-- **2026-11-03** `docs/trim-session-docs` (issue #69; backend issue #73, the lead): what loads every session is cut, with no rule lost. The progress table becomes this list, Now short bullets and each Feature one line, with the older entries, the MVP Build Order and the Features as recorded moved word for word to `docs/history.md`; the dialog rule is stated once, decision attributions go, the tree and hook list are cut, Code Review's Scope and Output live only in `/code-sweep`, and the Workflow Checklist's repeated checks become the self-review. Docs only.
 
 ## Features
 

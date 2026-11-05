@@ -71,6 +71,12 @@ function stored(n) {
   };
 }
 
+// Cloudinary refusing an upload: a 4xx, which is never retried.
+const REFUSED = {
+  status: 400,
+  body: { error: { message: "Image file format gif not allowed" } },
+};
+
 // The sign endpoint and Cloudinary, answering uploads in order. Returns mockFetch's calls.
 function mockUploads(uploads = [stored(1), stored(2)]) {
   return mockFetch({
@@ -830,19 +836,10 @@ describe("PostForm image uploads", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it.each([
-    [
-      "Cloudinary refuses it",
-      {
-        status: 400,
-        body: { error: { message: "Image file format gif not allowed" } },
-      },
-    ],
-    ["Cloudinary can't be reached", { networkError: true }],
-  ])("saves nothing and keeps the post when %s", async (_, failure) => {
+  it("saves nothing and keeps the post when Cloudinary refuses the image", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
-    mockUploads([failure]);
+    mockUploads([REFUSED]);
     const onSubmit = vi.fn();
     const { user } = renderCreate({ onSubmit });
     await walkSteps(user);
@@ -1010,23 +1007,36 @@ describe("PostForm image uploads", () => {
     expect(toolbarRows()[0]).toBe("Post Name: Walk day");
   });
 
-  it("keeps the progress dialog closed after a failed upload, even as another upload finishes", async () => {
+  it("keeps the images that uploaded when another fails, so Submit again uploads only the rest", async () => {
     const loads = stubImageLoading();
-    stubObjectUrls();
-    const second = deferred();
-    mockUploads([{ networkError: true }, () => second.promise]);
-    const { user } = renderCreate({ onSubmit: vi.fn() });
+    const { revokeObjectURL } = stubObjectUrls();
+    const calls = mockUploads([stored(1), REFUSED, stored(2)]);
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user, onSuccess } = renderCreate({ onSubmit });
     await walkSteps(user);
     await addImage(user, loads, "Stevie");
     await addImage(user, loads, "Ball");
     await user.click(button("Submit"));
-    await screen.findByText(
-      "Your images couldn't be uploaded, please try again.",
+    expect(
+      await screen.findByText(
+        "1 of your 2 images couldn't be uploaded. Press Submit to try it again.",
+      ),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test/1");
+    expect(revokeObjectURL).not.toHaveBeenCalledWith("blob:test/2");
+
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(uploadCalls(calls)).toHaveLength(3);
+    const images = onSubmit.mock.calls[0][0].body.filter(
+      (element) => element.type === "image",
     );
-
-    await act(async () => second.resolve(stored(2)));
-
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(images.map((element) => element.image.src)).toEqual([
+      `${FOLDER_URL}/stored1.jpg`,
+      `${FOLDER_URL}/stored2.jpg`,
+    ]);
   });
 
   it("lets go of picked images' object URLs when the form closes", async () => {

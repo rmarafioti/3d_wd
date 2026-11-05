@@ -1,5 +1,6 @@
 // sentry: the one place the app talks to Sentry, production only (off while NEXT_PUBLIC_SENTRY_DSN
-// is empty). An event carries the error and the page's path, never what a user typed or sent.
+// is empty). An event carries the error and the page's path (and a failed upload's counts), never
+// what a user typed or sent.
 
 import * as Sentry from "@sentry/browser";
 import { ApiError } from "./apiFetch";
@@ -58,4 +59,18 @@ export function initSentry(overrides = {}) {
 // Reports an error a boundary caught (global-error.js). Does nothing while Sentry is off.
 export function reportError(error) {
   if (Sentry.isInitialized()) Sentry.captureException(error);
+}
+
+// Reports a Submit whose image uploads failed after their retries: how many of how many, and why
+// (e.g. "network", "status 503"). Never the file, its name or the upload URL and fields. The one
+// fixed message groups every upload failure as one Sentry issue.
+export function reportUploadFailure({ failed, total, reasons }) {
+  if (!Sentry.isInitialized()) return;
+  Sentry.captureException(new Error("Image upload failed"), {
+    tags: {
+      uploadFailed: failed,
+      uploadTotal: total,
+      uploadFailure: reasons.join(", "),
+    },
+  });
 }

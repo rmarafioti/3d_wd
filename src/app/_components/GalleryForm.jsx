@@ -402,13 +402,17 @@ export default function GalleryForm({
   // Uploads every image with a picked file and returns the images with their Cloudinary src, width
   // and height in place of the file, and their crops scaled from the picked file's size to the
   // stored size. The same swap goes into the form, as a functional update that skips an image
-  // whose file was changed or deleted meanwhile, so a retry neither uploads an image twice nor
-  // re-scales its stored crops.
+  // whose file was changed or deleted meanwhile, before any upload error is thrown. So when some
+  // uploads or the save fail, a retry uploads only the rest and never re-scales stored crops.
   async function uploadNewImages() {
     const newImages = images.filter((image) => image.file);
     if (newImages.length === 0) return images;
 
-    const storedBySrc = await uploadPicked(websiteId, newImages, setProgress);
+    const { storedBySrc, error } = await uploadPicked(
+      websiteId,
+      newImages,
+      setProgress,
+    );
 
     function swap(image) {
       const stored = storedBySrc.get(image.src);
@@ -427,8 +431,11 @@ export default function GalleryForm({
         mobileCrop: scaleCrop(image.mobileCrop, picked, stored, "mobile"),
       };
     }
-    newImages.forEach((image) => releaseObjectUrl(image.src));
+    newImages
+      .filter((image) => storedBySrc.has(image.src))
+      .forEach((image) => releaseObjectUrl(image.src));
     setValues((current) => ({ ...current, images: current.images.map(swap) }));
+    if (error) throw error;
     return images.map(swap);
   }
 
