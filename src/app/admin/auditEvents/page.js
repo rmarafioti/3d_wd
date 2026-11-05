@@ -1,12 +1,12 @@
-// Audit Events page: the read-only audit log, one UTC month at a time. A Client Component on
-// purpose, since per-user data is only ever fetched client-side.
+// Audit Events page: the read-only audit log, one UTC month or one local day at a time. A Client
+// Component on purpose, since per-user data is only ever fetched client-side.
 
 "use client";
 
 import { useState } from "react";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
 import { useAuth } from "../../_hooks/useAuth";
-import { useAuditEvents } from "../../_hooks/useAuditEvents";
+import { auditEventsQuery, useAuditEvents } from "../../_hooks/useAuditEvents";
 import { useAuditEventMonths } from "../../_hooks/useAuditEventMonths";
 import AuditEventTable from "../../_components/AuditEventTable";
 import Toggle from "../../_components/Toggle";
@@ -20,6 +20,13 @@ const SIGN_IN_ACTIONS = ["auth.login_succeeded", "auth.logout"];
 // The month is a UTC calendar month ("YYYY-MM"), the one the API filters by.
 function currentUtcMonth() {
   return new Date().toISOString().slice(0, 7);
+}
+
+// Today in the admin's time zone, as a date field's value ("YYYY-MM-DD"): the latest day to pick.
+function todayLocalDate() {
+  const now = new Date();
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 // "2026-10" → "October 2026".
@@ -36,6 +43,8 @@ export default function AuditEventsPage() {
   const months = useAuditEventMonths();
   // The month the admin stepped to, or null for the newest month with events.
   const [chosenMonth, setChosenMonth] = useState(null);
+  // The day picked in the date field ("YYYY-MM-DD"), or "" for the whole month.
+  const [date, setDate] = useState("");
   const [hideMySignIns, setHideMySignIns] = useState(false);
 
   // Until the months arrive nothing is fetched. An empty log shows the current month's empty state.
@@ -49,13 +58,12 @@ export default function AuditEventsPage() {
     loadMore,
     loadingMore,
     loadMoreError,
-  } = useAuditEvents(month);
+  } = useAuditEvents(month && auditEventsQuery({ month, date }));
 
-  // months.data is newest first, so the older month is the next entry and the newer one the
-  // entry before. A month not in the list (the empty log's current month) has neither.
-  const index = months.data?.indexOf(month) ?? -1;
-  const olderMonth = index === -1 ? null : (months.data[index + 1] ?? null);
-  const newerMonth = index === -1 ? null : (months.data[index - 1] ?? null);
+  // The nearest months with events either side of the one shown ("YYYY-MM" sorts as text), so a
+  // date picked in a month without events can still step away. months.data is newest first.
+  const olderMonth = months.data?.find((entry) => entry < month) ?? null;
+  const newerMonth = months.data?.findLast((entry) => entry > month) ?? null;
   const events = (data ?? []).filter(
     (event) =>
       !hideMySignIns ||
@@ -63,10 +71,25 @@ export default function AuditEventsPage() {
       event.actorEmail !== user?.email,
   );
 
+  function handleDateChange(event) {
+    const picked = event.target.value;
+    setDate(picked);
+    // The month name follows the picked day.
+    if (picked) setChosenMonth(picked.slice(0, 7));
+  }
+
+  // A chevron leaves the picked day for the whole of the month it steps to.
+  function stepTo(nextMonth) {
+    setDate("");
+    setChosenMonth(nextMonth);
+  }
+
   let content;
   if (months.error) content = <p>{months.error.message}</p>;
   else if (error) content = <p>{error.message}</p>;
   else if (loading) content = <p>Loading…</p>;
+  else if (data.length === 0 && date)
+    content = <p>No audit events on this day.</p>;
   else if (data.length === 0) content = <p>No audit events this month.</p>;
   else if (events.length === 0)
     content = <p>No audit events to show. Your sign-ins are hidden.</p>;
@@ -74,8 +97,7 @@ export default function AuditEventsPage() {
 
   return (
     <article className={styles.auditEvents}>
-      {/* Shrinks to the table's width, so the heading and the switch line up with its left edge
-          and the month controls with its right edge. */}
+      {/* Shrinks to the table's width, so the rows above it line up with its left edge. */}
       <div className={styles.tableArea}>
         <div className={styles.topRow}>
           <h1>Audit Events</h1>
@@ -84,7 +106,7 @@ export default function AuditEventsPage() {
               type="button"
               aria-label="Previous month"
               title="Previous month"
-              onClick={() => setChosenMonth(olderMonth)}
+              onClick={() => stepTo(olderMonth)}
               disabled={!olderMonth}
               className={styles.monthButton}
             >
@@ -95,13 +117,34 @@ export default function AuditEventsPage() {
               type="button"
               aria-label="Next month"
               title="Next month"
-              onClick={() => setChosenMonth(newerMonth)}
+              onClick={() => stepTo(newerMonth)}
               disabled={!newerMonth}
               className={styles.monthButton}
             >
               <GoChevronRight aria-hidden="true" />
             </button>
           </div>
+        </div>
+        <div className={styles.dateRow}>
+          <label className={styles.dateField}>
+            Date
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={date}
+              max={todayLocalDate()}
+              onChange={handleDateChange}
+            />
+          </label>
+          {date && (
+            <button
+              type="button"
+              onClick={() => setDate("")}
+              className={styles.clearButton}
+            >
+              Clear
+            </button>
+          )}
         </div>
         <div className={styles.toggleRow}>
           <p aria-hidden="true">Hide my sign-ins</p>

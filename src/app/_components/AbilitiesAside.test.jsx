@@ -2,7 +2,14 @@
 // confirmation, failures, and editing the posts placement.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AbilitiesAside from "./AbilitiesAside";
 import { mockFetch } from "../../test/helpers";
@@ -77,6 +84,118 @@ describe("AbilitiesAside", () => {
     expect(screen.getByText("Posts")).toBeInTheDocument();
     expect(screen.getByText("Photo Galleries")).toBeInTheDocument();
     expect(screen.getByText("live")).toBeInTheDocument();
+  });
+
+  it("describes each ability through its info button, for screen readers", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+
+    expect(
+      screen.getByRole("button", { name: "About Posts" }),
+    ).toHaveAccessibleDescription(
+      "Write posts with text and photos, add bold, italics and links, and preview each post before it goes up. Publish it to your website or keep it as a draft. Tell us once where your posts should go, and we'll reply promptly by email with a mockup to approve.",
+    );
+    expect(
+      screen.getByRole("button", { name: "About Photo Galleries" }),
+    ).toHaveAccessibleDescription(
+      "Create photo galleries of up to 30 photos each, with an optional square thumbnail and mobile crop for every photo. Give each gallery a title and copy, then tell us where on your website it should go. We'll reply promptly by email with a mockup to approve.",
+    );
+  });
+
+  it("shows an ability's info while the pointer is over its button", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    const info = screen.getByRole("button", { name: "About Posts" });
+
+    await user.hover(info);
+
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    await user.unhover(info);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("shows an ability's info on keyboard focus, and hides it on Esc", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    const info = screen.getByRole("button", { name: "About Posts" });
+
+    act(() => info.focus());
+
+    expect(info).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    await user.keyboard("{Escape}");
+    expect(info).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("opens an ability's info level with its row, flush against the aside's border, when the screen has room", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    // jsdom lays nothing out: a 1024px page beside a 15px scrollbar, the open aside (340px) at its
+    // right, and the row inside it.
+    vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(
+      1024,
+    );
+    vi.stubGlobal("innerWidth", 1039);
+    vi.spyOn(
+      screen.getByRole("complementary", { name: "Abilities" }),
+      "getBoundingClientRect",
+    ).mockReturnValue({ left: 684 });
+    vi.spyOn(
+      screen.getByText("Posts").closest("li"),
+      "getBoundingClientRect",
+    ).mockReturnValue({ top: 100, bottom: 140, left: 692, width: 324 });
+
+    await user.hover(screen.getByRole("button", { name: "About Posts" }));
+
+    expect(screen.getByRole("tooltip")).toHaveStyle({
+      top: "100px",
+      right: "339px",
+      width: "256px",
+    });
+  });
+
+  it("opens an ability's info under its row when the aside fills the screen", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    vi.spyOn(
+      screen.getByRole("complementary", { name: "Abilities" }),
+      "getBoundingClientRect",
+    ).mockReturnValue({ left: 0 });
+    vi.spyOn(
+      screen.getByText("Posts").closest("li"),
+      "getBoundingClientRect",
+    ).mockReturnValue({ top: 100, bottom: 140, left: 0, width: 375 });
+
+    await user.hover(screen.getByRole("button", { name: "About Posts" }));
+
+    expect(screen.getByRole("tooltip")).toHaveStyle({
+      top: "140px",
+      left: "0px",
+      width: "375px",
+    });
+  });
+
+  it("closes an ability's info when anything scrolls", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+    await user.click(screen.getByRole("button", { name: "About Posts" }));
+
+    fireEvent.scroll(document);
+
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("shows an ability's info on a tap", async () => {
+    const { user } = renderAside([STEVIE]);
+    await user.click(screen.getByRole("button", { name: "Abilities" }));
+
+    await user.click(
+      screen.getByRole("button", { name: "About Photo Galleries" }),
+    );
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Create photo galleries of up to 30 photos each",
+    );
   });
 
   it("reads Add ? and offers only + Add for an ability the website hasn't added", async () => {
@@ -266,8 +385,8 @@ describe("AbilitiesAside", () => {
       },
     ]);
     await user.click(screen.getByRole("button", { name: "Abilities" }));
-    const posts = screen.getByText("Posts").parentElement;
-    const galleries = screen.getByText("Photo Galleries").parentElement;
+    const posts = screen.getByText("Posts").closest("li");
+    const galleries = screen.getByText("Photo Galleries").closest("li");
 
     expect(within(posts).getByText("live")).toBeInTheDocument();
     expect(within(posts).getByText("requested")).toBeInTheDocument();
@@ -277,7 +396,7 @@ describe("AbilitiesAside", () => {
   it("shows one live pill on posts once they are placed live", async () => {
     const { user } = renderAside([STEVIE]);
     await user.click(screen.getByRole("button", { name: "Abilities" }));
-    const posts = screen.getByText("Posts").parentElement;
+    const posts = screen.getByText("Posts").closest("li");
 
     expect(within(posts).getAllByText("live")).toHaveLength(1);
   });

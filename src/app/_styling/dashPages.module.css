@@ -120,6 +120,11 @@
   margin-bottom: 0.5rem;
 }
 
+/* Posts' placement note, a little under their header's line, above their list. */
+.postsNote {
+  margin-top: 0.5rem;
+}
+
 /* The site owner's request note keeps the line breaks they typed. */
 .requestNote {
   margin-bottom: 0.5rem;
@@ -140,11 +145,12 @@
   position: relative;
 }
 
-/* The tables' width (postTable.module.css), so a website with no posts or galleries doesn't
-   shrink the section. */
+/* As wide as its widest table, from 30rem, so a website with no posts or galleries doesn't shrink
+   it, to 40rem, where the tables' names start to wrap (postTable.module.css). */
 .siteOwnerAccount {
-  width: 30rem;
-  max-width: 100%;
+  width: fit-content;
+  min-width: 30rem;
+  max-width: min(40rem, 100%);
 }
 
 @media (max-width: 667px) {
@@ -155,6 +161,8 @@
   /* The screen's width less a 1rem gutter each side, as the tables' (postTable.module.css). */
   .siteOwnerAccount {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: 0rem 1rem;
   }
 }

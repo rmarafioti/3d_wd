@@ -11,15 +11,18 @@
   max-width: 100%;
 }
 
-/* The heading at the table's left edge, the month controls at its right. */
+/* The heading at the table's left edge, the month controls right beside it, wrapping under it on a
+   narrow screen. */
 .topRow {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
+/* Under the heading: the date field, then Hide my sign-ins. */
+.dateRow,
 .toggleRow {
   display: flex;
   align-items: center;
@@ -60,6 +63,20 @@
   gap: 1rem;
 }
 
+/* "Date" and its field centred on one line. */
+.dateField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* No global input bottom margin, which would lift the field off the label's centre line, and only
+   as wide as a date. */
+.dateInput {
+  width: auto;
+  margin-bottom: 0;
+}
+
 /* Square icon buttons like the post editor's format buttons: the global button's width, padding
    and colours are reset. */
 .monthButton {
@@ -70,6 +87,16 @@
   height: 2.5rem;
   padding: 0rem;
   font-size: 20px;
+  color: black;
+  background-color: white;
+  border: 1px solid lightgray;
+}
+
+/* Clear, in the month buttons' look (as tall, white with a light gray border), at the global
+   button's width. */
+.clearButton {
+  height: 2.5rem;
+  padding: 0rem 0.5rem;
   color: black;
   background-color: white;
   border: 1px solid lightgray;

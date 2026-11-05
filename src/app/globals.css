@@ -1,6 +1,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* The site's three fonts, loaded by next/font in layout.js. */
+  --logoFont: var(--fontBbhHegarty), sans-serif;
+  --headerFont: var(--fontMontserrat), sans-serif;
+  --copyFont: var(--fontMontserrat), sans-serif;
 }
 
 * {
@@ -26,13 +30,23 @@ body {
   flex-direction: column;
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--copyFont);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--headerFont);
+  font-weight: 600;
 }
 
 article {
@@ -111,7 +125,7 @@ label {
 }
 
 textarea {
-  font-family: "Arial", Times, serif;
+  font-family: var(--copyFont);
   width: 100%;
   /* Resize only in height, never wider than its container, so it can't be dragged out of a dialog. */
   max-width: 100%;

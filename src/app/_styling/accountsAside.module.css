@@ -22,9 +22,11 @@
 }
 
 /* Open: runs the height of the viewport; the toggle stays at the top and the list scrolls. */
-/* 300px fits a row's name, pill, switch and ⋮ side by side. */
+/* 340px fits a row's info icon, name ("Photo Galleries" on one line), pill, switch and ⋮ side by
+   side; never wider than a narrow phone's screen. */
 .open {
-  width: 300px;
+  width: 340px;
+  max-width: 100vw;
   height: 100vh;
   /* The visible height on a phone, so the last row isn't under the browser's bottom bar. */
   height: 100dvh;

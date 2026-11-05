@@ -7,6 +7,7 @@ import {
   ABILITY_PILL_TONES,
   abilityPillLabel,
   findAbility,
+  placementTone,
 } from "../_lib/abilities";
 import ActionsMenu from "./ActionsMenu";
 import Pill from "./Pill";
@@ -20,14 +21,15 @@ function yesNo(value) {
   return value ? "Yes" : "No";
 }
 
-// The site owner's request note, saying where on their website something goes, once sent: the
-// posts' (their ability's) or one gallery's. Line breaks kept.
+// The site owner's request note, shown as "Placement note" right under the Placement pill it
+// explains: where on their website something goes, once sent, the posts' (their ability's) or one
+// gallery's. Line breaks kept. A term and its value, so it goes inside a <dl>.
 function RequestNote({ note }) {
   if (!note) return null;
   return (
     <>
-      <p className={styles.key}>Request note:</p>
-      <p className={styles.requestNote}>{note}</p>
+      <dt className={styles.key}>Placement note:</dt>
+      <dd className={styles.requestNote}>{note}</dd>
     </>
   );
 }
@@ -76,13 +78,18 @@ function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
               <ItemStatus status={gallery.status} />
             </summary>
             <dl className={styles.gallerySummary}>
+              {/* The code the site owner sees on their dashboard, so both can name the gallery. */}
+              <div className={styles.itemRow}>
+                <dt className={styles.key}>Gallery Code:</dt>
+                <dd>{gallery.slug}</dd>
+              </div>
               {gallery.placement && (
                 <div className={styles.itemRow}>
                   <dt className={styles.key}>Placement:</dt>
                   <dd className={styles.pillGroup}>
                     <Pill
                       label={gallery.placement}
-                      tone={gallery.placement === "live" ? "green" : "purple"}
+                      tone={placementTone(gallery.placement)}
                     />
                     {galleriesLive && gallery.placement === "requested" && (
                       <Toggle
@@ -95,6 +102,7 @@ function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
                   </dd>
                 </div>
               )}
+              <RequestNote note={gallery.requestNote} />
               {[
                 ["Photos:", gallery.imageCount],
                 ["Thumbnails:", yesNo(gallery.hasThumbnails)],
@@ -106,7 +114,6 @@ function GalleryItems({ galleries, galleriesLive, website, onSetGalleryLive }) {
                 </div>
               ))}
             </dl>
-            <RequestNote note={gallery.requestNote} />
           </details>
         </li>
       ))}
@@ -179,6 +186,13 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
                     )}
                   </span>
                 </summary>
+                {/* Posts' note right under their header, which holds their placement pill. Each
+                    gallery's is under its own Placement, inside its dropdown. */}
+                {kind === "posts" && ability.requestNote && (
+                  <dl className={styles.postsNote}>
+                    <RequestNote note={ability.requestNote} />
+                  </dl>
+                )}
                 {kind === "posts" ? (
                   <PostItems posts={website.posts} />
                 ) : (
@@ -189,9 +203,6 @@ function Abilities({ website, onSetLive, onSetGalleryLive }) {
                     onSetGalleryLive={onSetGalleryLive}
                   />
                 )}
-                {/* Under the posts, since it says where they go on the website. Each gallery has its
-                    own, inside its dropdown. */}
-                {kind === "posts" && <RequestNote note={ability.requestNote} />}
               </details>
             </li>
           );

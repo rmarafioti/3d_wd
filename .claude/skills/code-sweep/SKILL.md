@@ -108,7 +108,7 @@ For each file, against `CLAUDE.md` → Code Style and Anti-Patterns → New styl
   grep -rln 'style={{' src --include='*.js' --include='*.jsx' --exclude='*.test.jsx'   # inline styles
   ```
 
-  Inline styles are allowed only where `CLAUDE.md` lists them: `white-space: pre-line` in `dashboard/post/[id]/page.js`, `PostPreview.jsx`, `dashboard/gallery/[id]/page.js` and `GalleryPreview.jsx`, and `CropPreview.jsx`'s computed box and image. Any other hit is a finding.
+  Inline styles are allowed only where `CLAUDE.md` lists them: `white-space: pre-line` in `dashboard/post/[id]/page.js`, `PostPreview.jsx`, `dashboard/gallery/[id]/page.js` and `GalleryPreview.jsx`, `CropPreview.jsx`'s computed box and image, and `AbilityInfo.jsx`'s measured box position. Any other hit is a finding.
 
 Finding: a file that breaks a written rule, or two files doing the same thing two ways where no rule decides it (a **decision**: the rule gets written first).
 

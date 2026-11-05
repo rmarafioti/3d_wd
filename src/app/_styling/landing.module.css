@@ -1,0 +1,27 @@
+/* The global article centres the block across the screen; its text reads from the left. */
+.landing {
+  text-align: left;
+}
+
+/* A readable line length, with the screen's side gutter at phone width. */
+.content {
+  max-width: 40rem;
+  padding: 0 1rem;
+}
+
+/* BBH Hegarty has one weight, so the heading's 600 would show as a faked bold. */
+.title {
+  font-family: var(--logoFont);
+  font-weight: normal;
+}
+
+.tagline {
+  margin-top: 1rem;
+  font-family: var(--headerFont);
+  font-weight: 600;
+}
+
+.copy {
+  margin-top: 1rem;
+  line-height: 1.5;
+}

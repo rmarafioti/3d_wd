@@ -1,8 +1,8 @@
 // Tests for the Audit Events page, through the real hooks and apiFetch: the month controls, the
-// table, Load more, every state and "Hide my sign-ins".
+// date field, the table, Load more, every state and "Hide my sign-ins".
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AuditEventsPage from "./page";
 import { AuthContext } from "../../_context/AuthContext";
@@ -17,6 +17,11 @@ const ADMIN = {
 const OCTOBER = "GET /api/admin/auditEvents?month=2026-10";
 const SEPTEMBER = "GET /api/admin/auditEvents?month=2026-09";
 const MONTHS = "GET /api/admin/auditEvents/months";
+// October 14 in the test machine's own time zone: its local midnight to the next, as instants.
+const OCTOBER_14_PATH = `/api/admin/auditEvents?from=${encodeURIComponent(
+  new Date(2026, 9, 14).toISOString(),
+)}&to=${encodeURIComponent(new Date(2026, 9, 15).toISOString())}`;
+const OCTOBER_14 = `GET ${OCTOBER_14_PATH}`;
 
 function auditEvent(id, overrides = {}) {
   return {
@@ -55,6 +60,11 @@ function renderPage() {
       <AuditEventsPage />
     </AuthContext.Provider>,
   );
+}
+
+// A date field takes its value whole (user-event can't type into one in jsdom).
+function pickDate(value) {
+  fireEvent.change(screen.getByLabelText("Date"), { target: { value } });
 }
 
 // The data rows of the table, without its header row.
@@ -295,6 +305,129 @@ describe("Audit Events page", () => {
     expect(
       screen.getByText("No audit events to show. Your sign-ins are hidden."),
     ).toBeInTheDocument();
+  });
+
+  it("shows only the picked local day, paging within it with Load more", async () => {
+    const { eventPaths } = mockAuditFetch({
+      [OCTOBER]: page([auditEvent("3"), auditEvent("2"), auditEvent("1")]),
+      [OCTOBER_14]: page([auditEvent("2")], "2"),
+      [`${OCTOBER_14}&cursor=2`]: page([auditEvent("1")]),
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("p3");
+
+    pickDate("2026-10-14");
+    await user.click(await screen.findByRole("button", { name: "Load more" }));
+
+    await screen.findByText("p1");
+    expect(bodyRows()).toHaveLength(2);
+    expect(eventPaths()).toEqual([
+      "/api/admin/auditEvents?month=2026-10",
+      OCTOBER_14_PATH,
+      `${OCTOBER_14_PATH}&cursor=2`,
+    ]);
+  });
+
+  it("moves the month name to the picked day's month", async () => {
+    mockAuditFetch(
+      {
+        [OCTOBER]: page([auditEvent("2")]),
+        [`GET /api/admin/auditEvents?from=${encodeURIComponent(
+          new Date(2026, 8, 3).toISOString(),
+        )}&to=${encodeURIComponent(new Date(2026, 8, 4).toISOString())}`]: page(
+          [auditEvent("1", { action: "account.created" })],
+        ),
+      },
+      ["2026-10", "2026-09"],
+    );
+    renderPage();
+    await screen.findByText("post.created");
+
+    pickDate("2026-09-03");
+
+    expect(await screen.findByText("account.created")).toBeInTheDocument();
+    expect(screen.getByText("September 2026")).toBeInTheDocument();
+  });
+
+  it("returns to the whole month with Clear", async () => {
+    const { eventPaths } = mockAuditFetch({
+      [OCTOBER]: page([auditEvent("3"), auditEvent("2")]),
+      [OCTOBER_14]: page([auditEvent("2")]),
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("p3");
+    pickDate("2026-10-14");
+    await screen.findByRole("button", { name: "Clear" });
+
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+
+    await screen.findByText("p3");
+    expect(screen.getByLabelText("Date")).toHaveValue("");
+    expect(
+      screen.queryByRole("button", { name: "Clear" }),
+    ).not.toBeInTheDocument();
+    expect(eventPaths().at(-1)).toBe("/api/admin/auditEvents?month=2026-10");
+  });
+
+  it("leaves the picked day for the month a chevron steps to", async () => {
+    mockAuditFetch(
+      {
+        [OCTOBER]: page([auditEvent("2")]),
+        [OCTOBER_14]: page([auditEvent("2")]),
+        [SEPTEMBER]: page([auditEvent("1", { action: "account.created" })]),
+      },
+      ["2026-10", "2026-09"],
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("post.created");
+    pickDate("2026-10-14");
+
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+
+    expect(await screen.findByText("account.created")).toBeInTheDocument();
+    expect(screen.getByLabelText("Date")).toHaveValue("");
+  });
+
+  it('shows "No audit events on this day." for a day without events', async () => {
+    mockAuditFetch({
+      [OCTOBER]: page([auditEvent("2")]),
+      [OCTOBER_14]: page([]),
+    });
+    renderPage();
+    await screen.findByText("post.created");
+
+    pickDate("2026-10-14");
+
+    expect(
+      await screen.findByText("No audit events on this day."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the API's message when a picked day's range is refused", async () => {
+    mockAuditFetch({
+      [OCTOBER]: page([auditEvent("2")]),
+      [OCTOBER_14]: {
+        status: 400,
+        body: {
+          error: {
+            message: "Please fix the highlighted fields.",
+            fields: { to: "The range can be at most 31 days." },
+          },
+        },
+      },
+    });
+    renderPage();
+    await screen.findByText("post.created");
+
+    pickDate("2026-10-14");
+
+    expect(
+      await screen.findByText("Please fix the highlighted fields."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
   it("never shows a month's events after the admin has moved to another month", async () => {

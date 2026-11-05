@@ -39,6 +39,7 @@ const WEBSITE = {
     {
       id: "g1",
       galleryName: "Our Interior",
+      slug: "our-interior",
       status: "published",
       placement: "requested",
       imageCount: 12,
@@ -216,14 +217,20 @@ describe("AccountList", () => {
     expect(screen.getByText("The news page.")).toBeInTheDocument();
   });
 
-  it("shows each gallery's own placement and request note inside its dropdown", () => {
+  it("shows each gallery's own placement and placement note inside its dropdown", () => {
     renderList([ACCOUNT]);
     const gallery = within(screen.getByText("Our Interior").closest("details"));
 
     expect(gallery.getByText("Placement:").nextSibling).toHaveTextContent(
       "requested",
     );
-    expect(gallery.getByText("The front page slider.")).toBeInTheDocument();
+    expect(gallery.getByText("Placement note:").nextSibling).toHaveTextContent(
+      "The front page slider.",
+    );
+    // Right under its Placement row, before the photo count.
+    expect(gallery.getByText("Placement:").parentElement.nextSibling).toBe(
+      gallery.getByText("Placement note:"),
+    );
   });
 
   it("lists each post by name with its status", () => {
@@ -233,7 +240,7 @@ describe("AccountList", () => {
     expect(within(post).getByText("draft")).toBeInTheDocument();
   });
 
-  it("lists each gallery by name and status, opening to its photo count and crop flags", async () => {
+  it("lists each gallery by name and status, opening to its code, photo count and crop flags", async () => {
     const user = userEvent.setup();
     renderList([ACCOUNT]);
     const name = screen.getByText("Our Interior");
@@ -248,6 +255,9 @@ describe("AccountList", () => {
 
     expect(gallery).toHaveAttribute("open");
     const summary = within(gallery);
+    expect(summary.getByText("Gallery Code:").nextSibling).toHaveTextContent(
+      "our-interior",
+    );
     expect(summary.getByText("Photos:").nextSibling).toHaveTextContent("12");
     expect(summary.getByText("Thumbnails:").nextSibling).toHaveTextContent(
       "Yes",

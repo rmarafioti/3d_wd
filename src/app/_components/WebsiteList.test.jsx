@@ -44,10 +44,13 @@ const WEBSITE = {
       galleryName: "Our Interior",
       slug: "our-interior",
       status: "draft",
+      placement: null,
+      requestedAt: null,
       createdAt: "2026-10-31T00:00:00.000Z",
     },
   ],
 };
+const SENT = "2026-11-01T00:00:00.000Z";
 
 describe("WebsiteList", () => {
   it("shows Loading… before the first response", () => {
@@ -128,7 +131,13 @@ describe("WebsiteList", () => {
       within(table)
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
-    ).toEqual(["Gallery Name", "Gallery Code", "Status", "Actions"]);
+    ).toEqual([
+      "Gallery Name",
+      "Gallery Code",
+      "Status",
+      "Placement",
+      "Actions",
+    ]);
     const [, row] = within(table).getAllByRole("row");
     expect(
       within(row).getByRole("link", { name: "Our Interior" }),
@@ -138,6 +147,41 @@ describe("WebsiteList", () => {
     expect(
       within(row).getByRole("button", { name: "Actions for Our Interior" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows a gallery's placement in its own column once its request was sent", () => {
+    const galleries = [
+      { ...WEBSITE.galleries[0], id: "g1", galleryName: "Not Sent" },
+      {
+        ...WEBSITE.galleries[0],
+        id: "g2",
+        galleryName: "Asked",
+        placement: "requested",
+        requestedAt: SENT,
+      },
+      {
+        ...WEBSITE.galleries[0],
+        id: "g3",
+        galleryName: "Placed",
+        placement: "live",
+        requestedAt: SENT,
+      },
+    ];
+
+    render(
+      <WebsiteList
+        websites={[{ ...WEBSITE, galleries }]}
+        loading={false}
+        error={null}
+      />,
+    );
+
+    const [, notSent, asked, placed] = within(
+      screen.getAllByRole("table")[1],
+    ).getAllByRole("row");
+    expect(notSent.cells[3]).toBeEmptyDOMElement();
+    expect(asked.cells[3]).toHaveTextContent(/^requested$/);
+    expect(placed.cells[3]).toHaveTextContent(/^live$/);
   });
 
   it('shows "No galleries yet." for a website without galleries', () => {

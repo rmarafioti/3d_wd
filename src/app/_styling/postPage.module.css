@@ -10,11 +10,14 @@
   margin: 0rem 2rem 0rem 0rem;
 }
 
+/* At least 280px, so the line under it keeps its length, and wider when the pill and the switch's
+   words need it, so neither is squeezed. */
 .statusRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 280px;
+  width: fit-content;
+  min-width: 280px;
   margin: 1rem 0rem 1rem 0rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid lightgray;

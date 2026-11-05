@@ -1,11 +1,21 @@
 // abilities: the catalog of ability kinds and their labels, and the helpers that read a website's
-// abilities: pill words, the pending request form and the request dialog's copy.
+// abilities: pill words and tones, the pending request form and the request dialog's copy.
 
 // The API lists only the abilities a website has, so the frontend keeps every kind, and a kind the
-// website doesn't have can offer "+ Add".
+// website doesn't have can offer "+ Add". info is what the Abilities aside's "i" says it does.
 export const ABILITY_KINDS = [
-  { kind: "posts", label: "Posts", removable: false },
-  { kind: "galleries", label: "Photo Galleries", removable: true },
+  {
+    kind: "posts",
+    label: "Posts",
+    removable: false,
+    info: "Write posts with text and photos, add bold, italics and links, and preview each post before it goes up. Publish it to your website or keep it as a draft. Tell us once where your posts should go, and we'll reply promptly by email with a mockup to approve.",
+  },
+  {
+    kind: "galleries",
+    label: "Photo Galleries",
+    removable: true,
+    info: "Create photo galleries of up to 30 photos each, with an optional square thumbnail and mobile crop for every photo. Give each gallery a title and copy, then tell us where on your website it should go. We'll reply promptly by email with a mockup to approve.",
+  },
 ];
 
 // Each word abilityPillLabel gives, with its pill's tone. A prompt takes the look of the state it
@@ -17,6 +27,11 @@ export const ABILITY_PILL_TONES = {
   off: "red",
   "Turn On ?": "red",
 };
+
+// A placement pill's tone: purple while requested, green once the administrator has set it live.
+export function placementTone(placement) {
+  return placement === "live" ? "green" : "purple";
+}
 
 // The website's ability of that kind, or undefined while it hasn't been added (or was removed).
 // website: one from GET /api/siteOwner/websites or GET /api/admin/accounts.
