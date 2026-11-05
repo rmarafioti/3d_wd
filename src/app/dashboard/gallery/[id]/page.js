@@ -19,7 +19,7 @@ import Toggle from "../../../_components/Toggle";
 import Pill from "../../../_components/Pill";
 import CropPreview from "../../../_components/CropPreview";
 import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
-import { galleryRequestCopy } from "../../../_lib/abilities";
+import { galleryRequestCopy, placementTone } from "../../../_lib/abilities";
 
 import styles from "../../../_styling/postPage.module.css";
 
@@ -168,7 +168,7 @@ export default function GalleryPage() {
                 {gallery.placement && (
                   <Pill
                     label={gallery.placement}
-                    tone={gallery.placement === "live" ? "green" : "purple"}
+                    tone={placementTone(gallery.placement)}
                   />
                 )}
               </dt>

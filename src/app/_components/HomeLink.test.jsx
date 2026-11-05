@@ -1,4 +1,4 @@
-// Tests for HomeLink: "3D Web Dev" leads to the signed-in user's dashboard, or to / signed out.
+// Tests for HomeLink: "3D | WD" leads to the signed-in user's dashboard, or to / signed out.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";

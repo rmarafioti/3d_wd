@@ -7,6 +7,12 @@
   padding: 0rem;
 }
 
+/* The logo, without the link underline; it is still a link, named "3D Web Dev home". */
+.homeLink {
+  font-family: var(--logoFont);
+  text-decoration: none;
+}
+
 .topRow {
   display: flex;
   justify-content: space-between;
@@ -33,13 +39,13 @@
   gap: 1rem;
 }
 
-/* The row keeps its 1rem sides and the gap between links. It has no padding above or below:
-   each link's taller padding gives the row its height instead, so a link's gray highlight meets
-   the lines over and under the row. */
+/* 4rem in from the left, so the links sit further into view, and the gap between them. No
+   padding above or below: each link's taller padding gives the row its height instead, so a link's
+   gray highlight meets the lines over and under the row. */
 .links {
   display: flex;
   gap: 0.5rem;
-  padding: 0rem 1rem;
+  padding: 0rem 1rem 0rem 4rem;
   border-top: 1px solid lightgray;
   list-style: none;
 }
@@ -53,6 +59,8 @@
   /* 1rem above and below, so the link alone gives the row its height. */
   padding: 1rem 0.5rem;
   border-radius: 0px;
+  /* Montserrat SemiBold, the header font's weight, so the links stand out. */
+  font-weight: 600;
   color: black;
   background-color: white;
   text-align: left;

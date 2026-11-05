@@ -1,10 +1,11 @@
-// GalleryTable (site owner): one website's galleries on /dashboard, each with its code, status pill
-// and ⋮ menu.
+// GalleryTable (site owner): one website's galleries on /dashboard, each with its code, status pill,
+// placement pill and ⋮ menu.
 
 import Link from "next/link";
 
 import Pill from "./Pill";
 import GalleryActionsMenu from "./GalleryActionsMenu";
+import { placementTone } from "../_lib/abilities";
 
 import styles from "../_styling/postTable.module.css";
 
@@ -23,6 +24,9 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
           </th>
           <th scope="col" className={styles.statusColumn}>
             Status
+          </th>
+          <th scope="col" className={styles.placementColumn}>
+            Placement
           </th>
           {/* Named for screen readers; the ⋮ buttons need no visible heading. */}
           <th scope="col" className={styles.actionsColumn}>
@@ -44,6 +48,16 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
                 label={gallery.status}
                 tone={gallery.status === "published" ? "green" : "red"}
               />
+            </td>
+            {/* Once its request form was sent, as on the gallery page: requested until the admin
+                sets it live. Empty before then. */}
+            <td>
+              {gallery.requestedAt && gallery.placement && (
+                <Pill
+                  label={gallery.placement}
+                  tone={placementTone(gallery.placement)}
+                />
+              )}
             </td>
             {/* Positioned, so the menu's list opens from this cell's edges. */}
             <td className={styles.actionsCell}>

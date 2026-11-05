@@ -17,12 +17,10 @@
 }
 
 /* No sideways-scrolling box as on the Audit Events page: it would clip each row's ⋮ menu. The
-   columns keep fixed widths (set on the header cells, which a fixed layout reads), so every
-   website's table lines up; Post Name takes the rest (14rem on desktop) and wraps. */
+   section's width, so its tables line up; columns grow with their contents (the header cells'
+   widths are their starting widths), and once the section is at its widest, the names wrap. */
 .table {
-  width: 30rem;
-  max-width: 100%;
-  table-layout: fixed;
+  width: 100%;
   border-collapse: collapse;
 }
 
@@ -30,7 +28,8 @@
   width: 7rem;
 }
 
-.statusColumn {
+.statusColumn,
+.placementColumn {
   width: 6rem;
 }
 
@@ -85,8 +84,8 @@
   white-space: nowrap;
 }
 
-/* At phone width the table is the screen's width less a 1rem gutter each side; the fixed columns
-   keep their widths and Post Name shrinks to the space left. */
+/* At phone width the table is the screen's width less a 1rem gutter each side; the other columns
+   keep their contents' widths and the names wrap in the space left. */
 @media (max-width: 667px) {
   .postList {
     width: calc(100vw - 2rem);

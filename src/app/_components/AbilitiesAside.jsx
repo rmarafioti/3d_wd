@@ -13,6 +13,7 @@ import {
   findAbility,
   postsRequestCopy,
 } from "../_lib/abilities";
+import AbilityInfo from "./AbilityInfo";
 import AbilityRequestDialog from "./AbilityRequestDialog";
 import ActionsMenu from "./ActionsMenu";
 import ConfirmDialog from "./ConfirmDialog";
@@ -144,14 +145,19 @@ export default function AbilitiesAside({ websites, onChange }) {
                       key={entry.kind}
                       className={`${styles.ability} ${styles.abilityRow} ${asideStyles.fullWidth}`}
                     >
-                      <span className={styles.abilityName}>{entry.label}</span>
+                      {/* The "i" inside the name's cell, so it sits just before the name; the name
+                          keeps a span of its own text. */}
+                      <span className={styles.abilityName}>
+                        <AbilityInfo label={entry.label} info={entry.info} />{" "}
+                        <span>{entry.label}</span>
+                      </span>
                       <Pill
                         label={pillLabel}
                         tone={ABILITY_PILL_TONES[pillLabel]}
                       />
                       {/* Posts waiting to be placed: a second pill only then, since once the admin
                           sets them live the status pill already reads "live". Each gallery's
-                          placement is on its page. */}
+                          placement is on its page and its gallery table row. */}
                       {entry.kind === "posts" &&
                         ability?.placement === "requested" && (
                           <Pill label="requested" tone="purple" />

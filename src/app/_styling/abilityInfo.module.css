@@ -1,0 +1,20 @@
+/* Icon only, black on white like the ⋮ button, not the full-width purple button. */
+.infoButton {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 0.2rem;
+  color: black;
+  background-color: white;
+}
+
+/* Fixed to the screen, outside the aside's scrolling list, at the place AbilityInfo measures; above
+   the aside (z-index 10). Normal weight, though it sits inside the bold ability name. */
+.info {
+  position: fixed;
+  z-index: 20;
+  padding: 0.5rem;
+  background-color: white;
+  border: 1px solid lightgray;
+  font-weight: normal;
+}

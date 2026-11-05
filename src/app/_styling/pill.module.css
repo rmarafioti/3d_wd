@@ -1,7 +1,8 @@
-/* Never bold, even in a bold heading or row. */
+/* One size and never bold, whatever heading or row it sits in, so every pill matches. */
 .pill {
   padding: 0.2rem 0.5rem;
   border-radius: 25px;
+  font-size: 1rem;
   font-weight: normal;
 }
 
