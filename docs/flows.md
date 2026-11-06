@@ -15,14 +15,14 @@ All pop-ups below are native `<dialog>` elements, never closed by clicking outsi
 - No user in context → links to `/` (the landing page and sign-in page).
 - Admin → links to `/admin`; site owner → links to `/dashboard` (`HOME_BY_ROLE`), so a signed-in user always has a way back to their dashboard. Only signing out leads back to the landing page.
 
-**Navbar rows and links:** the Navbar is a client component reading `useAuth()`. Its top row holds `HomeLink`, `DashboardTitle` and `AuthButton`. Signed in, a second row under a light gray line holds the dashboard's text links (semibold, 4rem in from the left, pointer cursor, light gray behind the one under the pointer or reached with Tab, the gray meeting the lines above and below the row):
+**Navbar rows and links:** the Navbar is a client component reading `useAuth()`. Its top row holds `HomeLink`, `DashboardTitle`, the mail icon (`MailLink`, signed in only, see Inbox) and `AuthButton`. Signed in, a second row under a light gray line holds the dashboard's text links (semibold, 4rem in from the left, pointer cursor, light gray behind the one under the pointer or reached with Tab, the gray meeting the lines above and below the row):
 
-- Admin: **Create an Account** (`/admin/createAccount`) and **Audit Events** (`/admin/auditEvents`).
+- Admin: **Create an Account** (`/admin/createAccount`), **Send a Notification** (`/admin/notifications`, see Inbox) and **Audit Events** (`/admin/auditEvents`).
 - Site owner: **Create a Post** (`/dashboard?create=post`), **Create a Gallery** (`/dashboard?create=gallery`) once any of their websites has Photo Galleries (see Abilities), and **Recently Deleted** (`/dashboard/deleted`, see Recently Deleted). The dashboard layout knows this from the websites it fetches and tells the Navbar through `NavContext`, since the Navbar sits above the dashboards in the root layout. From any page, a link opens its form on `/dashboard` (see Get All Websites).
 
 Signed out (the landing and sign-in pages) there is no second row.
 
-**Phone menu:** at phone width, signed in, the second row and the top row's Sign out are hidden, and a hamburger icon button (named "Menu", with `aria-expanded`) sits where Sign out was. It opens the links, then Sign out, listed like the links rather than as a purple button, as a menu under the navbar, each item's highlight running the menu's width, over the page and above the asides; open, its icon is an X. It is a disclosure, like the ⋮ menus, not a `<dialog>`: it closes on Esc (focus back on the hamburger), on a click outside it, and once a link is picked. Signed out, the navbar keeps its one row and the Sign in button.
+**Phone menu:** at phone width, signed in, the second row and the top row's Sign out are hidden (the mail icon stays), and a hamburger icon button (named "Menu", with `aria-expanded`) sits where Sign out was. It opens the links, then Sign out, listed like the links rather than as a purple button, as a menu under the navbar, each item's highlight running the menu's width, over the page and above the asides; open, its icon is an X. It is a disclosure, like the ⋮ menus, not a `<dialog>`: it closes on Esc (focus back on the hamburger), on a click outside it, and once a link is picked. Signed out, the navbar keeps its one row and the Sign in button.
 
 **Navbar `AuthButton`:** a small client component that reads `useAuth()`.
 
@@ -101,7 +101,7 @@ Hooks used: `useAccounts()`, `useAllWebsites()`, both called once by the admin l
 
 Hook used: `useAccounts()` → `GET /api/admin/accounts`
 
-Lists every website that has a site owner, by website rather than by account, since a website can have more than one site owner. The accounts the API returns are grouped by website, each website listed once, sorted by name. Opened, the aside first shows only the website names, each a disclosure (native `<details>`, closed by default), its row carrying the website's "active"/"inactive" pill at its right, like every row with a pill. Opening one shows the website's URL (linked, opening in a new tab), then each site owner linked to it: **Site Owner:** with the account's "active"/"inactive" pill and a ⋮ menu (`ActionsMenu`, named "Actions for {name}") at the right, then {name} and **Email:** {email}. The ⋮ offers **"Link a Website"**, which links another website to that account. Then the website's Abilities (below). An account with no website isn't listed: it doesn't count yet. With no websites at all, the list shows "No site owner accounts yet."
+Lists every website that has a site owner, by website rather than by account, since a website can have more than one site owner. The accounts the API returns are grouped by website, each website listed once, sorted by name. Opened, the aside first shows only the website names, each a disclosure (native `<details>`, closed by default), its row carrying the website's "active"/"inactive" pill at its right, like every row with a pill. Opening one shows the website's URL (linked, opening in a new tab), then each site owner linked to it: **Site Owner:** with the account's "active"/"inactive" pill and a ⋮ menu (`ActionsMenu`, named "Actions for {name}") at the right, then {name} and **Email:** {email}. The ⋮ offers **"Link a Website"**, which links another website to that account, and **"Message"**, which starts a thread with that site owner (Inbox → Start a thread). Then the website's Abilities (below). An account with no website isn't listed: it doesn't count yet. With no websites at all, the list shows "No site owner accounts yet."
 
 Under each website's site owners, one **"Abilities"** section lists the abilities the website has (see Abilities), in the catalog's order (Posts, then Photo Galleries; one it hasn't added is left out). Each ability is a disclosure, closed by default so the list stays short, whose summary reads its name with its status pill beside it in a row ("added", "live", or "off"), for Posts a "requested" placement pill while they wait to be placed (none once placed live, since the status pill already reads "live"), and its Live switch (below), a click on which never opens or closes it. Opened, it shows, for Posts, **Placement note:** with the site owner's note (line breaks kept) once they have sent it, right under the header that holds their placement pill, then its items by name, each with its "published" / "draft" pill beside it. Each gallery has its own note instead, inside its dropdown. A line under each ability (its row, items and note) sets it apart from the next, and a lighter line sits under "Abilities" and, while it is open, under each ability's row, with its items a little below it. Every line meets the aside's left border:
 
@@ -184,6 +184,96 @@ The read-only audit log, so the administrator can answer "who did what?" without
 - **Page counter:** beside Load more, while the table has rows, "Page {N} of {pages}", 50 events a page (no `limit` is sent). `pages` is the latest response's, since events written while paging can raise it; N is counted on the page: 1 for the first load, one more per Load more, and back to 1 when the month or day changes. It stays on the last page, where Load more is gone.
 - **Hide my sign-ins:** a `Toggle` (named "Hide my sign-ins") beside the text "Hide my sign-ins", **off by default** on every page load. On, it hides only rows whose `action` is `auth.login_succeeded` or `auth.logout` and whose `actorEmail` is the signed-in admin's own email (from `/me`). Failed logins (`auth.login_failed`) and every change always show. The API always returns every row; the hiding is on the page only. It is off by default because a takeover of the admin's Google account would sign in under the admin's own email, and only the `ip` and time would give it away.
 - **States:** while the month loads, "Loading…". An empty month shows "No audit events this month." (an empty state, not an error). When every row of the month is hidden by Hide my sign-ins, "No audit events to show. Your sign-ins are hidden." Any other error shows the API's `error.message` in place of the table.
+
+---
+
+## Inbox
+
+How the admin and site owners reach each other in the Client Portal. Two kinds of item (`docs/api.md` → Notes, Updates and threads):
+
+- An **update** is one way, with no reply: the admin's site-wide update (`kind` `general`) or one the backend writes when the admin sets an ability or a gallery live (`automatic`).
+- A **thread** is a conversation between one site owner and the admin, which either side starts and both reply to.
+
+No email is sent for either. No inbox form has a preview: the formatting shows once the update or message is sent.
+
+### Mail icon (`MailLink`)
+
+Hook used: `useUnreadCount(role)` → `GET /api/admin/threads/unreadCount` (admin: `threads`) or `GET /api/siteOwner/notifications/unreadCount` (site owner: `updates + threads`)
+
+In the Navbar's top row, before Sign out, for both roles, and still there at phone width beside the hamburger.
+
+- **The icon:** a thin-lined envelope (the same icon set as the hamburger and its X) linking to `/admin/messages` or `/dashboard/messages`.
+- **The badge:** while anything is unread, a small green dot (the "published" pill's green) over the icon's top right corner, with no number. Screen readers hear "Messages, {n} unread", or "Messages" with nothing unread. A failed count shows no badge.
+- **When it counts again:** on load, on every page change, and when a page marks something read (`NavContext`'s `refreshUnread`). It never polls.
+
+### Send a Notification (`/admin/notifications`)
+
+Hook used: `useInboxActions("admin")` (`sendUpdate`) → `POST /api/admin/notifications`
+
+- **Heading:** "Send a Notification", then "Sent to every active site owner."
+- **The form:**
+  - **Title**: required, max 120, with its count.
+  - **Body**: the paragraph editor (Paragraph formatting), max 10000, its note "*Line breaks you add will show."
+  - **Send**: disabled until both are valid.
+  - The messages are the contract's ("Title is required." / "Title must be 120 characters or fewer.", the same for Body, and the link messages). A backend `error.fields` message shows under its field, and `error.message` under Send. What was typed stays.
+- **Once sent:** the admin goes to their mailbox (`/admin/messages`), where the update is at the top with its read tally. There is no success dialog, and this page lists no sent updates.
+
+### Messages, admin (`/admin/messages`)
+
+Hooks used: `useMailbox("admin")` → `GET /api/admin/notifications?cursor=` and `GET /api/admin/threads?cursor=`, and `useInboxActions("admin")` (`editUpdate` → `PATCH`, `withdrawUpdate` → `DELETE`)
+
+- **Heading:** "Messages".
+- **The list:** the updates the admin sent and every site owner's threads in **one list**, newest first (an update by when it was sent, a thread by its latest message), merged as in the site owner's mailbox, with Load more. Each item is one row, not stacked, and wraps at phone width:
+  - **A sent update:** the plain "update" pill, its title (taking the spare width), "Read by {readCount} of {recipientCount}" and its sent local time, then a ⋮ (`ActionsMenu`, "Actions for {title}") beside the row. It shows counts only: the admin never sees which site owner read it. The row opens in place (a `<details>`) to show the body, formatted, and "Edited {local time}" once edited.
+  - **A thread:** the purple "message" pill, its subject (a link to the thread, taking the spare width), the site owner's name, the latest message's local time and, while unread, a purple "unread" pill, with the subject semibold.
+- **Edit** (the ⋮): a dialog "Edit update", "Site owners who already read it will see the new text.", the Title and Body, and **Save**, disabled until the title or body changes. Read state is kept. On save the mailbox is fetched again.
+- **Withdraw** (the ⋮): gated by `ConfirmDialog`, "Withdraw "{title}"? It will be removed from every mailbox.", with "Withdraw" and "Cancel". On confirm the mailbox is fetched again. A failure shows the API's `error.message` in a dialog.
+- **States:** "Loading…", the API's `error.message` in place of the list, and "No messages yet."
+
+### Messages, site owner (`/dashboard/messages`)
+
+Hooks used: `useMailbox("site_owner")` → `GET /api/siteOwner/notifications?cursor=` and `GET /api/siteOwner/threads?cursor=`, and `useInboxActions("site_owner")`
+
+- **Heading:** "Messages", with a **Message Admin** button beside it (Start a thread).
+- **The list:** updates and threads in **one list**, newest first: an update by when it was sent, a thread by its latest message. Each row has:
+  - a pill saying what it is, "update" (plain) or "message" (purple);
+  - its title or subject, semibold while unread, with "(unread)" for screen readers;
+  - its local date and time.
+- **An update** opens in place (a `<details>`) to show its body, formatted, with no reply. Opening an unread one marks it read (`POST /api/siteOwner/notifications/:id/read`), then the badge counts again.
+- **A thread** links to `/dashboard/messages/{id}`.
+- **Merging two paged lists:** an item is shown only once it can't be outranked. While either list has more pages, items older than that list's oldest loaded item wait, since its next page may hold a newer one. Load more fetches the next page of the list holding them back.
+- **States:** "Loading…", the API's `error.message` in place of the list, and "No messages yet."
+
+### A thread (`/admin/messages/[id]`, `/dashboard/messages/[id]`)
+
+Hooks used: `useThread(role, id)` → `GET /api/{admin|siteOwner}/threads/:id`, and `useInboxActions(role)`
+
+`ThreadView`, the same for both roles:
+
+- **Heading:** the subject; for the admin, "With {site owner name}" under it.
+- **The messages:** oldest first. Each has a top line with an arrow and its author's name at the left and its local date and time at the right, then its body formatted with line breaks kept. The arrow says which side wrote it, from the viewer's side: ↗ for one they sent, ↙ for one they received (thin-lined, from the same icon set as the mail icon, and named "Sent" or "Received" for screen readers). The arrow and name sit in a pill: light gray on every message the viewer sent, light blue on every one they received, so the two sides read apart down the thread. Every message lines up on the left, with no indent.
+- **Read state:** opening the thread marks it read (`POST .../threads/:id/read`, safe to repeat), then the badge counts again.
+- **Reply:** a **Reply** button under the messages, at the right. The page shows no reply form until it is pressed.
+- **The Reply dialog (`ReplyDialog`):**
+  - Titled "Reply to {subject}", with the X.
+  - A **Message** field: the paragraph editor, max 5000.
+  - **Send reply**: "Sending…" while in flight.
+  - On success the dialog closes and the user goes straight back to the dashboard (`/admin` for the admin, `/dashboard` for the site owner), with no success dialog.
+  - On failure, what was typed stays, and the API's `error.message` shows under the button, such as "Too many requests. Please try again later." (a site owner over 20 messages in 15 minutes).
+- **A full thread:** a `409` "This thread is full. Start a new thread." shows in the Reply dialog with a **Start a new thread** button. It replaces the Reply dialog with Start a thread, for the same site owner (the admin) or for the admin (the site owner).
+- **Not found:** "Thread not found." shows in place of the thread.
+
+### Start a thread (`StartThreadDialog`)
+
+From the site owner's "Message Admin", the admin's ⋮ → Message in the Accounts aside, and a full thread's "Start a new thread".
+
+- **The dialog:** titled "Message Admin" or "Message {Account Name}". It has:
+  - **Subject**: required, max 120;
+  - **Message**: the paragraph editor, max 5000;
+  - **Send**, disabled until both are valid.
+- **The request:** `POST /api/siteOwner/threads` with `{ subject, message }`, or `POST /api/admin/threads` with `{ accountId, subject, message }`.
+- **On success:** the dialog closes and the new thread's page opens. There is no success dialog.
+- **On failure:** what was typed stays. `error.fields` messages show under their fields, and `error.message` under Send ("Account not found.", the 429).
 
 ---
 

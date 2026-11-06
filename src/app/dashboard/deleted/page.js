@@ -10,6 +10,7 @@ import { useDeletedPosts } from "../../_hooks/useDeletedPosts";
 import { usePosts } from "../../_hooks/usePosts";
 import DeletedPostTable from "../../_components/DeletedPostTable";
 import MessageDialog from "../../_components/MessageDialog";
+import LoadMoreButton from "../../_components/LoadMoreButton";
 
 import styles from "../../_styling/dashPages.module.css";
 
@@ -63,17 +64,7 @@ export default function RecentlyDeletedPage() {
           Deleted posts can be restored for 30 days.
         </p>
         {content}
-        {deleted.hasMore && !deleted.error && (
-          <button
-            type="button"
-            onClick={deleted.loadMore}
-            disabled={deleted.loadingMore}
-            className={styles.loadMore}
-          >
-            {deleted.loadingMore ? "Loading…" : "Load more"}
-          </button>
-        )}
-        {deleted.loadMoreError && <p>{deleted.loadMoreError.message}</p>}
+        <LoadMoreButton list={deleted} />
         {restoreError && (
           <MessageDialog
             message={restoreError}

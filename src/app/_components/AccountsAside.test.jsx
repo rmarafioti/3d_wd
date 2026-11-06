@@ -1,12 +1,15 @@
-// Tests for AccountsAside: opening and closing, Link a Website for the clicked account, and the
-// Live switches for an ability and a requested gallery.
+// Tests for AccountsAside: opening and closing, Link a Website and Message for the clicked account,
+// and the Live switches for an ability and a requested gallery.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminDataProvider } from "../_context/AdminDataContext";
 import AccountsAside from "./AccountsAside";
 import { deferred, mockFetch, pressEscape } from "../../test/helpers";
+
+const router = { push: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const STEVIE = {
   id: "w1",
@@ -51,6 +54,54 @@ async function setup(linkRoute) {
 }
 
 describe("AccountsAside", () => {
+  it("starts a thread with the account from its Message action and goes to the thread", async () => {
+    const { calls } = mockFetch({
+      "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },
+      "GET /api/admin/websites": { body: { data: [STEVIE] } },
+      "POST /api/admin/threads": {
+        status: 201,
+        body: {
+          data: {
+            id: "t1",
+            subject: "Your gallery",
+            lastMessageAt: "2026-11-06T12:00:00.000Z",
+            createdAt: "2026-11-06T12:00:00.000Z",
+            unread: false,
+            account: { id: "a1", name: "Richard Marafioti" },
+            messages: [],
+          },
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderAside();
+    await user.click(screen.getByRole("button", { name: "Accounts" }));
+    await user.click(await screen.findByText("Stevie The Dog"));
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Richard Marafioti" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Message" }));
+    const dialog = screen.getByRole("dialog", {
+      name: "Message Richard Marafioti",
+    });
+    await user.type(within(dialog).getByLabelText("Subject"), "Your gallery");
+    await user.type(
+      within(dialog).getByLabelText("Message"),
+      "It looks great.",
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Send" }));
+
+    await waitFor(() =>
+      expect(router.push).toHaveBeenCalledWith("/admin/messages/t1"),
+    );
+    expect(calls.find((call) => call.method === "POST").body).toEqual({
+      accountId: "a1",
+      subject: "Your gallery",
+      message: "It looks great.",
+    });
+  });
+
   it("starts closed, with no accounts shown", async () => {
     const { calls } = mockFetch({
       "GET /api/admin/accounts": { body: { data: [ACCOUNT] } },

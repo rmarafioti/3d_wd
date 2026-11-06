@@ -1,22 +1,27 @@
-// AccountsAside: the admin's Accounts panel on every /admin route, with the Link a Website flow and
-// the confirmations for setting an ability or a gallery live.
+// AccountsAside: the admin's Accounts panel on every /admin route, with the Link a Website and
+// Message flows and the confirmations for setting an ability or a gallery live.
 
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 import { useAdminData } from "../_hooks/useAdminData";
+import { useInboxActions } from "../_hooks/useInboxActions";
 import { abilityLabel } from "../_lib/abilities";
 import AccountList from "./AccountList";
 import LinkWebsiteDialog from "./LinkWebsiteDialog";
 import CredentialRevealModal from "./CredentialRevealModal";
 import MessageDialog from "./MessageDialog";
 import ConfirmDialog from "./ConfirmDialog";
+import StartThreadDialog from "./StartThreadDialog";
 
 import styles from "../_styling/accountsAside.module.css";
 
 export default function AccountsAside() {
+  const router = useRouter();
   const { accounts, websites } = useAdminData();
+  const { startThread } = useInboxActions("admin");
   const [open, setOpen] = useState(false);
   // The account whose Link a Website dialog is open, or null. The flow's dialogs live outside the
   // panel, so they stay open if the panel closes.
@@ -25,6 +30,8 @@ export default function AccountsAside() {
   // open. The response may contain the one-time credentials, so it is set back to null the
   // moment that dialog closes.
   const [linkResult, setLinkResult] = useState(null);
+  // The account whose Message dialog is open, or null.
+  const [messagingAccount, setMessagingAccount] = useState(null);
   // What is being set live, whose confirmation is open: { ability, website } or
   // { gallery, website }, or null. It asks first, since the app can't undo going live.
   const [settingLive, setSettingLive] = useState(null);
@@ -38,6 +45,12 @@ export default function AccountsAside() {
     // The link response has no account, so the name comes from the account the dialog was for.
     setLinkResult({ accountName: linkingAccount.name, response });
     setLinkingAccount(null);
+  }
+
+  // The new thread's page shows it, so no success dialog.
+  function handleThreadStarted(thread) {
+    setMessagingAccount(null);
+    router.push(`/admin/messages/${thread.id}`);
   }
 
   function handleRevealClose() {
@@ -96,6 +109,7 @@ export default function AccountsAside() {
             loading={accounts.loading}
             error={accounts.error}
             onLink={setLinkingAccount}
+            onMessage={setMessagingAccount}
             onSetLive={(ability, website) =>
               setSettingLive({ ability, website })
             }
@@ -113,6 +127,16 @@ export default function AccountsAside() {
           linkWebsite={accounts.linkWebsite}
           onSuccess={handleLinked}
           onClose={() => setLinkingAccount(null)}
+        />
+      )}
+      {messagingAccount && (
+        <StartThreadDialog
+          title={`Message ${messagingAccount.name}`}
+          onSubmit={(payload) =>
+            startThread({ accountId: messagingAccount.id, ...payload })
+          }
+          onStarted={handleThreadStarted}
+          onClose={() => setMessagingAccount(null)}
         />
       )}
       {linkResult?.response.credentials && (
