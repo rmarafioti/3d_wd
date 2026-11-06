@@ -10,6 +10,8 @@ import { NavProvider } from "../_context/NavContext";
 import { SiteOwnerDataProvider } from "../_context/SiteOwnerDataContext";
 import { mockFetch } from "../../test/helpers";
 
+const ADMIN_UNREAD = "GET /api/admin/threads/unreadCount";
+const NONE_UNREAD = { body: { data: { threads: 0 } } };
 const ADMIN = { id: "u1", name: "Rich", email: "a@example.com", role: "admin" };
 const SITE_OWNER = {
   id: "u2",
@@ -61,7 +63,9 @@ describe("Navbar", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
-  it("links the admin to Create an Account and Audit Events", () => {
+  it("links the admin to Create an Account, Send a Notification, Audit Events and Messages", async () => {
+    mockFetch({ [ADMIN_UNREAD]: NONE_UNREAD });
+
     renderNavbar(ADMIN);
 
     expect(
@@ -71,10 +75,19 @@ describe("Navbar", () => {
       "href",
       "/admin/auditEvents",
     );
+    expect(
+      screen.getByRole("link", { name: "Send a Notification" }),
+    ).toHaveAttribute("href", "/admin/notifications");
+    expect(
+      await screen.findByRole("link", { name: "Messages" }),
+    ).toHaveAttribute("href", "/admin/messages");
   });
 
   it("links the site owner to Create a Post, Recently Deleted, and Create a Gallery only once a website has Photo Galleries", async () => {
     mockFetch({
+      "GET /api/siteOwner/notifications/unreadCount": {
+        body: { data: { updates: 0, threads: 0 } },
+      },
       "GET /api/siteOwner/websites": [
         { body: { data: [WEBSITE] } },
         { body: { data: [{ ...WEBSITE, abilities: [GALLERIES_ABILITY] }] } },
@@ -103,6 +116,7 @@ describe("Navbar", () => {
   });
 
   it("opens the menu from the hamburger and closes it on Esc, focus back on the hamburger", async () => {
+    mockFetch({ [ADMIN_UNREAD]: NONE_UNREAD });
     const user = userEvent.setup();
     renderNavbar(ADMIN);
     const menu = screen.getByRole("button", { name: "Menu" });
@@ -118,6 +132,7 @@ describe("Navbar", () => {
   });
 
   it("closes the menu on a click outside it and on a picked link", async () => {
+    mockFetch({ [ADMIN_UNREAD]: NONE_UNREAD });
     const user = userEvent.setup();
     renderNavbar(ADMIN);
     const menu = screen.getByRole("button", { name: "Menu" });

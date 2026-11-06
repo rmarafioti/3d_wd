@@ -6,8 +6,8 @@
 
 The frontend codebase of our Headless CMS project. 3D Web Dev is the business; this CMS tool is called the Client Portal. The backend is in a separate repository which we connect to through the API contract in `docs/api.md`. This repo also serves a public, static landing page for SEO, separate from the two authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each have their own dashboard view.
 
-- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites (in the Accounts aside, present on every `/admin` route), creates new site owner accounts, links websites to existing accounts, and reads the audit log (`/admin/auditEvents`).
-- The Site Owner (`/dashboard`) views, creates, edits, publishes, drafts and deletes posts and photo galleries for their own websites, adds Photo Galleries to a website, sends each ability's request form, and turns an ability on or off (the Abilities aside). The Administrator also sets an ability, and where its content goes, live.
+- The Administrator (`/admin`) sees a summary of all site owner accounts and their websites (in the Accounts aside, present on every `/admin` route), creates new site owner accounts, links websites to existing accounts, reads the audit log (`/admin/auditEvents`), sends site-wide updates (`/admin/notifications`) and messages site owners (`/admin/messages`).
+- The Site Owner (`/dashboard`) views, creates, edits, publishes, drafts and deletes posts and photo galleries for their own websites, adds Photo Galleries to a website, sends each ability's request form, turns an ability on or off (the Abilities aside), and reads updates and messages the admin from the mailbox (`/dashboard/messages`). The Administrator also sets an ability, and where its content goes, live.
 
 Production: this app runs on Vercel at `https://3dwebdev.com`. The API runs on Render at `https://api.3dwebdev.com`. Both share the parent domain `3dwebdev.com`, so the backend's session cookie (`Domain=.3dwebdev.com`) is also visible to this app's `proxy.js`.
 
@@ -101,7 +101,7 @@ No CSS frameworks or UI component libraries. The approved exceptions are `react-
 - A short comment on any rule whose reason isn't obvious.
 - Never invent a new visual direction (new colours, fonts, shadows, animation). If a feature seems to need one, leave it plain and flag it for Rich.
 
-The inline styles are functional: `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js` and `PostPreview.jsx`, and on a gallery's copy and its request note (Placement) in `dashboard/gallery/[id]/page.js` and its copy in `GalleryPreview.jsx`, which the API contract requires so typed line breaks show; `CropPreview`'s box proportions and image size and position, computed from each crop; and `AbilityInfo`'s box position and width, measured from its row on screen; neither of which a class can hold. They stay until Rich moves them.
+The inline styles are functional: `white-space: pre-line` on post paragraphs in `dashboard/post/[id]/page.js` and `PostPreview.jsx`, and on a gallery's copy and its request note (Placement) in `dashboard/gallery/[id]/page.js` and its copy in `GalleryPreview.jsx`, which the API contract requires so typed line breaks show; `CropPreview`'s box proportions and image size and position, computed from each crop; `FormattedMessage`'s `white-space: pre-line`, for an update's body and a thread message, whose line breaks the contract keeps; and `AbilityInfo`'s box position and width, measured from its row on screen; neither of which a class can hold. They stay until Rich moves them.
 
 ## Out of Scope (do not build)
 
@@ -120,8 +120,8 @@ One exception: signing in and out are one-shot auth actions, not data, so `SignI
 
 Each hook's header comment says what it fetches and which mutations it exposes. The shared rules:
 
-- `useApiResource(path)` holds the shared GET / ignore-stale / 401 / `refetch` logic behind the single-GET hooks; components never call it directly. A hook that must append pages (`useAuditEvents`, `useDeletedPosts`) has its own fetch.
-- A hook that only mutates (`usePosts`, `useGalleries`, `useAbilities`) fetches nothing; its data comes with the list hook (`useWebsites`).
+- `useApiResource(path)` holds the shared GET / ignore-stale / 401 / `refetch` logic behind the single-GET hooks; components never call it directly. `usePagedList(path)` holds the shared cursor paging (Load more appends) behind the list hooks (`useDeletedPosts`, and `useMailbox(role)`, which merges a role's updates and threads); `useAuditEvents` has its own, keyed by month or day.
+- A hook that only mutates (`usePosts`, `useGalleries`, `useAbilities`, `useInboxActions`) fetches nothing; its data comes with the list hook (`useWebsites`).
 - Data shared by a layout and its pages is fetched once by the layout and read through Context (`useAdminData()`, `useSiteOwnerData()`).
 
 Every data-fetching hook returns the same shape, plus whichever mutations are relevant to that resource: `{ data, loading, error }`. Without a library enforcing this automatically, consistency has to come from discipline — if one hook returns `{ posts, isLoading }` and another returns `{ data, error }`, every component consuming them needs to remember which shape it's dealing with. One shape, everywhere. Mutations return the API's `data` on success and throw the API error on failure. After a successful mutation, refetch the list it affects: list hooks also expose `refetch()` for this, and keep their current `data` while refetching so the list doesn't flash back to "Loading…".
@@ -346,9 +346,11 @@ root
   - **Audit cleanup done** (issue #69, with backend issue #73): the session docs trimmed, post `active` dropped, the process both repos follow in an identical `docs/process.md`, and #69's code items (issue #75): one `Pill`, and file headers of one or two lines with no history in any comment.
   - **V1 trim done** (issue #77, with backend issue #77): only `docs/process.md` loads every session, and the Anti-Patterns a linter can prove are lint rules.
   - **Scheduled publish** (issue #85, with backend issue #96) is merged once both PRs are: it goes out in one `npm run release`, backend first, since the frontend sends `publishAt` only to a backend that accepts it.
+  - **Notification inbox** (issue #87, with backend issue #98) goes out the same way, backend first: the frontend calls the inbox routes only on a backend that has them.
 - **Next:**
   1. Stevie's galleries: Rich wires the gallery component into the Stevie The Dog site, which renders a gallery from `GET /api/public/galleries/:slug` (in its own repo, with its own handoff), then sets Photo Galleries live and its gallery live.
   2. Onboarding the four client websites waiting for launch.
+  3. Deleting mail and one Recently Deleted with a trash icon (backend issue #100, the lead): per-viewer delete, Delete all read, 30 days then purged, posts, galleries and mail in one trash.
 - **Pending notes:**
   - Recently deleted posts: that a restored published post shows on the client website again (revalidation) is checked on production after the release, since the local Stevie The Dog site now uses the production API key.
   - Four client websites are waiting to onboard.
@@ -357,17 +359,18 @@ root
   - Image library (reuse stored images) is a backend `later` issue (#86); the backend confirmed that image rows may share a `src` and that no save or cleanup deletes a file a row still uses.
   - Images: Cloudflare R2 is the fallback if Cloudinary's free tier is outgrown (backend `docs/setup.md` → Image Hosting). Every `<Image>` is unoptimized, so no `images.remotePatterns` entry is needed; if the preview moves to optimized `<Image>`, the Cloudinary host joins `images.remotePatterns`.
   - The test site owner Richard Marafioti (`steviethedogchi@gmail.com`) and the Stevie The Dog website exist, and signing in as that owner routes to `/dashboard`.
-  - Wording still marked for Rich to confirm in the browser: the post and gallery cancel-gate buttons ("Yes, cancel post", "Discard changes", "Keep editing"), and the crop dialogs' notes (besides the two notes in `docs/flows.md`).
+  - Wording still marked for Rich to confirm in the browser: the post and gallery cancel-gate buttons ("Yes, cancel post", "Discard changes", "Keep editing"), and the crop dialogs' notes (besides the two notes in `docs/flows.md`); the inbox's ("Sent to every active site owner.", the Edit and Withdraw dialogs, "*Line breaks you add will show.").
+  - The inbox's unread semibold, and a thread's messages lined up on the left with a sent ↗ / received ↙ arrow and no indent, the name in a light gray (sent) or light blue (received) pill, are first passes for Rich to see in the browser. The mail badge is a green dot, the "published" pill's green.
   - The Audit Events page and the Navbar's "Audit Events" link keep the base styling for now, for Rich to adjust later.
   - Landing page: only the opening block of the copy is live. The rest of the draft drawn from the master doc's Proposal - v1 tab (What I do, Who it's for, How we work together, the Client Portal) and a contact route wait for Rich, and its styling is plain for him to adjust.
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-06** `feat/notification-inbox` (issue #87; backend issue #98, the lead): the Navbar's mail icon with a green unread dot for both roles; the admin's Send a Notification page (title and formatted body) and the admin's mailbox, its sent updates with "Read by N of M", Edit and Withdraw beside the threads, and the Accounts aside's ⋮ → Message; the site owner's mailbox, updates and threads in one list with an "update" / "message" pill, and Message Admin; each thread on its own page with replies. `usePagedList` now holds the paging. `docs/api.md` copies the backend's contract.
 - **2026-11-06** `feat/scheduled-publish` (issue #85; backend issue #96, the lead): a draft post or gallery gets a publish date (a day, published at its local midnight), set in the forms under the Status switch and on its own page with Set publish date / Clear; the dashboard tables gain a Live on column (`publishedAt ?? publishAt`) and turn on their side at phone width, with an Actions tap menu; Audit Events shows a scheduled publish as "Scheduled". Also: a sent posts placement is never asked for again, restoring a post goes back to `/dashboard`, the post page fits a phone, and "Your Websites" is gone. `docs/api.md` copies the backend's contract.
 - **2026-11-05** `feat/recently-deleted-posts` (issue #83; backend issue #85, the lead): `/dashboard/deleted` lists the posts deleted in the last 30 days with their days left (from `restorableUntil`) and a Restore button, reached from a Navbar link, and Delete a Post's confirmation says the post can be restored for 30 days; Audit Events shows "Page N of M" beside Load more; each website's Posts heading gets a Placement row with the posts' placement pill, shown even with no posts; the Abilities aside moves into the dashboard layout, so it shows on every `/dashboard` route. `docs/api.md` copies the backend's contract (`DeletedPostSummary`, the list and restore routes, `pages`).
 - **2026-11-05** `feat/ui-adjustments` (issue #81; backend issue #93): every pill is 1rem; the gallery table gets a Placement column with each gallery's placement pill, and the admin's gallery dropdown shows its Gallery Code (`placementTone` shared by the three placement pills); BBH Hegarty and Montserrat load through `next/font` as `--logoFont`, `--headerFont` and `--copyFont`; the landing page gets its first copy and meta description; the tables grow with their contents; the navbar reads "3D | WD" with semibold links; Audit Events gains a Date field for one local day (`from` / `to`); each ability in the Abilities aside gets an "i" saying what it does. `docs/api.md` copies the backend's contract. The backend clears the Posts placement once the last post is deleted, and generates new galleries' codes.
 - **2026-11-05** `fix/upload-resilience` (issue #79, frontend only): Submit uploads new photos 3 at a time, retries one that fails on the network or with a 5xx twice (after 1s, then 3s), keeps every photo that uploaded when another fails so the next Submit uploads only the rest, says how many failed, and reports the failure to Sentry with counts and reasons only.
-- **2026-11-04** `docs/v1-trim` (issue #77; backend issue #77, the lead): only `docs/process.md` is imported, with a Read before table in its place; `CLAUDE.md` is ordered by weight, each rule said once with no history inside it, and the launch checklist moves to `docs/history.md`. New ESLint rules (proven by `eslint.config.test.mjs`) enforce `apiFetch` only, no browser storage or cookie reads, no raw HTML, Sentry only through `_lib/sentry.js`, no em dash in UI text and a static landing page. Also records the Feature 11 phone-photo check as confirmed on production.
 
 ## Features
 
@@ -388,6 +391,7 @@ New work after the MVP Build Order, numbered and named the same as in the backen
 13. **Request emails** (`feat/ability-emails`, issue #63): a sent request message can be edited; the backend emails the admin.
 14. **Recently deleted posts** (`feat/recently-deleted-posts`, issue #83): the site owner lists the posts deleted in the last 30 days and restores one; Audit Events counts its pages.
 15. **Scheduled publish** (`feat/scheduled-publish`, issue #85): a draft post or gallery gets a publish date, and the backend's cron job publishes it when it passes.
+16. **Notification inbox** (`feat/notification-inbox`, issue #87): the admin's site-wide and automatic updates, threads between a site owner and the admin, and the Navbar's mail icon with its unread badge.
 
 ## Planned Later
 

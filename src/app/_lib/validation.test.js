@@ -13,10 +13,12 @@ import {
   validateGallery,
   validateGalleryImage,
   validateImage,
+  validateNewThread,
   validateParagraph,
   validatePost,
   validatePublishAt,
   validateRequestNote,
+  validateUpdate,
   validateWebsite,
 } from "./validation";
 
@@ -431,5 +433,65 @@ describe("validateGalleryImage", () => {
         requestNote: "Request note must be 1000 characters or fewer.",
       });
     });
+  });
+});
+
+describe("validateUpdate", () => {
+  it("requires a title and a body that aren't blank after trimming", () => {
+    expect(validateUpdate({ title: " ", body: " \n " })).toEqual({
+      title: "Title is required.",
+      body: "Body is required.",
+    });
+  });
+
+  it("allows a 120-character title and a 10000-character body, and rejects one more", () => {
+    expect(
+      validateUpdate({ title: "a".repeat(120), body: "b".repeat(10000) }),
+    ).toEqual({});
+    expect(
+      validateUpdate({ title: "a".repeat(121), body: "b".repeat(10001) }),
+    ).toEqual({
+      title: "Title must be 120 characters or fewer.",
+      body: "Body must be 10000 characters or fewer.",
+    });
+  });
+
+  it("checks the body's links with the paragraph link rules", () => {
+    expect(
+      validateUpdate({ title: "News", body: "See [menu](http://x.com)" }),
+    ).toEqual({ body: "Each link must be a valid URL starting with https://" });
+  });
+});
+
+describe("validateNewThread", () => {
+  it("requires a subject and a message", () => {
+    expect(validateNewThread({ subject: "", message: "" })).toEqual({
+      subject: "Subject is required.",
+      message: "Message is required.",
+    });
+  });
+
+  it("allows a 120-character subject and a 5000-character message, and rejects one more", () => {
+    expect(
+      validateNewThread({
+        subject: "a".repeat(120),
+        message: "b".repeat(5000),
+      }),
+    ).toEqual({});
+    expect(
+      validateNewThread({
+        subject: "a".repeat(121),
+        message: "b".repeat(5001),
+      }),
+    ).toEqual({
+      subject: "Subject must be 120 characters or fewer.",
+      message: "Message must be 5000 characters or fewer.",
+    });
+  });
+
+  it("checks the message's links, the link text before its URL", () => {
+    expect(
+      validateNewThread({ subject: "Hi", message: "[ ](http://x.com)" }),
+    ).toEqual({ message: "Each link needs link text." });
   });
 });

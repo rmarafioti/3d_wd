@@ -237,6 +237,7 @@ export default function AccountList({
   loading,
   error,
   onLink,
+  onMessage,
   onSetLive,
   onSetGalleryLive,
 }) {
@@ -290,6 +291,10 @@ export default function AccountList({
                           {
                             label: "Link a Website",
                             onClick: () => onLink(account),
+                          },
+                          {
+                            label: "Message",
+                            onClick: () => onMessage(account),
                           },
                         ]}
                       />

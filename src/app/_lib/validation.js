@@ -109,21 +109,52 @@ function linkErrorIn(text) {
   return null;
 }
 
-// Validates one paragraph element (the paragraph dialogs' Insert). Only the ends are trimmed when
-// sent, so line breaks inside the text, and its formatting markup, count toward the length.
+// Validates text that may hold paragraph formatting (docs/api.md → Paragraph formatting): a post
+// paragraph, an update's body or a thread message. Returns the message, or null. Only the ends are
+// trimmed when sent, so line breaks inside the text, and its markup, count toward the length.
+export function formattedTextError(text, label, max) {
+  if (isBlank(text)) return `${label} is required.`;
+  if (isTooLong(text, max))
+    return `${label} must be ${max} characters or fewer.`;
+  return linkErrorIn(text);
+}
+
+// A required plain text field with a limit (an update's title, a thread's subject). Returns the
+// message, or null.
+function requiredTextError(text, label, max) {
+  if (isBlank(text)) return `${label} is required.`;
+  if (isTooLong(text, max))
+    return `${label} must be ${max} characters or fewer.`;
+  return null;
+}
+
+// Keeps only the fields that have a message.
+function withoutNulls(errors) {
+  return Object.fromEntries(
+    Object.entries(errors).filter(([, message]) => message),
+  );
+}
+
+// Validates one paragraph element (the paragraph dialogs' Insert).
 export function validateParagraph({ text }) {
-  const errors = {};
-  if (isBlank(text)) {
-    errors.text = "Paragraph is required.";
-    return errors;
-  }
-  if (isTooLong(text, 10000)) {
-    errors.text = "Paragraph must be 10000 characters or fewer.";
-    return errors;
-  }
-  const linkError = linkErrorIn(text);
-  if (linkError) errors.text = linkError;
-  return errors;
+  return withoutNulls({ text: formattedTextError(text, "Paragraph", 10000) });
+}
+
+// Validates an update (docs/api.md → Validation rules, Updates): the admin's send and edit forms.
+export function validateUpdate({ title, body }) {
+  return withoutNulls({
+    title: requiredTextError(title, "Title", 120),
+    body: formattedTextError(body, "Body", 10000),
+  });
+}
+
+// Validates a new thread's subject and first message (docs/api.md → Validation rules, Threads).
+// The admin's account comes from the Accounts aside, so it needs no check here.
+export function validateNewThread({ subject, message }) {
+  return withoutNulls({
+    subject: requiredTextError(subject, "Subject", 120),
+    message: formattedTextError(message, "Message", 5000),
+  });
 }
 
 // Validates the top-level fields of the Create / Edit a Post form (each body element is checked

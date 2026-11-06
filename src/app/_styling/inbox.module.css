@@ -1,0 +1,167 @@
+/* The inbox pages: Send a Notification, both roles' Messages and a thread. One column, left aligned,
+   at most 40rem wide, with a gutter so it never touches the screen edge on a phone. */
+.inboxPage {
+  align-items: stretch;
+  width: 40rem;
+  max-width: 100%;
+  margin: 0rem auto;
+  padding: 4rem 1rem 1rem 1rem;
+  text-align: left;
+}
+
+/* 1rem under a heading and the note under it, as in the ability request dialog, so a form's first
+   field sits apart from them and, in a dialog, clears its X. */
+.heading,
+.note {
+  margin-bottom: 1rem;
+}
+
+/* The mailbox's heading with "Message Admin" beside it, wrapping under it on a narrow screen. */
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Message Admin on one line: as wide as its words rather than the global button's 140px. */
+.messageAdminButton {
+  width: auto;
+  white-space: nowrap;
+}
+
+/* Secondary text: a date, who a thread is with, the read count. */
+.muted {
+  color: gray;
+}
+
+/* The inbox forms take the column's width rather than the global form's 400px. Stretched rather
+   than the global form's flex-start, so each field's label row and format-button row span the
+   form, as in the post dialogs, and its character count sits at the right edge. */
+.form {
+  width: 100%;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.formDialog {
+  width: 40rem;
+  max-width: 100%;
+}
+
+.submitButton {
+  margin-top: 0.5rem;
+}
+
+/* A list of updates or threads, each set apart by a line under it. */
+.list {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.listItem {
+  padding: 0.5rem 0rem;
+  border-bottom: 1px solid lightgray;
+  overflow-wrap: anywhere;
+}
+
+/* An item's pill, title and date (or its title and ⋮ menu) on one row. No global summary margin,
+   and no link underline, so an update's row and a thread's row read the same. */
+.itemRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* The admin's sent update: its disclosure takes the row, with the ⋮ beside it rather than inside
+   the summary, so opening the menu never opens the update, and centred in the row's height.
+   Positioned, so the ⋮ list opens from this row (ActionsMenu), at its right edge, rather than from
+   the page. */
+.updateRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.updateDetails {
+  flex-grow: 1;
+}
+
+/* Down by the list item's 0.5rem bottom padding, so the ⋮ list's top border lies on the item's
+   bottom line. Two classes, so it wins over ActionsMenu's own top. */
+.updateRow .updateMenuList {
+  top: calc(100% + 0.5rem);
+}
+
+/* Takes the row's spare width, so the date or the ⋮ sits at the right. */
+.itemTitle {
+  flex-grow: 1;
+}
+
+/* Montserrat SemiBold while something in it is unread. */
+.unread {
+  font-weight: 600;
+}
+
+/* For screen readers only: an item's "(unread)". */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A thread's messages, oldest first, each set apart by a line under it, all lined up on the left:
+   the arrow before each name says which side wrote it. */
+.messages {
+  margin: 1rem 0rem 2rem 0rem;
+}
+
+.message {
+  padding: 0.5rem 0rem;
+  border-bottom: 1px solid lightgray;
+  overflow-wrap: anywhere;
+}
+
+/* Under the messages at the right, where a reply would follow. */
+.replyButton {
+  align-self: flex-end;
+}
+
+/* The arrow and author at the left and the date and time at the right, apart, so they don't read
+   as one. */
+.messageMeta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* The arrow and name in a pill, rounded like Pill's, in each side's colour: light gray for the
+   viewer's own messages, light blue for the other side's. 0.25rem more on the right matches the
+   blank space the arrow icon has on its left, so the two ends look even. */
+.author {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.75rem 0.2rem 0.5rem;
+  border-radius: 25px;
+}
+
+.sentAuthor {
+  background-color: lightgray;
+}
+
+.receivedAuthor {
+  background-color: lightblue;
+}

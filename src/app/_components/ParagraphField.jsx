@@ -1,5 +1,5 @@
-// ParagraphField: one paragraph's fields in the Create / Edit Post paragraph dialogs: its format
-// buttons, the textarea with its count, the Link panel and the list of the paragraph's links.
+// ParagraphField: a formatted text field (a post paragraph, an update's body, a thread message): its
+// format buttons, the textarea with its count, the Link panel and the list of the text's links.
 "use client";
 
 import { useId, useLayoutEffect, useRef, useState } from "react";
@@ -19,8 +19,8 @@ import {
   linksInParagraph,
 } from "../_lib/postFormatting";
 import {
+  formattedTextError,
   isBlank,
-  validateParagraph,
   validateParagraphLink,
 } from "../_lib/validation";
 
@@ -77,7 +77,17 @@ function touchesLink(links, { start, end }) {
   });
 }
 
-export default function ParagraphField({ name, value, onChange, serverError }) {
+// label, note and max default to a post paragraph's; an update's body and a thread message pass
+// their own (docs/api.md → Validation rules).
+export default function ParagraphField({
+  name,
+  value,
+  onChange,
+  serverError,
+  label = "Paragraph",
+  note = "Line breaks you add will show on your website.",
+  max = 10000,
+}) {
   const id = useId();
   const textareaRef = useRef(null);
   // Until the site owner first clicks into the paragraph, the buttons act at the end of its text.
@@ -98,9 +108,9 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
   // Whether the links list disclosure is open. Closed to start with, and again after a delete.
   const [linksOpen, setLinksOpen] = useState(false);
 
-  const error = validateParagraph(value).text;
+  const error = formattedTextError(value.text, label, max);
   // The text's own message (a bad link, too long) shows as soon as it applies, since the buttons
-  // change the text without leaving the field; "Paragraph is required." waits until it is left.
+  // change the text without leaving the field; "{label} is required." waits until it is left.
   const showError = touched || !isBlank(value.text);
   const message = showError && error ? error : serverError;
   // Read from the text on every render, so the list matches what is typed, hand-typed links too.
@@ -293,9 +303,9 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
 
   return (
     <>
-      <label htmlFor={id}>Paragraph</label>
+      <label htmlFor={id}>{label}</label>
       <p className={styles.message}>
-        <i>*Line breaks you add will show on your website.</i>
+        <i>*{note}</i>
       </p>
       <div className={styles.formatButtons}>
         {FORMAT_BUTTONS.map((button) => {
@@ -323,7 +333,7 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
           );
         })}
         {/* At the row's far end, so the count sits right above the textarea. */}
-        <CharacterCount id={`${id}-count`} value={value.text} max={10000} />
+        <CharacterCount id={`${id}-count`} value={value.text} max={max} />
       </div>
       {linkPanel?.mode === "add" && (
         <LinkPanel
@@ -339,7 +349,7 @@ export default function ParagraphField({ name, value, onChange, serverError }) {
       <textarea
         ref={textareaRef}
         id={id}
-        maxLength={10000}
+        maxLength={max}
         aria-describedby={`${id}-count`}
         value={value.text}
         onChange={handleTextChange}

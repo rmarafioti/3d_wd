@@ -1,5 +1,5 @@
-// Navbar: the home link, dashboard title and Sign in / out, then the signed-in user's links, which
-// at phone width move into a hamburger menu.
+// Navbar: the home link, dashboard title, mail icon and Sign in / out, then the signed-in user's
+// links, which at phone width move into a hamburger menu.
 
 "use client";
 
@@ -11,6 +11,7 @@ import { useNav } from "../_hooks/useNav";
 import HomeLink from "../_components/HomeLink";
 import DashboardTitle from "../_components/DashboardTitle";
 import AuthButton from "../_components/AuthButton";
+import MailLink from "../_components/MailLink";
 
 import styles from "../_styling/navbar.module.css";
 
@@ -22,6 +23,7 @@ function navLinks(user, canCreateGallery) {
   if (user.role === "admin") {
     return [
       { label: "Create an Account", href: "/admin/createAccount" },
+      { label: "Send a Notification", href: "/admin/notifications" },
       { label: "Audit Events", href: "/admin/auditEvents" },
     ];
   }
@@ -71,6 +73,7 @@ export default function Navbar() {
         <HomeLink />
         <DashboardTitle />
         <div className={styles.navActions}>
+          {user && <MailLink role={user.role} />}
           {/* Signed in, Sign out moves into the phone menu. */}
           <div className={links ? styles.desktopOnly : undefined}>
             <AuthButton />
