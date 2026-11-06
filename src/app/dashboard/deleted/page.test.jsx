@@ -1,5 +1,6 @@
 // Tests for the Recently Deleted page, through the real hooks and apiFetch: the rows and their days
-// left, the Website column, Restore and its refetches, a refused restore, the states and Load more.
+// left, the Website column, Restore and its return to /dashboard, a refused restore, the states
+// and Load more.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -7,6 +8,12 @@ import userEvent from "@testing-library/user-event";
 import RecentlyDeletedPage from "./page";
 import { SiteOwnerDataProvider } from "../../_context/SiteOwnerDataContext";
 import { mockFetch } from "../../../test/helpers";
+
+const router = { push: vi.fn() };
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+  usePathname: () => "/dashboard/deleted",
+}));
 
 const DELETED = "GET /api/siteOwner/posts/deleted";
 const WEBSITES = "GET /api/siteOwner/websites";
@@ -111,10 +118,10 @@ describe("Recently Deleted page", () => {
     ).toBeInTheDocument();
   });
 
-  it("restores a post with the CSRF header, then refetches the list from the start and the websites", async () => {
+  it("restores a post with the CSRF header, then refetches the websites and goes back to /dashboard", async () => {
     const { calls } = mockFetch({
       [WEBSITES]: { body: { data: [WEBSITE] } },
-      [DELETED]: [list([deletedPost("p1")]), list([])],
+      [DELETED]: list([deletedPost("p1")]),
       [RESTORE]: { body: { data: { id: "p1" } } },
     });
     const user = userEvent.setup();
@@ -124,16 +131,11 @@ describe("Recently Deleted page", () => {
       await screen.findByRole("button", { name: "Restore Post p1" }),
     );
 
-    expect(
-      await screen.findByText("No recently deleted posts."),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
     const restore = calls.find((call) => call.method === "POST");
     expect(restore.path).toBe("/api/siteOwner/posts/p1/restore");
     expect(restore.headers["X-CSRF-Protection"]).toBe("1");
     expect(restore.credentials).toBe("include");
-    expect(calls.filter((call) => `GET ${call.path}` === DELETED)).toHaveLength(
-      2,
-    );
     expect(
       calls.filter((call) => `GET ${call.path}` === WEBSITES),
     ).toHaveLength(2);
@@ -159,6 +161,7 @@ describe("Recently Deleted page", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("Post not found.")).toBeInTheDocument();
     await screen.findByText("No recently deleted posts.");
+    expect(router.push).not.toHaveBeenCalled();
     expect(
       calls.filter((call) => `GET ${call.path}` === WEBSITES),
     ).toHaveLength(1);

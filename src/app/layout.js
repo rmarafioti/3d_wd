@@ -14,6 +14,9 @@ const bbhHegarty = BBH_Hegarty({
   weight: "400",
   subsets: ["latin"],
   variable: "--fontBbhHegarty",
+  // Next.js has no metrics for this font to size a fallback by, and warns on every compile unless
+  // it is given its own fallback.
+  fallback: ["sans-serif"],
 });
 const montserrat = Montserrat({
   weight: ["400", "600"],

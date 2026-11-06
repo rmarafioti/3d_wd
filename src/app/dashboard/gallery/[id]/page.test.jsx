@@ -6,6 +6,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GalleryPage from "./page";
 import { mockFetch, pressEscape } from "../../../../test/helpers";
+import { toPublishAt } from "../../../_lib/publishAt";
 
 const router = { push: vi.fn(), replace: vi.fn() };
 // The page's query string; a test sets it before rendering.
@@ -25,6 +26,8 @@ const GALLERY = {
   title: null,
   copy: null,
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-31T00:00:00.000Z",
   requestNote: null,
   requestedAt: null,
   createdAt: "2026-10-31T00:00:00.000Z",
@@ -77,6 +80,37 @@ describe("Gallery page", () => {
     expect(
       screen.getByRole("img", { name: "Thumbnail crop of Stevie" }),
     ).toBeInTheDocument();
+  });
+
+  it("sets a draft gallery's publish date from the page through the gallery route, then goes back to /dashboard", async () => {
+    const draft = { ...GALLERY, status: "draft", publishedAt: null };
+    const later = toPublishAt("2030-12-01");
+    const { user, calls } = await setup(
+      {
+        "PATCH /api/siteOwner/galleries/g1/publishAt": {
+          body: { data: { ...draft, publishAt: later } },
+        },
+      },
+      "",
+      draft,
+    );
+    expect(
+      screen.getByText(/also needs its placement before it shows/),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Date"), "2030-12-01");
+    await user.click(screen.getByRole("button", { name: "Set publish date" }));
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
+    const set = calls.find((call) => call.path.endsWith("/publishAt"));
+    expect(set.method).toBe("PATCH");
+    expect(set.body).toEqual({ publishAt: later });
+  });
+
+  it("shows no publish date on a published gallery", async () => {
+    await setup();
+
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
   });
 
   it('shows "Gallery not found." with a link back to /dashboard on a 404', async () => {

@@ -19,5 +19,11 @@ export default function PostActionsMenu({ post, onStatusChange, onDelete }) {
     { label: "Delete", onClick: () => onDelete(post) },
   ];
 
-  return <ActionsMenu label={`Actions for ${post.postName}`} items={items} />;
+  return (
+    <ActionsMenu
+      label={`Actions for ${post.postName}`}
+      items={items}
+      phoneLabel="Actions"
+    />
+  );
 }

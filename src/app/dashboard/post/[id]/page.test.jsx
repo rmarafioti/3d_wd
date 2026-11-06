@@ -6,6 +6,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostPage from "./page";
 import { mockFetch } from "../../../../test/helpers";
+import { toPublishAt } from "../../../_lib/publishAt";
 
 const router = { push: vi.fn(), replace: vi.fn() };
 // The page's query string; a test sets it before rendering.
@@ -25,6 +26,8 @@ const POST = {
   subHeader: null,
   postDate: null,
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-07T00:00:00.000Z",
   createdAt: "2026-10-07T00:00:00.000Z",
   updatedAt: "2026-10-07T00:00:00.000Z",
   body: [
@@ -53,6 +56,10 @@ async function setup(routes, query = "") {
   render(<PostPage />);
   await screen.findByRole("heading", { name: "Post Name: Walk day" });
   return { user, calls };
+}
+
+function button(name) {
+  return screen.getByRole("button", { name });
 }
 
 function deleteCalls(calls) {
@@ -179,6 +186,97 @@ describe("Post page", () => {
     expect(statusCalls(calls)[0].body).toEqual({ status: "published" });
     expect(screen.getAllByText("published")).toHaveLength(2);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("sets a draft's publish date from the page with Set publish date, sending only the date and going back to /dashboard, both buttons disabled until there is something to do", async () => {
+    const draft = { ...POST, status: "draft", publishedAt: null };
+    const later = toPublishAt("2030-12-01");
+    const { user, calls } = await setup({
+      "GET /api/siteOwner/posts/p1": { body: { data: draft } },
+      "PATCH /api/siteOwner/posts/p1/publishAt": {
+        body: { data: { ...draft, publishAt: later } },
+      },
+    });
+    const date = screen.getByLabelText("Date");
+    expect(date).toHaveValue("");
+    expect(button("Clear")).toBeDisabled();
+    expect(button("Set publish date")).toBeDisabled();
+
+    await user.type(date, "2030-12-01");
+    await user.click(button("Set publish date"));
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
+    const set = calls.find((call) => call.path.endsWith("/publishAt"));
+    expect(set.method).toBe("PATCH");
+    expect(set.body).toEqual({ publishAt: later });
+    expect(set.headers["X-CSRF-Protection"]).toBe("1");
+  });
+
+  it("clears a saved publish date with Clear, staying on the page", async () => {
+    const scheduled = {
+      ...POST,
+      status: "draft",
+      publishedAt: null,
+      publishAt: toPublishAt("2030-11-20"),
+    };
+    const { user, calls } = await setup({
+      "GET /api/siteOwner/posts/p1": { body: { data: scheduled } },
+      "PATCH /api/siteOwner/posts/p1/publishAt": {
+        body: { data: { ...scheduled, publishAt: null } },
+      },
+    });
+    expect(screen.getByLabelText("Date")).toHaveValue("2030-11-20");
+
+    await user.click(button("Clear"));
+
+    await waitFor(() => expect(screen.getByLabelText("Date")).toHaveValue(""));
+    const clear = calls.find((call) => call.path.endsWith("/publishAt"));
+    expect(clear.body).toEqual({ publishAt: null });
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("shows the backend's publish date message under the field and keeps the date picked", async () => {
+    const draft = { ...POST, status: "draft", publishedAt: null };
+    const { user } = await setup({
+      "GET /api/siteOwner/posts/p1": { body: { data: draft } },
+      "PATCH /api/siteOwner/posts/p1/publishAt": {
+        status: 400,
+        body: {
+          error: {
+            message: "Please fix the highlighted fields.",
+            fields: { publishAt: "Only a draft can have a go-live date." },
+          },
+        },
+      },
+    });
+
+    await user.type(screen.getByLabelText("Date"), "2030-12-01");
+    await user.click(button("Set publish date"));
+
+    expect(
+      await screen.findByText("Only a draft can have a go-live date."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Date")).toHaveValue("2030-12-01");
+  });
+
+  it("shows no publish date on a published post, and drops it once a draft is published by hand", async () => {
+    const scheduled = {
+      ...POST,
+      status: "draft",
+      publishedAt: null,
+      publishAt: toPublishAt("2030-11-20"),
+    };
+    const { user } = await setup({
+      "GET /api/siteOwner/posts/p1": { body: { data: scheduled } },
+      "PATCH /api/siteOwner/posts/p1/status": { body: { data: POST } },
+    });
+    expect(screen.getByLabelText("Date")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("switch", { name: "Published" }));
+
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Date")).not.toBeInTheDocument(),
+    );
   });
 
   it("shows a failed status change in a dialog and leaves the switch as it was", async () => {

@@ -17,9 +17,11 @@ import MessageDialog from "../../../_components/MessageDialog";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Toggle from "../../../_components/Toggle";
 import Pill from "../../../_components/Pill";
+import PublishDateEditor from "../../../_components/PublishDateEditor";
 import CropPreview from "../../../_components/CropPreview";
 import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
 import { galleryRequestCopy, placementTone } from "../../../_lib/abilities";
+import { GALLERY_PUBLISH_DATE_NOTE } from "../../../_lib/galleryFields";
 
 import styles from "../../../_styling/postPage.module.css";
 
@@ -75,6 +77,7 @@ export default function GalleryPage() {
     error,
     update,
     setStatus,
+    setPublishAt,
     editRequest,
   } = useGallery(id);
   const { remove } = useGalleries();
@@ -135,7 +138,7 @@ export default function GalleryPage() {
 
   return (
     <article>
-      <section className={`${styles.postPage} ${styles.galleryPage}`}>
+      <section className={styles.postPage}>
         <p>Website: {gallery.websiteName}</p>
         <h1>Gallery Name: {gallery.galleryName}</h1>
         <div className={styles.statusRow}>
@@ -154,6 +157,15 @@ export default function GalleryPage() {
             onChange={changeStatus}
           />
         </div>
+        {/* Keyed on the saved date, so a save (or the switch clearing it) starts the field afresh. */}
+        {gallery.status === "draft" && (
+          <PublishDateEditor
+            key={gallery.publishAt ?? "none"}
+            publishAt={gallery.publishAt}
+            onSave={setPublishAt}
+            note={GALLERY_PUBLISH_DATE_NOTE}
+          />
+        )}
 
         <dl>
           {/* The slug, so the site owner can say which gallery goes where on their website. */}

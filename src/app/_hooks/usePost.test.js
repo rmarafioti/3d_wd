@@ -26,13 +26,20 @@ async function renderLoaded(id = "p1") {
 }
 
 describe("usePost", () => {
-  it("returns { data, loading, error, update, setStatus } for the post", async () => {
+  it("returns { data, loading, error, update, setStatus, setPublishAt } for the post", async () => {
     mockFetch({ "GET /api/siteOwner/posts/p1": { body: { data: POST } } });
 
     const { result } = await renderLoaded();
 
     expect(Object.keys(result.current).sort()).toEqual(
-      ["data", "error", "loading", "setStatus", "update"].sort(),
+      [
+        "data",
+        "error",
+        "loading",
+        "setPublishAt",
+        "setStatus",
+        "update",
+      ].sort(),
     );
     expect(result.current.data).toEqual(POST);
   });

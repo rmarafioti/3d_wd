@@ -40,8 +40,8 @@ export function useDeletedPosts() {
     };
   }, [reloadKey]);
 
-  // From the start, never from a cursor: after a restore, the post a cursor names may be back
-  // (docs/api.md → Notes).
+  // From the start, never from a cursor: once a restore has been tried, the post a cursor names may
+  // be back (docs/api.md → Notes).
   const refetch = useCallback(() => setReloadKey((key) => key + 1), []);
 
   const loadMore = useCallback(async () => {

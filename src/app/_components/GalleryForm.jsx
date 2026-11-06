@@ -17,12 +17,14 @@ import Toggle from "./Toggle";
 import MessageDialog from "./MessageDialog";
 import SubmitProgressDialog from "./SubmitProgressDialog";
 import MobileShapePicker from "./MobileShapePicker";
+import PublishDateField from "./PublishDateField";
 import {
   GALLERY_NAME_TAKEN_MESSAGE,
   isBlank,
   takenGalleryNames,
   validateGallery,
   validateGalleryImage,
+  validatePublishAt,
 } from "../_lib/validation";
 import { uploadPicked } from "../_lib/uploadImages";
 import {
@@ -35,10 +37,12 @@ import {
 } from "../_lib/crops";
 import {
   GALLERY_FIELDS,
+  GALLERY_PUBLISH_DATE_NOTE,
   MAX_CAPTION,
   MAX_GALLERY_IMAGES,
   OPTIONAL_GALLERY_FIELDS,
 } from "../_lib/galleryFields";
+import { publishAtPayload, publishAtToDate } from "../_lib/publishAt";
 
 import styles from "../_styling/postForm.module.css";
 import previewStyles from "../_styling/postPreview.module.css";
@@ -47,6 +51,7 @@ const EMPTY_GALLERY = {
   galleryName: "",
   title: "",
   copy: "",
+  publishDate: "",
   images: [],
 };
 
@@ -65,12 +70,17 @@ const TIMED_OUT_MESSAGE =
   "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again.";
 
 // Form values for a Gallery loaded by useGallery: nulls become "", so every input is controlled.
-// Each image keeps its id (and uses it as its key), src, size and crops.
+// Each image keeps its id (and uses it as its key), src, size and crops. status and the stored
+// publishAt are read, never sent: Edit shows the publish date only on a draft, and accepts the
+// stored time unchanged.
 export function galleryToFormValues(gallery) {
   return {
+    status: gallery.status,
+    publishAt: gallery.publishAt,
     galleryName: gallery.galleryName,
     title: gallery.title ?? "",
     copy: gallery.copy ?? "",
+    publishDate: publishAtToDate(gallery.publishAt),
     images: gallery.images.map((image) => ({
       key: image.id,
       id: image.id,
@@ -177,8 +187,10 @@ export default function GalleryForm({
     galleryWebsiteId ?? (websites.length === 1 ? websites[0].id : ""),
   );
   const [values, setValues] = useState(initialValues);
-  // A new gallery is published unless the site owner switches it to draft.
-  const [status, setStatus] = useState("published");
+  // A new gallery is published unless the site owner switches it to draft; Edit keeps the
+  // gallery's own status, changed only outside the form.
+  const [status, setStatus] = useState(initialValues.status ?? "published");
+  const isDraft = status === "draft";
 
   // Create walks name → details → firstImage → review; Edit starts on review.
   const [step, setStep] = useState(isCreate ? "name" : "review");
@@ -225,6 +237,12 @@ export default function GalleryForm({
   );
   const validateOptions = { requireWebsite: isCreate, takenNames };
   const errors = validateGallery({ websiteId, ...values }, validateOptions);
+  const publishAtError =
+    isDraft &&
+    validatePublishAt(values.publishDate, {
+      storedPublishAt: initialValues.publishAt,
+    });
+  if (publishAtError) errors.publishAt = publishAtError;
   // Each image is valid on its own here: it only joins the gallery through Insert, which waits for
   // its checks, and the only image can't be deleted. Together, their crops must still be
   // consistent (every image or none has each crop, one mobile shape), which adding a crop to one
@@ -374,6 +392,12 @@ export default function GalleryForm({
     dropServerErrors((path) => path === field);
   }
 
+  // The publish date's fields are edited in place in the review view, with no dialog.
+  function changePublishDate(publishDate) {
+    updateGallery((current) => ({ ...current, publishDate }));
+    dropServerErrors((path) => path === "publishAt");
+  }
+
   // A new mobile shape for the whole gallery: every mobile crop is redrawn in it around its own
   // centre (reshapeCrop, in its image's own pixels), so none is lost and all share the shape. The
   // backend's messages about the images described them as they were, so they are dropped.
@@ -449,8 +473,11 @@ export default function GalleryForm({
     try {
       const payload = toPayload({ ...values, images: await uploadNewImages() });
       setProgress("Saving your gallery…");
+      const scheduling = publishAtPayload(status, values.publishDate);
       const gallery = await onSubmit(
-        isCreate ? { websiteId, ...payload, status } : payload,
+        isCreate
+          ? { websiteId, ...payload, status, ...scheduling }
+          : { ...payload, ...scheduling },
       );
       onSuccess(gallery);
     } catch (err) {
@@ -588,6 +615,13 @@ export default function GalleryForm({
                     setStatus(published ? "published" : "draft")
                   }
                 />
+                {isDraft && renderPublishDate()}
+              </div>
+            )}
+            {!isCreate && isDraft && (
+              <div className={styles.statusSection}>
+                <p className={styles.statusHeader}>Publish date</p>
+                {renderPublishDate()}
               </div>
             )}
             <button
@@ -620,6 +654,18 @@ export default function GalleryForm({
           onChange={(shape) => setEditing({ mobileShape: shape })}
         />
       </PostStepDialog>
+    );
+  }
+
+  function renderPublishDate() {
+    return (
+      <PublishDateField
+        publishDate={values.publishDate}
+        onChange={changePublishDate}
+        onBlur={() => touch("publishAt")}
+        message={messageFor("publishAt")}
+        note={GALLERY_PUBLISH_DATE_NOTE}
+      />
     );
   }
 

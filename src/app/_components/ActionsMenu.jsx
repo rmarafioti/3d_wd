@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { GoTriangleDown, GoTriangleRight } from "react-icons/go";
 
 import styles from "../_styling/actionsMenu.module.css";
 
@@ -14,11 +15,14 @@ import styles from "../_styling/actionsMenu.module.css";
 // caller that lays them out differently. Each item is { label, href } for a link or
 // { label, onClick } for a button; an item with an Icon shows only the icon, named by its label.
 // keepOpen keeps the menu open after a click, so a move arrow can move an element several places.
+// phoneLabel, for a table that turns on its side at phone width, shows that word with the asides'
+// triangle in place of the ⋮ there ("Actions ▸").
 export default function ActionsMenu({
   label,
   items,
   className = "",
   listClassName = "",
+  phoneLabel,
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -51,8 +55,13 @@ export default function ActionsMenu({
     item.onClick?.();
   }
 
+  const Triangle = open ? GoTriangleDown : GoTriangleRight;
+
   return (
-    <div ref={menuRef} className={className}>
+    <div
+      ref={menuRef}
+      className={`${className} ${phoneLabel ? styles.hasPhoneTrigger : ""}`}
+    >
       <button
         ref={buttonRef}
         type="button"
@@ -61,7 +70,13 @@ export default function ActionsMenu({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <BsThreeDotsVertical aria-hidden="true" />
+        <BsThreeDotsVertical aria-hidden="true" className={styles.dotsIcon} />
+        {phoneLabel && (
+          <span aria-hidden="true" className={styles.phoneTrigger}>
+            {phoneLabel}
+            <Triangle />
+          </span>
+        )}
       </button>
       {open && (
         <ul className={`${styles.menuList} ${listClassName}`}>

@@ -35,7 +35,10 @@ export default function AuditEventTable({ events }) {
           {events.map((event) => (
             <tr key={event.id}>
               <td>{new Date(event.createdAt).toLocaleString()}</td>
-              <td>{event.actorEmail}</td>
+              {/* A scheduled publish has no actor: the backend's job made it. */}
+              <td>
+                {event.metadata?.scheduled ? "Scheduled" : event.actorEmail}
+              </td>
               <td>{event.action}</td>
               <td>{event.targetType}</td>
               <td>{event.targetId}</td>

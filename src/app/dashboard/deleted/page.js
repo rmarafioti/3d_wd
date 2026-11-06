@@ -4,6 +4,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSiteOwnerData } from "../../_hooks/useSiteOwnerData";
 import { useDeletedPosts } from "../../_hooks/useDeletedPosts";
 import { usePosts } from "../../_hooks/usePosts";
@@ -13,6 +14,7 @@ import MessageDialog from "../../_components/MessageDialog";
 import styles from "../../_styling/dashPages.module.css";
 
 export default function RecentlyDeletedPage() {
+  const router = useRouter();
   const websites = useSiteOwnerData();
   const deleted = useDeletedPosts();
   const posts = usePosts();
@@ -21,13 +23,16 @@ export default function RecentlyDeletedPage() {
   // A failed restore's message, held only while its dialog is open.
   const [restoreError, setRestoreError] = useState(null);
 
-  // No success dialog: the row leaving this list, and the post back on /dashboard, show it. Either
-  // way the list is fetched again, since a failure ("Post not found.") means its window has passed.
+  // No success dialog: a restored post sends the site owner back to /dashboard, where it is listed
+  // again. A failure stays here, and the list is fetched again, since "Post not found." means its
+  // window has passed.
   async function restore(post) {
     setRestoringId(post.id);
     try {
       await posts.restore(post.id);
       websites.refetch();
+      router.push("/dashboard");
+      return;
     } catch (err) {
       setRestoreError(err.message);
     }

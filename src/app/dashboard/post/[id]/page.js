@@ -9,12 +9,16 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { usePost } from "../../../_hooks/usePost";
 import { usePosts } from "../../../_hooks/usePosts";
-import { deletePostMessage } from "../../../_lib/postFields";
+import {
+  deletePostMessage,
+  POST_PUBLISH_DATE_NOTE,
+} from "../../../_lib/postFields";
 import PostForm, { postToFormValues } from "../../../_components/PostForm";
 import MessageDialog from "../../../_components/MessageDialog";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Toggle from "../../../_components/Toggle";
 import Pill from "../../../_components/Pill";
+import PublishDateEditor from "../../../_components/PublishDateEditor";
 import FormattedText from "../../../_components/FormattedText";
 
 import styles from "../../../_styling/postPage.module.css";
@@ -23,7 +27,14 @@ export default function PostPage() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: post, loading, error, update, setStatus } = usePost(id);
+  const {
+    data: post,
+    loading,
+    error,
+    update,
+    setStatus,
+    setPublishAt,
+  } = usePost(id);
   const { remove } = usePosts();
 
   // ?edit=1 (the ⋮ menu's Edit) opens the form; it shows once the post has loaded.
@@ -99,6 +110,15 @@ export default function PostPage() {
             onChange={changeStatus}
           />
         </div>
+        {/* Keyed on the saved date, so a save (or the switch clearing it) starts the field afresh. */}
+        {post.status === "draft" && (
+          <PublishDateEditor
+            key={post.publishAt ?? "none"}
+            publishAt={post.publishAt}
+            onSave={setPublishAt}
+            note={POST_PUBLISH_DATE_NOTE}
+          />
+        )}
 
         <dl>
           <dt className={styles.key}>Post Date:</dt>

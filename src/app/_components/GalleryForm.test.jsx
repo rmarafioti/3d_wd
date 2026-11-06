@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GalleryForm, { galleryToFormValues } from "./GalleryForm";
+import { toPublishAt } from "../_lib/publishAt";
 import {
   deferred,
   imageFile,
@@ -64,6 +65,8 @@ const GALLERY = {
   title: "Inside",
   copy: null,
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-31T00:00:00.000Z",
   createdAt: "2026-10-31T00:00:00.000Z",
   updatedAt: "2026-10-31T00:00:00.000Z",
   images: [STORED_IMAGE, { ...STORED_IMAGE, id: "i2", altText: "Ball" }],
@@ -509,6 +512,40 @@ describe("GalleryForm (edit)", () => {
         "Thumbnail crop must be a square inside the image.",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("GalleryForm publish date", () => {
+  it("shows a draft's publish date with the placement note, and sends a changed date", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(GALLERY);
+    const draft = {
+      ...GALLERY,
+      status: "draft",
+      publishAt: toPublishAt("2030-11-20"),
+    };
+    const { user } = renderEdit({ gallery: draft, onSubmit });
+    expect(screen.getByLabelText("Date")).toHaveValue("2030-11-20");
+    expect(
+      screen.getByText(/also needs its placement before it shows/),
+    ).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("Date"));
+    await user.type(screen.getByLabelText("Date"), "2030-12-01");
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].publishAt).toBe(toPublishAt("2030-12-01"));
+  });
+
+  it("shows no publish date on a published gallery's Edit, and sends none", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(GALLERY);
+    const { user } = renderEdit({ onSubmit });
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
+
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("publishAt");
   });
 });
 

@@ -44,3 +44,26 @@
 .menuItem:focus-visible {
   background-color: lightgray;
 }
+
+/* A table row's "Actions ▸", shown in place of the ⋮ only at phone width (phoneLabel). */
+.phoneTrigger {
+  display: none;
+}
+
+@media (max-width: 667px) {
+  .hasPhoneTrigger .dotsIcon {
+    display: none;
+  }
+
+  /* The whole row is the tap target, its word bold like the keys above it. */
+  .hasPhoneTrigger .menuButton {
+    width: 100%;
+  }
+
+  .hasPhoneTrigger .phoneTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-weight: bold;
+  }
+}

@@ -57,19 +57,14 @@ export function abilityPillLabel(ability, { prompts = false } = {}) {
   return ability.status;
 }
 
-// Posts wait for their request form once the website has a post and either the form was never
-// sent (placement null) or every post was deleted after it was, so the oldest post now is newer
-// than the form (the backend's rule, docs/api.md → Notes, Abilities). Posts
-// backfilled live without a form (placement live, requestedAt null) wait for nothing.
+// Posts wait for their request form once the website has a post and the form was never sent
+// (placement null). Once sent, the placement stays, whatever happens to the posts: deleting every
+// post never asks again, and the site owner changes it only through Edit placement. Posts
+// backfilled live without a form (placement live) wait for nothing.
 function postsPending(website) {
   const ability = findAbility(website, "posts");
   if (!ability || website.posts.length === 0) return false;
-  if (ability.placement === null) return true;
-  if (!ability.requestedAt) return false;
-  const oldest = Math.min(
-    ...website.posts.map((post) => Date.parse(post.createdAt)),
-  );
-  return oldest > Date.parse(ability.requestedAt);
+  return ability.placement === null;
 }
 
 // The first request form still waiting to be sent: a website's posts (postsPending), or a

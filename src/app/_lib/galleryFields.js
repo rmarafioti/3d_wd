@@ -35,3 +35,8 @@ export const MAX_CAPTION = 300;
 export function imageNames(images) {
   return images.map((_image, index) => `image ${index + 1}`);
 }
+
+// The publish date's note, the same in the gallery form and on the gallery page: publishing
+// doesn't place a gallery on the website, the administrator sets its placement live.
+export const GALLERY_PUBLISH_DATE_NOTE =
+  "Your gallery also needs its placement before it shows on your website.";
