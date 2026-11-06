@@ -1,5 +1,10 @@
 // postFields: the post's own fields as Create / Edit Post shows them, shared by PostForm and
-// PostToolbar so a field reads the same in its dialog and its toolbar row.
+// PostToolbar so a field reads the same in its dialog and its toolbar row, and Delete's message.
+
+// Delete a Post's confirmation, the same on the post page and the dashboard's ⋮ menu.
+export function deletePostMessage(postName) {
+  return `Delete ${postName}? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.`;
+}
 
 // The limits match docs/api.md → Validation rules (checked in validation.js's validatePost).
 export const POST_FIELDS = {

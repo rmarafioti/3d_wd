@@ -197,7 +197,7 @@ describe("Dashboard page", () => {
     const dialog = screen.getByRole("dialog");
 
     expect(dialog).toHaveTextContent(
-      "Delete Walk day? It will be removed from your dashboard and your website. This can't be undone.",
+      "Delete Walk day? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.",
     );
     await user.click(
       within(dialog).getByRole("button", { name: "Delete Post" }),

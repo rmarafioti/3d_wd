@@ -34,7 +34,7 @@ export default function PostTable({ posts, onStatusChange, onDelete }) {
         {posts.map((post) => (
           <tr key={post.id}>
             <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-            <td>
+            <td className={styles.wrapCell}>
               <Link href={`/dashboard/post/${post.id}`}>{post.postName}</Link>
             </td>
             <td>
