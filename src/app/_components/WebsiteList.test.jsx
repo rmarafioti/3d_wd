@@ -53,6 +53,31 @@ const WEBSITE = {
 const SENT = "2026-11-01T00:00:00.000Z";
 
 describe("WebsiteList", () => {
+  it("shows the posts' live placement even when the website has no posts", () => {
+    const website = {
+      ...WEBSITE,
+      abilities: [{ ...WEBSITE.abilities[0], placement: "live" }],
+      posts: [],
+    };
+
+    render(<WebsiteList websites={[website]} loading={false} error={null} />);
+
+    expect(screen.getByText("Placement:")).toBeInTheDocument();
+    expect(screen.getByText("live")).toBeInTheDocument();
+    expect(screen.getByText("No posts yet.")).toBeInTheDocument();
+  });
+
+  it("shows no placement before the posts' request form is sent", () => {
+    const website = {
+      ...WEBSITE,
+      abilities: [{ ...WEBSITE.abilities[0], placement: null }],
+    };
+
+    render(<WebsiteList websites={[website]} loading={false} error={null} />);
+
+    expect(screen.queryByText("Placement:")).not.toBeInTheDocument();
+  });
+
   it("shows Loading… before the first response", () => {
     render(<WebsiteList websites={null} loading error={null} />);
 

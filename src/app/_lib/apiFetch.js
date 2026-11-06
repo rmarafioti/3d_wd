@@ -15,8 +15,8 @@ export class ApiError extends Error {
   }
 }
 
-// paginated: true returns { data, nextCursor } instead of data, for the paginated lists whose
-// success body has nextCursor beside data (docs/api.md → GET /api/admin/auditEvents).
+// paginated: true returns { data, nextCursor, pages } instead of data, for the paginated lists
+// whose success body has nextCursor beside data; pages is null for a list that sends no count.
 export async function apiFetch(
   path,
   { method = "GET", body, paginated = false } = {},
@@ -47,7 +47,11 @@ export async function apiFetch(
   } catch {}
 
   if (response.ok && paginated) {
-    return { data: json?.data ?? [], nextCursor: json?.nextCursor ?? null };
+    return {
+      data: json?.data ?? [],
+      nextCursor: json?.nextCursor ?? null,
+      pages: json?.pages ?? null,
+    };
   }
   if (response.ok) return json?.data ?? null;
 

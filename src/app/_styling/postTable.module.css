@@ -16,6 +16,18 @@
   margin: 0.5rem 0rem;
 }
 
+/* The posts' placement, under "Posts" and above their table. */
+.placementRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.placementLabel {
+  font-weight: bold;
+}
+
 /* No sideways-scrolling box as on the Audit Events page: it would clip each row's ⋮ menu. The
    section's width, so its tables line up; columns grow with their contents (the header cells'
    widths are their starting widths), and once the section is at its widest, the names wrap. */
@@ -29,7 +41,9 @@
 }
 
 .statusColumn,
-.placementColumn {
+.placementColumn,
+.daysColumn,
+.restoreColumn {
   width: 6rem;
 }
 
@@ -58,20 +72,38 @@
   vertical-align: middle;
 }
 
-/* The date, the pill and the ⋮ button stay on one line; only the post name (column 2) wraps,
-   breaking even a long unspaced name so it never runs past its column. */
-.table td:not(:nth-child(2)) {
+/* Dates, pills, days left and buttons stay on one line, so their columns grow to fit them. */
+.table td {
   white-space: nowrap;
 }
 
-.table td:nth-child(2) {
-  overflow-wrap: anywhere;
-}
-
-/* The gallery table's name and slug both wrap, since the name is its first column. */
+/* Only the names (and the gallery table's slug) wrap, breaking even a long unspaced name so it
+   never runs past its column. A class, not a column number, since the tables' columns differ. */
 .table td.wrapCell {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* Recently Deleted's Restore: the button fills its cell, so the cell is the button. Two classes,
+   so its padding wins over the shared cell rule above. */
+.table .restoreCell {
+  padding: 0rem;
+}
+
+/* Plain like the Navbar's links: black on white, gray under the pointer or reached with Tab. */
+.restoreButton {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0px;
+  color: black;
+  background-color: white;
+}
+
+.restoreButton:hover:not(:disabled),
+.restoreButton:focus-visible {
+  background-color: lightgray;
 }
 
 /* For screen readers only: the menu column's heading. */

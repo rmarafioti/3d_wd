@@ -73,7 +73,7 @@ describe("Navbar", () => {
     );
   });
 
-  it("links the site owner to Create a Post, and to Create a Gallery only once a website has Photo Galleries", async () => {
+  it("links the site owner to Create a Post, Recently Deleted, and Create a Gallery only once a website has Photo Galleries", async () => {
     mockFetch({
       "GET /api/siteOwner/websites": [
         { body: { data: [WEBSITE] } },
@@ -86,6 +86,9 @@ describe("Navbar", () => {
       "href",
       "/dashboard?create=post",
     );
+    expect(
+      screen.getByRole("link", { name: "Recently Deleted" }),
+    ).toHaveAttribute("href", "/dashboard/deleted");
     expect(
       screen.queryByRole("link", { name: "Create a Gallery" }),
     ).not.toBeInTheDocument();

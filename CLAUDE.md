@@ -120,7 +120,7 @@ One exception: signing in and out are one-shot auth actions, not data, so `SignI
 
 Each hook's header comment says what it fetches and which mutations it exposes. The shared rules:
 
-- `useApiResource(path)` holds the shared GET / ignore-stale / 401 / `refetch` logic behind the single-GET hooks; components never call it directly. A hook that must append pages (`useAuditEvents`) has its own fetch.
+- `useApiResource(path)` holds the shared GET / ignore-stale / 401 / `refetch` logic behind the single-GET hooks; components never call it directly. A hook that must append pages (`useAuditEvents`, `useDeletedPosts`) has its own fetch.
 - A hook that only mutates (`usePosts`, `useGalleries`, `useAbilities`) fetches nothing; its data comes with the list hook (`useWebsites`).
 - Data shared by a layout and its pages is fetched once by the layout and read through Context (`useAdminData()`, `useSiteOwnerData()`).
 
@@ -151,7 +151,7 @@ Only the reveal, the progress dialog and the first request dialog block Esc (a t
 When a request succeeds and the page itself shows the result (a new post's row on `/dashboard`, an edited post on its page, a post leaving its table), the form simply closes, with no "has been created" / "updated" dialog to dismiss. A success dialog stays only when it tells the user something the page doesn't: the one-time credentials, or that an existing website's credentials were left unchanged (Create an Account, Link a Website). Removing a step that adds nothing is preferred over keeping it.
 
 **Destructive actions are gated by a confirmation dialog:**
-`ConfirmDialog` gates an action that can't be undone in one step: Delete Post and Delete Gallery (their pages and the dashboard's ⋮ menus), cancelling a post or gallery in its Create / Edit form once there is something to lose, removing Photo Galleries (its galleries are deleted with it), and the admin's Live switch (the app can't undo it). A post's status is not gated (the Published switch, or the ⋮ menu's status item): a draft is reversible, undone the same way, and the pill shows the result immediately. Neither are adding an ability or turning it on or off, each undone in one motion.
+`ConfirmDialog` gates an action that can't be undone in one step: Delete Post and Delete Gallery (their pages and the dashboard's ⋮ menus), cancelling a post or gallery in its Create / Edit form once there is something to lose, removing Photo Galleries (its galleries are deleted with it), and the admin's Live switch (the app can't undo it). A post's status is not gated (the Published switch, or the ⋮ menu's status item): a draft is reversible, undone the same way, and the pill shows the result immediately. Neither are adding an ability or turning it on or off, each undone in one motion, nor restoring a deleted post (Recently Deleted), undone by deleting it again.
 
 **The one-time key/secret reveal is a single reusable component:**
 `CredentialRevealModal` is used by Create an Account and Link a Website now, and will be reused by key rotation later — one piece rather than recreating the "show once, discard on close" logic for each flow.
@@ -349,6 +349,7 @@ root
   1. Stevie's galleries: Rich wires the gallery component into the Stevie The Dog site, which renders a gallery from `GET /api/public/galleries/:slug` (in its own repo, with its own handoff), then sets Photo Galleries live and its gallery live.
   2. Onboarding the four client websites waiting for launch.
 - **Pending notes:**
+  - Recently deleted posts: that a restored published post shows on the client website again (revalidation) is checked on production after the release, since the local Stevie The Dog site now uses the production API key.
   - Four client websites are waiting to onboard.
   - Staging is kept, following `main`, with the `production` branch beside it. Its cost ($13.30/month for Render staging) is reassessed later; if it is ever deleted, it is added back from production before the first breaking change (backend `docs/scaling.md` §8).
   - HSTS `preload`: not now. Revisit once email and any other service that may want its own subdomain are set up (`docs/deploy.md` §7).
@@ -361,11 +362,11 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-05** `feat/recently-deleted-posts` (issue #83; backend issue #85, the lead): `/dashboard/deleted` lists the posts deleted in the last 30 days with their days left (from `restorableUntil`) and a Restore button, reached from a Navbar link, and Delete a Post's confirmation says the post can be restored for 30 days; Audit Events shows "Page N of M" beside Load more; each website's Posts heading gets a Placement row with the posts' placement pill, shown even with no posts; the Abilities aside moves into the dashboard layout, so it shows on every `/dashboard` route. `docs/api.md` copies the backend's contract (`DeletedPostSummary`, the list and restore routes, `pages`).
 - **2026-11-05** `feat/ui-adjustments` (issue #81; backend issue #93): every pill is 1rem; the gallery table gets a Placement column with each gallery's placement pill, and the admin's gallery dropdown shows its Gallery Code (`placementTone` shared by the three placement pills); BBH Hegarty and Montserrat load through `next/font` as `--logoFont`, `--headerFont` and `--copyFont`; the landing page gets its first copy and meta description; the tables grow with their contents; the navbar reads "3D | WD" with semibold links; Audit Events gains a Date field for one local day (`from` / `to`); each ability in the Abilities aside gets an "i" saying what it does. `docs/api.md` copies the backend's contract. The backend clears the Posts placement once the last post is deleted, and generates new galleries' codes.
 - **2026-11-05** `fix/upload-resilience` (issue #79, frontend only): Submit uploads new photos 3 at a time, retries one that fails on the network or with a 5xx twice (after 1s, then 3s), keeps every photo that uploaded when another fails so the next Submit uploads only the rest, says how many failed, and reports the failure to Sentry with counts and reasons only.
 - **2026-11-04** `docs/v1-trim` (issue #77; backend issue #77, the lead): only `docs/process.md` is imported, with a Read before table in its place; `CLAUDE.md` is ordered by weight, each rule said once with no history inside it, and the launch checklist moves to `docs/history.md`. New ESLint rules (proven by `eslint.config.test.mjs`) enforce `apiFetch` only, no browser storage or cookie reads, no raw HTML, Sentry only through `_lib/sentry.js`, no em dash in UI text and a static landing page. Also records the Feature 11 phone-photo check as confirmed on production.
 - **2026-11-04** `chore/audit-follow-ups` (issue #75, frontend only): `StatusPill`, `AbilityPill` and `PlacementPill` become one `Pill({ label, tone })`, with the ability pill's tones in `_lib/abilities.js`; every JS / JSX header is cut to one or two lines and history leaves every comment; the tests of a dialog that opens on load wait for it with `findByRole`. No behaviour change.
-- **2026-11-04** `docs/shared-process` (issue #73; backend issue #73, the lead): Issue Workflow, Cross-Repo Handoff, Version Control, Releases and the shared Reminders rule move into `docs/process.md`, an identical copy of the backend's; Planned Later and Documentation Sync become pointers, `docs/scaling.md` keeps only frontend rules, and the guard hook copy points at `docs/process.md`. Docs only.
 
 ## Features
 
@@ -384,6 +385,7 @@ New work after the MVP Build Order, numbered and named the same as in the backen
 11. **Faster photo submit** (`feat/faster-photo-submit`, issue #55, the frontend leads): photos shrunk before upload, the Submit progress dialog, 16px form fields.
 12. **Abilities** (`feat/abilities`, issue #59): Posts and Photo Galleries as a website's abilities, the Abilities aside, the request dialog and the admin's Live switches; status split from placement by issue #67.
 13. **Request emails** (`feat/ability-emails`, issue #63): a sent request message can be edited; the backend emails the admin.
+14. **Recently deleted posts** (`feat/recently-deleted-posts`, issue #83): the site owner lists the posts deleted in the last 30 days and restores one; Audit Events counts its pages.
 
 ## Planned Later
 

@@ -139,10 +139,15 @@
   width: 100%;
 }
 
-/* Positioned, so the Abilities aside sits over the dashboard's top right, like the Accounts aside
-   on /admin. */
-.dashboard {
+/* Positioned, so the Abilities aside sits over every /dashboard page's top right, like the
+   Accounts aside on /admin. */
+.dashboardLayout {
   position: relative;
+}
+
+/* Recently Deleted's Load more, under its table. */
+.loadMore {
+  margin-top: 1rem;
 }
 
 /* As wide as its widest table, from 30rem, so a website with no posts or galleries doesn't shrink

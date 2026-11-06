@@ -58,6 +58,8 @@ export default function AuditEventsPage() {
     loadMore,
     loadingMore,
     loadMoreError,
+    pageNumber,
+    pages,
   } = useAuditEvents(month && auditEventsQuery({ month, date }));
 
   // The nearest months with events either side of the one shown ("YYYY-MM" sorts as text), so a
@@ -156,15 +158,20 @@ export default function AuditEventsPage() {
         </div>
         {content}
       </div>
-      {hasMore && !error && (
-        <button
-          type="button"
-          onClick={loadMore}
-          disabled={loadingMore}
-          className={styles.loadMore}
-        >
-          {loadingMore ? "Loading…" : "Load more"}
-        </button>
+      {/* Stays on the last page, where Load more is gone, so the admin knows it is the end. */}
+      {data?.length > 0 && !error && (
+        <div className={styles.pagingRow}>
+          {hasMore && (
+            <button type="button" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? "Loading…" : "Load more"}
+            </button>
+          )}
+          {pages > 0 && (
+            <p>
+              Page {pageNumber} of {pages}
+            </p>
+          )}
+        </div>
       )}
       {loadMoreError && <p>{loadMoreError.message}</p>}
     </article>

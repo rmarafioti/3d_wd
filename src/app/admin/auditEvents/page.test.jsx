@@ -37,8 +37,8 @@ function auditEvent(id, overrides = {}) {
   };
 }
 
-function page(data, nextCursor = null) {
-  return { body: { data, nextCursor } };
+function page(data, nextCursor = null, pages = 1) {
+  return { body: { data, nextCursor, pages } };
 }
 
 // mockFetch with the months list in front of the routes (October alone unless a test says
@@ -165,6 +165,42 @@ describe("Audit Events page", () => {
     expect(
       screen.queryByRole("button", { name: "Load more" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("counts the pages shown against the latest response's pages", async () => {
+    mockAuditFetch({
+      [OCTOBER]: page([auditEvent("3")], "3", 2),
+      [`${OCTOBER}&cursor=3`]: page([auditEvent("2")], "2", 3),
+      [`${OCTOBER}&cursor=2`]: page([auditEvent("1")], null, 3),
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+    expect(await screen.findByText("Page 2 of 3")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(await screen.findByText("Page 3 of 3")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts a picked day's count again at page 1 with the day's own pages", async () => {
+    mockAuditFetch({
+      [OCTOBER]: page([auditEvent("3")], "3", 4),
+      [`${OCTOBER}&cursor=3`]: page([auditEvent("2")], "2", 4),
+      [OCTOBER_14]: page([auditEvent("2")], "2", 2),
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "Load more" }));
+    await screen.findByText("Page 2 of 4");
+
+    pickDate("2026-10-14");
+
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument();
   });
 
   it("keeps the rows and shows the message when Load more fails", async () => {

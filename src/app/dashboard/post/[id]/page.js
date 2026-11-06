@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { usePost } from "../../../_hooks/usePost";
 import { usePosts } from "../../../_hooks/usePosts";
+import { deletePostMessage } from "../../../_lib/postFields";
 import PostForm, { postToFormValues } from "../../../_components/PostForm";
 import MessageDialog from "../../../_components/MessageDialog";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
@@ -183,7 +184,7 @@ export default function PostPage() {
         )}
         {confirmingDelete && (
           <ConfirmDialog
-            message={`Delete ${post.postName}? It will be removed from your dashboard and your website. This can't be undone.`}
+            message={deletePostMessage(post.postName)}
             confirmLabel="Delete Post"
             onConfirm={deletePost}
             onClose={() => setConfirmingDelete(false)}

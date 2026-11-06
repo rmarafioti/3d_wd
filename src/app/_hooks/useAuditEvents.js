@@ -1,5 +1,6 @@
 // useAuditEvents(query) (admin): GET /api/admin/auditEvents for one UTC month or one local day, a
-// page at a time. Returns { data, loading, error } plus hasMore, loadMore, loadingMore, loadMoreError.
+// page at a time. Returns { data, loading, error } plus hasMore, loadMore, loadingMore, loadMoreError,
+// and pageNumber of pages for the "Page N of M" counter.
 
 "use client";
 
@@ -28,7 +29,10 @@ export function auditEventsQuery({ month, date }) {
 export function useAuditEvents(query) {
   // Each result remembers the query it belongs to, so switching month or day shows "Loading…" at
   // once and a result for another query is never shown as this one's.
-  const [page, setPage] = useState(null); // { query, data, nextCursor }
+  // pageNumber counts the pages shown, 1 on the first load and one more per Load more, so a new
+  // query starts again at 1. pages is the latest response's, since events written while paging
+  // can raise it.
+  const [page, setPage] = useState(null); // { query, data, nextCursor, pages, pageNumber }
   const [failure, setFailure] = useState(null); // { query, error }
   const [more, setMore] = useState(null); // { query, loading, error }, the latest Load more
   // The query on screen, for a Load more response that arrives after the admin moved on.
@@ -46,7 +50,7 @@ export function useAuditEvents(query) {
     apiFetch(pathFor(query), { paginated: true })
       .then((result) => {
         if (ignore) return;
-        setPage({ query, ...result });
+        setPage({ query, ...result, pageNumber: 1 });
         setFailure(null);
       })
       .catch((err) => {
@@ -78,6 +82,8 @@ export function useAuditEvents(query) {
               query,
               data: [...latest.data, ...next.data],
               nextCursor: next.nextCursor,
+              pages: next.pages,
+              pageNumber: latest.pageNumber + 1,
             }
           : latest,
       );
@@ -93,6 +99,8 @@ export function useAuditEvents(query) {
     loading: !current && !error,
     error,
     hasMore: Boolean(current?.nextCursor),
+    pageNumber: current?.pageNumber ?? null,
+    pages: current?.pages ?? null,
     loadMore,
     loadingMore: Boolean(currentMore?.loading),
     loadMoreError: currentMore?.error ?? null,

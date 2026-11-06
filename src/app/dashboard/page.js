@@ -1,5 +1,5 @@
-// Site owner dashboard: the websites' post and gallery tables, the Create forms, the rows' ⋮ saves,
-// the Abilities aside and the request dialog. Client-side, so no user data is server-rendered.
+// Site owner dashboard: the websites' tables, the Create forms, the rows' ⋮ saves and the request
+// dialog (the Abilities aside is the layout's). Client-side, so no user data is server-rendered.
 
 "use client";
 
@@ -15,12 +15,12 @@ import {
   pendingRequest,
   postsRequestCopy,
 } from "../_lib/abilities";
+import { deletePostMessage } from "../_lib/postFields";
 import PostForm from "../_components/PostForm";
 import GalleryForm from "../_components/GalleryForm";
 import WebsiteList from "../_components/WebsiteList";
 import MessageDialog from "../_components/MessageDialog";
 import ConfirmDialog from "../_components/ConfirmDialog";
-import AbilitiesAside from "../_components/AbilitiesAside";
 import AbilityRequestDialog from "../_components/AbilityRequestDialog";
 
 import styles from "../_styling/dashPages.module.css";
@@ -121,7 +121,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <article className={styles.dashboard}>
+    <article>
       <section className={styles.siteOwnerAccount}>
         <h1 className={styles.postHeader}>Your Websites</h1>
         <WebsiteList
@@ -158,7 +158,7 @@ export default function DashboardPage() {
         )}
         {deleting?.post && (
           <ConfirmDialog
-            message={`Delete ${deleting.post.postName}? It will be removed from your dashboard and your website. This can't be undone.`}
+            message={deletePostMessage(deleting.post.postName)}
             confirmLabel="Delete Post"
             onConfirm={confirmDelete}
             onClose={() => setDeleting(null)}
@@ -187,9 +187,6 @@ export default function DashboardPage() {
           />
         )}
       </section>
-      {websites.data && (
-        <AbilitiesAside websites={websites.data} onChange={websites.refetch} />
-      )}
     </article>
   );
 }

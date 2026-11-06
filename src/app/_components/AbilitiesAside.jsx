@@ -1,5 +1,5 @@
-// AbilitiesAside (site owner): the Abilities panel on /dashboard, each website's abilities with
-// their pills and a ⋮ menu of what each ability's state allows.
+// AbilitiesAside (site owner): the Abilities panel on every /dashboard route, each website's
+// abilities with their pills and a ⋮ menu of what each ability's state allows.
 
 "use client";
 

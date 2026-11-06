@@ -62,14 +62,29 @@ describe("apiFetch", () => {
     await expect(apiFetch("/api/x")).resolves.toEqual([{ id: "1" }]);
   });
 
-  it("returns data with nextCursor beside it for a paginated list", async () => {
+  it("returns data with nextCursor and pages beside it for a paginated list", async () => {
     mockFetch({
-      "GET /api/x": { body: { data: [{ id: "1" }], nextCursor: "1" } },
+      "GET /api/x": {
+        body: { data: [{ id: "1" }], nextCursor: "1", pages: 3 },
+      },
     });
 
     await expect(apiFetch("/api/x", { paginated: true })).resolves.toEqual({
       data: [{ id: "1" }],
       nextCursor: "1",
+      pages: 3,
+    });
+  });
+
+  it("returns pages as null for a paginated list that sends no count", async () => {
+    mockFetch({
+      "GET /api/x": { body: { data: [], nextCursor: null } },
+    });
+
+    await expect(apiFetch("/api/x", { paginated: true })).resolves.toEqual({
+      data: [],
+      nextCursor: null,
+      pages: null,
     });
   });
 

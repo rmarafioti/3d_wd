@@ -32,6 +32,7 @@ function navLinks(user, canCreateGallery) {
       href: "/dashboard?create=gallery",
     });
   }
+  links.push({ label: "Recently Deleted", href: "/dashboard/deleted" });
   return links;
 }
 
