@@ -1,5 +1,9 @@
 // postFields: the post's own fields as Create / Edit Post shows them, shared by PostForm and
-// PostToolbar so a field reads the same in its dialog and its toolbar row, and Delete's message.
+// PostToolbar so a field reads the same in its dialog and its toolbar row, and two shared texts.
+
+// The publish date's note, the same in the post form and on the post page.
+export const POST_PUBLISH_DATE_NOTE =
+  "Your post is listed by the day it was created, so you may want to set its Post Date to the publish day.";
 
 // Delete a Post's confirmation, the same on the post page and the dashboard's ⋮ menu.
 export function deletePostMessage(postName) {

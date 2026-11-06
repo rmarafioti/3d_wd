@@ -2,6 +2,7 @@
 // Every check trims first, so a field holding only spaces counts as empty.
 
 import { findLinks } from "./postFormatting";
+import { toPublishAt } from "./publishAt";
 
 // Deliberately loose (something@something.something); the backend has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -145,6 +146,23 @@ export function validatePost(
   if (isTooLong(subHeader, 200))
     errors.subHeader = "Sub header must be 200 characters or fewer.";
   return errors;
+}
+
+// A draft's publish date (docs/api.md → Validation rules, publishAt), as the form's local date. A
+// blank date isn't scheduled. The day must be after today (its midnight, which is what is sent,
+// must be in the future), except the date already stored (storedPublishAt, on Edit), which the
+// backend also accepts once it has passed. Returns the message, or null.
+export function validatePublishAt(
+  publishDate,
+  { storedPublishAt = null } = {},
+) {
+  if (isBlank(publishDate)) return null;
+  if (!isValidDate(publishDate)) return "Enter a valid date and time.";
+  const time = new Date(toPublishAt(publishDate)).getTime();
+  if (storedPublishAt && time === new Date(storedPublishAt).getTime())
+    return null;
+  if (time <= Date.now()) return "Pick a go-live date after today.";
+  return null;
 }
 
 // The names a gallery can't take (docs/api.md → Validation rules): the website's other

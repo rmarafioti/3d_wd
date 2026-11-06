@@ -22,6 +22,46 @@
   margin-bottom: 1rem;
 }
 
+/* A draft's publish date (PublishDateField), under the Status switch or its own heading. */
+.publishDate {
+  margin-top: 1rem;
+}
+
+/* The publish date's buttons: Clear alone spans the width, as Submit does under it; on the post
+   and gallery pages, Clear (left) and "Set publish date" (right) share it equally. */
+.publishDateButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.publishDateButtons > button {
+  flex: 1 1 0;
+  height: 2.5rem;
+  padding: 0rem 0.5rem;
+}
+
+/* In the white of the Audit Events date field's Clear rather than the purple of an action. */
+.clearButton {
+  color: black;
+  background-color: white;
+  border: 1px solid lightgray;
+  transition:
+    color 300ms ease-in-out,
+    background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
+}
+
+/* Fades to Submit's purple on hover, only where there is a real hover (a mouse), so a tap on a
+   touch screen doesn't leave the button stuck in its hover colours. */
+@media (hover: hover) {
+  .clearButton:hover:not(:disabled) {
+    color: white;
+    background-color: rgb(117, 99, 236);
+    border-color: rgb(117, 99, 236);
+  }
+}
+
 .linksHeader,
 .statusHeader {
   font-weight: bold;

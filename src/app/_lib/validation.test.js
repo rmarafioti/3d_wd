@@ -1,7 +1,7 @@
 // Tests for validation: every rule in docs/api.md → Validation rules at its boundaries, with its
 // message word for word, and the Paragraph formatting → Rejected examples row for row.
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isBlank,
   isHttpsUrl,
@@ -15,6 +15,7 @@ import {
   validateImage,
   validateParagraph,
   validatePost,
+  validatePublishAt,
   validateRequestNote,
   validateWebsite,
 } from "./validation";
@@ -293,6 +294,37 @@ describe("validatePost", () => {
     expect(validatePost({ ...VALID_POST, postDate: "2026-02-30" })).toEqual({
       postDate: "Enter a valid date (YYYY-MM-DD).",
     });
+  });
+});
+
+describe("validatePublishAt", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("passes while no date is picked, since the draft isn't scheduled", () => {
+    expect(validatePublishAt(" ")).toBeNull();
+  });
+
+  it("rejects a date that isn't real", () => {
+    expect(validatePublishAt("2030-02-30")).toBe(
+      "Enter a valid date and time.",
+    );
+  });
+
+  it("rejects today, whose midnight has passed, and passes tomorrow", () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date(2030, 10, 20, 8, 0) });
+
+    expect(validatePublishAt("2030-11-20")).toBe(
+      "Pick a go-live date after today.",
+    );
+    expect(validatePublishAt("2030-11-21")).toBeNull();
+  });
+
+  it("passes the stored date on Edit, even once it has passed", () => {
+    const storedPublishAt = new Date(2020, 10, 20).toISOString();
+
+    expect(validatePublishAt("2020-11-20", { storedPublishAt })).toBeNull();
   });
 });
 

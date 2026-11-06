@@ -28,6 +28,8 @@ const WEBSITE = {
       postName: "Beach day",
       postDate: "2026-10-07",
       status: "published",
+      publishAt: null,
+      publishedAt: "2026-10-08T00:00:00.000Z",
       createdAt: "2026-10-08T00:00:00.000Z",
     },
     {
@@ -35,6 +37,8 @@ const WEBSITE = {
       postName: "Walk day",
       postDate: null,
       status: "draft",
+      publishAt: null,
+      publishedAt: null,
       createdAt: "2026-10-06T00:00:00.000Z",
     },
   ],
@@ -46,6 +50,8 @@ const WEBSITE = {
       status: "draft",
       placement: null,
       requestedAt: null,
+      publishAt: null,
+      publishedAt: null,
       createdAt: "2026-10-31T00:00:00.000Z",
     },
   ],
@@ -107,7 +113,7 @@ describe("WebsiteList", () => {
       within(table)
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
-    ).toEqual(["Created", "Post Name", "Status", "Actions"]);
+    ).toEqual(["Created", "Post Name", "Status", "Live on", "Actions"]);
     const links = within(table).getAllByRole("link");
     expect(links.map((link) => link.textContent)).toEqual([
       "Beach day",
@@ -160,6 +166,7 @@ describe("WebsiteList", () => {
       "Gallery Name",
       "Gallery Code",
       "Status",
+      "Live on",
       "Placement",
       "Actions",
     ]);
@@ -204,9 +211,9 @@ describe("WebsiteList", () => {
     const [, notSent, asked, placed] = within(
       screen.getAllByRole("table")[1],
     ).getAllByRole("row");
-    expect(notSent.cells[3]).toBeEmptyDOMElement();
-    expect(asked.cells[3]).toHaveTextContent(/^requested$/);
-    expect(placed.cells[3]).toHaveTextContent(/^live$/);
+    expect(notSent.cells[4]).toBeEmptyDOMElement();
+    expect(asked.cells[4]).toHaveTextContent(/^requested$/);
+    expect(placed.cells[4]).toHaveTextContent(/^live$/);
   });
 
   it('shows "No galleries yet." for a website without galleries', () => {

@@ -117,6 +117,25 @@ describe("Audit Events page", () => {
     expect(cells[6]).toHaveTextContent("reason: invalid_token");
   });
 
+  it('shows a scheduled publish\'s actor as "Scheduled"', async () => {
+    mockAuditFetch({
+      [OCTOBER]: page([
+        auditEvent("1", {
+          action: "post.published",
+          actorEmail: null,
+          ip: null,
+          metadata: { websiteId: "w1", scheduled: true },
+        }),
+      ]),
+    });
+
+    renderPage();
+
+    await screen.findByText("p1");
+    const cells = within(bodyRows()[0]).getAllByRole("cell");
+    expect(cells[1]).toHaveTextContent(/^Scheduled$/);
+  });
+
   it("steps between the months with events and stops at either end", async () => {
     const { eventPaths } = mockAuditFetch(
       {

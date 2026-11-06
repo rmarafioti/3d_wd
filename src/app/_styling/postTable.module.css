@@ -36,7 +36,8 @@
   border-collapse: collapse;
 }
 
-.createdColumn {
+.createdColumn,
+.liveOnColumn {
   width: 7rem;
 }
 
@@ -125,5 +126,50 @@
 
   .table {
     width: 100%;
+  }
+
+  /* The post and gallery tables turn on their side: a block per row, its column names down the
+     left (each cell's data-label) and its values on the right, so neither is wider than the
+     screen. The header row's names are the left-hand keys, so it is hidden. */
+  .stackedTable thead {
+    display: none;
+  }
+
+  .stackedTable,
+  .stackedTable tbody,
+  .stackedTable tr {
+    display: block;
+  }
+
+  .stackedTable tr {
+    margin-bottom: 1rem;
+    border: 1px solid lightgray;
+  }
+
+  /* Key and value side by side; start, so a pill keeps its own width rather than stretching. */
+  .stackedTable td {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 0.5rem;
+    justify-items: start;
+    align-items: center;
+    border: none;
+    border-bottom: 1px solid lightgray;
+    white-space: normal;
+  }
+
+  .stackedTable td:last-child {
+    border-bottom: none;
+  }
+
+  .stackedTable td::before {
+    content: attr(data-label);
+    font-weight: bold;
+  }
+
+  /* The actions row has no key: its "Actions ▸" button spans the row (ActionsMenu's phoneLabel). */
+  .stackedTable .actionsCell {
+    display: block;
+    text-align: left;
   }
 }

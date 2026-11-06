@@ -24,6 +24,10 @@ export default function GalleryActionsMenu({
   ];
 
   return (
-    <ActionsMenu label={`Actions for ${gallery.galleryName}`} items={items} />
+    <ActionsMenu
+      label={`Actions for ${gallery.galleryName}`}
+      items={items}
+      phoneLabel="Actions"
+    />
   );
 }

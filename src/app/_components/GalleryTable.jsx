@@ -6,6 +6,7 @@ import Link from "next/link";
 import Pill from "./Pill";
 import GalleryActionsMenu from "./GalleryActionsMenu";
 import { placementTone } from "../_lib/abilities";
+import { liveOnDate } from "../_lib/publishAt";
 
 import styles from "../_styling/postTable.module.css";
 
@@ -13,7 +14,7 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
   if (galleries.length === 0) return <p>No galleries yet.</p>;
 
   return (
-    <table className={styles.table}>
+    <table className={`${styles.table} ${styles.stackedTable}`}>
       {/* No Created column, so the table keeps the post table's width on a phone. */}
       <thead>
         <tr>
@@ -24,6 +25,9 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
           </th>
           <th scope="col" className={styles.statusColumn}>
             Status
+          </th>
+          <th scope="col" className={styles.liveOnColumn}>
+            Live on
           </th>
           <th scope="col" className={styles.placementColumn}>
             Placement
@@ -37,21 +41,24 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
       <tbody>
         {galleries.map((gallery) => (
           <tr key={gallery.id}>
-            <td className={styles.wrapCell}>
+            <td data-label="Gallery Name" className={styles.wrapCell}>
               <Link href={`/dashboard/gallery/${gallery.id}`}>
                 {gallery.galleryName}
               </Link>
             </td>
-            <td className={styles.wrapCell}>{gallery.slug}</td>
-            <td>
+            <td data-label="Gallery Code" className={styles.wrapCell}>
+              {gallery.slug}
+            </td>
+            <td data-label="Status">
               <Pill
                 label={gallery.status}
                 tone={gallery.status === "published" ? "green" : "red"}
               />
             </td>
+            <td data-label="Live on">{liveOnDate(gallery)}</td>
             {/* Once its request form was sent, as on the gallery page: requested until the admin
                 sets it live. Empty before then. */}
-            <td>
+            <td data-label="Placement">
               {gallery.requestedAt && gallery.placement && (
                 <Pill
                   label={gallery.placement}

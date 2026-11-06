@@ -7,6 +7,7 @@ import userEvent from "@testing-library/user-event";
 import DashboardPage from "./page";
 import { SiteOwnerDataProvider } from "../_context/SiteOwnerDataContext";
 import { mockFetch, pressEscape } from "../../test/helpers";
+import { formatDay, toPublishAt } from "../_lib/publishAt";
 
 const router = { replace: vi.fn() };
 // The page's address query, set per test (the Navbar's links add ?create=).
@@ -63,6 +64,8 @@ const GALLERY = {
   galleryName: "Our Interior",
   slug: "our-interior",
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-31T00:00:00.000Z",
   createdAt: "2026-10-31T00:00:00.000Z",
 };
 const NEW_POST = {
@@ -70,6 +73,8 @@ const NEW_POST = {
   postName: "Walk day",
   postDate: null,
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-07T00:00:00.000Z",
   createdAt: "2026-10-07T00:00:00.000Z",
 };
 
@@ -106,6 +111,62 @@ describe("Dashboard page", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("shows each row's Live on: a scheduled draft's publish date, or that an unscheduled draft has none", async () => {
+    const publishAt = toPublishAt("2030-11-20");
+    mockFetch({
+      "GET /api/siteOwner/websites": {
+        body: {
+          data: [
+            {
+              ...WEBSITE,
+              posts: [
+                { ...NEW_POST, status: "draft", publishedAt: null, publishAt },
+                {
+                  ...NEW_POST,
+                  id: "p2",
+                  postName: "Later",
+                  status: "draft",
+                  publishedAt: null,
+                },
+              ],
+              galleries: [
+                {
+                  ...GALLERY,
+                  status: "draft",
+                  publishedAt: null,
+                  placement: "requested",
+                  requestedAt: "2026-11-01T00:00:00.000Z",
+                  publishAt,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    renderPage();
+
+    await screen.findByRole("link", { name: "Walk day" });
+    // The table row holding the post's or gallery's name link.
+    const rowOf = (name) =>
+      screen
+        .getAllByRole("row")
+        .find((row) => within(row).queryByRole("link", { name }));
+    const scheduledPost = rowOf("Walk day");
+    const unscheduledPost = rowOf("Later");
+    const gallery = rowOf("Our Interior");
+    expect(within(scheduledPost).getAllByRole("cell")[3]).toHaveTextContent(
+      formatDay(publishAt),
+    );
+    expect(within(unscheduledPost).getAllByRole("cell")[3]).toHaveTextContent(
+      /^No publish date selected$/,
+    );
+    expect(within(gallery).getAllByRole("cell")[3]).toHaveTextContent(
+      formatDay(publishAt),
+    );
+  });
+
   it("opens Create a Post from ?create=post only once the websites have loaded, and drops the query", async () => {
     search = "create=post";
     mockFetch({
@@ -127,12 +188,17 @@ describe("Dashboard page", () => {
         { body: { data: [{ ...WEBSITE, posts: [NEW_POST] }] } },
         {
           body: {
-            data: [{ ...WEBSITE, posts: [{ ...NEW_POST, status: "draft" }] }],
+            data: [
+              {
+                ...WEBSITE,
+                posts: [{ ...NEW_POST, status: "draft", publishedAt: null }],
+              },
+            ],
           },
         },
       ],
       "PATCH /api/siteOwner/posts/p1/status": {
-        body: { data: { ...NEW_POST, status: "draft" } },
+        body: { data: { ...NEW_POST, status: "draft", publishedAt: null } },
       },
     });
     const user = userEvent.setup();
@@ -256,13 +322,16 @@ describe("Dashboard page", () => {
         {
           body: {
             data: [
-              { ...WEBSITE, galleries: [{ ...GALLERY, status: "draft" }] },
+              {
+                ...WEBSITE,
+                galleries: [{ ...GALLERY, status: "draft", publishedAt: null }],
+              },
             ],
           },
         },
       ],
       "PATCH /api/siteOwner/galleries/g1/status": {
-        body: { data: { ...GALLERY, status: "draft" } },
+        body: { data: { ...GALLERY, status: "draft", publishedAt: null } },
       },
     });
     const user = userEvent.setup();
@@ -440,8 +509,12 @@ describe("Dashboard page", () => {
     expect(dialog).toHaveAttribute("open");
   });
 
-  it("asks for the posts' request again once a new first post follows every post being deleted", async () => {
-    const posts = { ...POSTS_ABILITY, requestedAt: "2026-10-01T00:00:00.000Z" };
+  it("never asks for the posts' request again once it was sent, even after every post was deleted and a new one written", async () => {
+    const posts = {
+      ...POSTS_ABILITY,
+      placement: "requested",
+      requestedAt: "2026-10-01T00:00:00.000Z",
+    };
     const newerPost = { ...NEW_POST, createdAt: "2026-11-02T00:00:00.000Z" };
     mockFetch({
       "GET /api/siteOwner/websites": {
@@ -458,39 +531,7 @@ describe("Dashboard page", () => {
     });
 
     renderPage();
-
-    expect(
-      await screen.findByRole("dialog", {
-        name: "Where should your posts go?",
-      }),
-    ).toBeInTheDocument();
-  });
-
-  it("asks nothing for posts while a post from before the request is still there", async () => {
-    const posts = { ...POSTS_ABILITY, requestedAt: "2026-11-01T00:00:00.000Z" };
-    const olderPost = { ...NEW_POST, createdAt: "2026-10-31T00:00:00.000Z" };
-    const newerPost = {
-      ...NEW_POST,
-      id: "p2",
-      postName: "Beach day",
-      createdAt: "2026-11-02T00:00:00.000Z",
-    };
-    mockFetch({
-      "GET /api/siteOwner/websites": {
-        body: {
-          data: [
-            {
-              ...WEBSITE,
-              abilities: [posts, GALLERIES_ABILITY],
-              posts: [newerPost, olderPost],
-            },
-          ],
-        },
-      },
-    });
-
-    renderPage();
-    await screen.findByRole("link", { name: "Beach day" });
+    await screen.findByRole("link", { name: "Walk day" });
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PostForm, { postToFormValues } from "./PostForm";
+import { earliestPublishDate, toPublishAt } from "../_lib/publishAt";
 import {
   deferred,
   imageFile,
@@ -35,6 +36,8 @@ const POST = {
   subHeader: null,
   postDate: "2026-10-07",
   status: "published",
+  publishAt: null,
+  publishedAt: "2026-10-07T00:00:00.000Z",
   createdAt: "2026-10-07T00:00:00.000Z",
   updatedAt: "2026-10-07T00:00:00.000Z",
   body: [
@@ -332,7 +335,7 @@ describe("PostForm (create) steps", () => {
 });
 
 describe("PostForm (create) review view", () => {
-  it("sends the body in order, line breaks kept, blank optional fields as null, the status from its toggle, and no client key", async () => {
+  it("sends the body in order, line breaks kept, blank optional fields as null, the status from its toggle, no publish date as null, and no client key", async () => {
     const loads = stubImageLoading();
     stubObjectUrls();
     mockUploads();
@@ -361,6 +364,7 @@ describe("PostForm (create) review view", () => {
       subHeader: null,
       postDate: null,
       status: "draft",
+      publishAt: null,
       body: [
         { type: "paragraph", text: "We went\nfor a walk." },
         {
@@ -468,6 +472,121 @@ describe("PostForm (create) review view", () => {
     expect(button("Add Image")).toBeDisabled();
     expect(screen.getByText("Maximum of 5 paragraphs")).toBeInTheDocument();
     expect(screen.getByText("Maximum of 5 images")).toBeInTheDocument();
+  });
+});
+
+describe("PostForm publish date", () => {
+  const FUTURE = toPublishAt("2030-11-20");
+  const PAST = toPublishAt("2020-11-20");
+
+  it("shows the publish date only while the Status switch is set to draft, starting at tomorrow", async () => {
+    const { user } = renderCreate();
+    await walkSteps(user);
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("Published"));
+
+    expect(screen.getByLabelText("Date")).toHaveValue("");
+    expect(screen.getByLabelText("Date")).toHaveAttribute(
+      "min",
+      earliestPublishDate(),
+    );
+    expect(
+      screen.getByText(/set its Post Date to the publish day/),
+    ).toBeInTheDocument();
+  });
+
+  it("sends the picked date as the start of that day", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await walkSteps(user);
+    await user.click(screen.getByLabelText("Published"));
+
+    await user.type(screen.getByLabelText("Date"), "2030-11-20");
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      status: "draft",
+      publishAt: FUTURE,
+    });
+  });
+
+  it("sends no publish date once the switch is back on published", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await walkSteps(user);
+    await user.click(screen.getByLabelText("Published"));
+    await user.type(screen.getByLabelText("Date"), "2030-11-20");
+
+    await user.click(screen.getByLabelText("Published"));
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].status).toBe("published");
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("publishAt");
+  });
+
+  it("clears the date with Clear, so the draft is sent unscheduled", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await walkSteps(user);
+    await user.click(screen.getByLabelText("Published"));
+    await user.type(screen.getByLabelText("Date"), "2030-11-20");
+
+    await user.click(button("Clear"));
+    await user.click(button("Submit"));
+
+    expect(screen.getByLabelText("Date")).toHaveValue("");
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].publishAt).toBeNull();
+  });
+
+  it("keeps Submit disabled for a date that has passed, with its message once the field is left", async () => {
+    const { user } = renderCreate();
+    await walkSteps(user);
+    await user.click(screen.getByLabelText("Published"));
+
+    await user.type(screen.getByLabelText("Date"), "2020-11-20");
+    await user.tab();
+
+    expect(
+      screen.getByText("Pick a go-live date after today."),
+    ).toBeInTheDocument();
+    expect(button("Submit")).toBeDisabled();
+  });
+
+  it("opens a scheduled draft's Edit on its stored date, and resends it even once it has passed", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const draft = { ...POST, status: "draft", publishAt: PAST };
+    const { user } = renderEdit({ post: draft, onSubmit });
+
+    expect(screen.getByLabelText("Date")).toHaveValue("2020-11-20");
+    await user.click(button("Submit"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0].publishAt).toBe(PAST);
+  });
+
+  it("shows no publish date on a published post's Edit", () => {
+    renderEdit();
+
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
+  });
+
+  it("shows the backend's publish date message under the field", async () => {
+    const onSubmit = vi.fn().mockRejectedValue({
+      message: "Please fix the highlighted fields.",
+      fields: { publishAt: "Only a draft can have a go-live date." },
+    });
+    const draft = { ...POST, status: "draft", publishAt: FUTURE };
+    const { user } = renderEdit({ post: draft, onSubmit });
+
+    await user.click(button("Submit"));
+
+    expect(
+      await screen.findByText("Only a draft can have a go-live date."),
+    ).toBeInTheDocument();
   });
 });
 

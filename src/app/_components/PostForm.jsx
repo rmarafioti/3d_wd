@@ -16,14 +16,22 @@ import ConfirmDialog from "./ConfirmDialog";
 import Toggle from "./Toggle";
 import MessageDialog from "./MessageDialog";
 import SubmitProgressDialog from "./SubmitProgressDialog";
+import PublishDateField from "./PublishDateField";
 import {
   isBlank,
   validateImage,
   validateParagraph,
   validatePost,
+  validatePublishAt,
 } from "../_lib/validation";
 import { uploadPicked } from "../_lib/uploadImages";
-import { elementNames, OPTIONAL_FIELDS, POST_FIELDS } from "../_lib/postFields";
+import {
+  elementNames,
+  OPTIONAL_FIELDS,
+  POST_FIELDS,
+  POST_PUBLISH_DATE_NOTE,
+} from "../_lib/postFields";
+import { publishAtPayload, publishAtToDate } from "../_lib/publishAt";
 
 import styles from "../_styling/postForm.module.css";
 import previewStyles from "../_styling/postPreview.module.css";
@@ -33,6 +41,7 @@ const EMPTY_POST = {
   postDate: "",
   header: "",
   subHeader: "",
+  publishDate: "",
   body: [],
 };
 
@@ -54,13 +63,17 @@ const TIMED_OUT_MESSAGE =
 
 // Form values for a Post loaded by usePost: nulls become "", so every input is controlled. Body
 // elements are flattened; paragraphs have no id, so they get a fresh key. Existing images keep
-// their id (and use it as their key), src and size.
+// their id (and use it as their key), src and size. status and the stored publishAt are read,
+// never sent: Edit shows the publish date only on a draft, and accepts the stored time unchanged.
 export function postToFormValues(post) {
   return {
+    status: post.status,
+    publishAt: post.publishAt,
     postName: post.postName,
     postDate: post.postDate ?? "",
     header: post.header ?? "",
     subHeader: post.subHeader ?? "",
+    publishDate: publishAtToDate(post.publishAt),
     body: post.body.map((element) => {
       if (element.type === "paragraph") {
         return {
@@ -183,8 +196,10 @@ export default function PostForm({
     postWebsiteId ?? (websites.length === 1 ? websites[0].id : ""),
   );
   const [values, setValues] = useState(initialValues);
-  // A new post is published unless the site owner switches it to draft.
-  const [status, setStatus] = useState("published");
+  // A new post is published unless the site owner switches it to draft; Edit keeps the post's own
+  // status, changed only outside the form.
+  const [status, setStatus] = useState(initialValues.status ?? "published");
+  const isDraft = status === "draft";
 
   // Create walks name → details → firstParagraph → review; Edit starts on review.
   const [step, setStep] = useState(isCreate ? "name" : "review");
@@ -229,6 +244,12 @@ export default function PostForm({
     { websiteId, ...values },
     { requireWebsite: isCreate },
   );
+  const publishAtError =
+    isDraft &&
+    validatePublishAt(values.publishDate, {
+      storedPublishAt: initialValues.publishAt,
+    });
+  if (publishAtError) errors.publishAt = publishAtError;
   // The body is always valid here: an element only joins it through Insert, which waits for its
   // checks, and its one required paragraph can't be deleted.
   const isValid = Object.keys(errors).length === 0;
@@ -369,6 +390,12 @@ export default function PostForm({
     dropServerErrors((path) => path === field);
   }
 
+  // The publish date's fields are edited in place in the review view, with no dialog.
+  function changePublishDate(publishDate) {
+    updatePost((current) => ({ ...current, publishDate }));
+    dropServerErrors((path) => path === "publishAt");
+  }
+
   // --- Submit ------------------------------------------------------------------------------------
 
   // Uploads every image with a picked file and returns the body with their Cloudinary src, width
@@ -410,8 +437,11 @@ export default function PostForm({
     try {
       const payload = toPayload({ ...values, body: await uploadNewImages() });
       setProgress("Saving your post…");
+      const scheduling = publishAtPayload(status, values.publishDate);
       const post = await onSubmit(
-        isCreate ? { websiteId, ...payload, status } : payload,
+        isCreate
+          ? { websiteId, ...payload, status, ...scheduling }
+          : { ...payload, ...scheduling },
       );
       onSuccess(post);
     } catch (err) {
@@ -559,6 +589,13 @@ export default function PostForm({
                     setStatus(published ? "published" : "draft")
                   }
                 />
+                {isDraft && renderPublishDate()}
+              </div>
+            )}
+            {!isCreate && isDraft && (
+              <div className={styles.statusSection}>
+                <p className={styles.statusHeader}>Publish date</p>
+                {renderPublishDate()}
               </div>
             )}
             <button
@@ -572,6 +609,18 @@ export default function PostForm({
           </PostToolbar>
         </div>
       </PostStepDialog>
+    );
+  }
+
+  function renderPublishDate() {
+    return (
+      <PublishDateField
+        publishDate={values.publishDate}
+        onChange={changePublishDate}
+        onBlur={() => touch("publishAt")}
+        message={messageFor("publishAt")}
+        note={POST_PUBLISH_DATE_NOTE}
+      />
     );
   }
 

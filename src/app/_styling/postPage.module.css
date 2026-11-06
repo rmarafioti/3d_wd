@@ -1,9 +1,12 @@
+/* The post and gallery pages. A long unspaced word, URL, slug or caption wraps rather than running
+   past the screen's edge. */
 .postPage {
   display: flex;
   flex-direction: column;
   text-align: left;
   align-items: flex-start;
   width: 800px;
+  overflow-wrap: anywhere;
 }
 
 .statusPill {
@@ -21,6 +24,13 @@
   margin: 1rem 0rem 1rem 0rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid lightgray;
+}
+
+/* A draft's publish date, under the status row: a field's width, not the page's. */
+.publishDateEditor {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 1rem;
 }
 
 dl .value,
@@ -59,12 +69,6 @@ its height follows its stored proportions. */
 .key {
   font-size: 20px;
   font-weight: bold;
-}
-
-/* The gallery page: like a post page, and a long slug or caption wraps rather than running past
-   the screen's edge. */
-.galleryPage {
-  overflow-wrap: anywhere;
 }
 
 /* The gallery page's images take the page's full width, so two fit side by side. */
@@ -125,19 +129,25 @@ its height follows its stored proportions. */
 }
 
 @media (max-width: 667px) {
+  /* At least 0.5rem from either edge of the screen: the article centres the page, so it is the
+     screen's width less 1rem. */
   .postPage {
-    width: 100vw;
-    margin-left: 2rem;
+    width: calc(100vw - 1rem);
   }
+
   .statusRow {
     width: 90%;
   }
 
-  /* At least 0.5rem from either edge of the screen: the article centres the page, so it is the
-     screen's width less 1rem, without the post page's 2rem shift. */
-  .galleryPage {
-    width: calc(100vw - 1rem);
-    margin-left: 0rem;
+  /* The post body takes the page's width rather than its desktop 600px. */
+  .bodySection {
+    width: 100%;
+  }
+
+  /* Edit and Delete at either end of the page's width. */
+  .actionRow {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .imageGrid {

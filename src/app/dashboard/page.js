@@ -123,7 +123,6 @@ export default function DashboardPage() {
   return (
     <article>
       <section className={styles.siteOwnerAccount}>
-        <h1 className={styles.postHeader}>Your Websites</h1>
         <WebsiteList
           websites={websites.data}
           loading={websites.loading}

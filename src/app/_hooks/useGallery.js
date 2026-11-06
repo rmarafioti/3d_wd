@@ -1,5 +1,5 @@
 // useGallery(id) (site owner): GET /api/siteOwner/galleries/:id, returning { data, loading, error }
-// plus update, setStatus and editRequest, each storing the Gallery the API returns in data.
+// plus update, setStatus, setPublishAt and editRequest, each storing the Gallery the API returns.
 
 "use client";
 
@@ -48,5 +48,19 @@ export function useGallery(id) {
     [id, sendEditRequest, setData],
   );
 
-  return { data, loading, error, update, setStatus, editRequest };
+  // A draft's publish date from the gallery page: an ISO instant, or null to clear it. Returns the
+  // updated Gallery. Throws the ApiError on failure.
+  const setPublishAt = useCallback(
+    async (publishAt) => {
+      const gallery = await apiFetch(`${path}/publishAt`, {
+        method: "PATCH",
+        body: { publishAt },
+      });
+      setData(gallery);
+      return gallery;
+    },
+    [path, setData],
+  );
+
+  return { data, loading, error, update, setStatus, setPublishAt, editRequest };
 }

@@ -1,5 +1,5 @@
-// usePost(id) (site owner): a single post. Returns { data, loading, error } plus update and
-// setStatus, which both store the Post the API returns, so the page needs no second request.
+// usePost(id) (site owner): a single post. Returns { data, loading, error } plus update, setStatus
+// and setPublishAt, each storing the Post the API returns, so the page needs no second request.
 
 "use client";
 
@@ -35,5 +35,19 @@ export function usePost(id) {
     [id, sendStatus, setData],
   );
 
-  return { data, loading, error, update, setStatus };
+  // A draft's publish date from the post page: an ISO instant, or null to clear it. Returns the
+  // updated Post. Throws the ApiError on failure.
+  const setPublishAt = useCallback(
+    async (publishAt) => {
+      const post = await apiFetch(`${path}/publishAt`, {
+        method: "PATCH",
+        body: { publishAt },
+      });
+      setData(post);
+      return post;
+    },
+    [path, setData],
+  );
+
+  return { data, loading, error, update, setStatus, setPublishAt };
 }
