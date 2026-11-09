@@ -5,7 +5,7 @@
 
 import { useSiteOwnerData } from "../../_hooks/useSiteOwnerData";
 import { useNav } from "../../_hooks/useNav";
-import RecentlyDeleted from "../../_components/RecentlyDeleted";
+import RecentlyDeleted from "../../_components/recentlyDeleted/RecentlyDeleted";
 
 export default function RecentlyDeletedPage() {
   const websites = useSiteOwnerData();

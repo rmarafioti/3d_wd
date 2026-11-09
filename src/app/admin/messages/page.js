@@ -12,15 +12,15 @@ import { useSelection } from "../../_hooks/useSelection";
 import { formatMailTime } from "../../_lib/mailTime";
 import { useInboxActions } from "../../_hooks/useInboxActions";
 import { useNav } from "../../_hooks/useNav";
-import Pill from "../../_components/Pill";
-import ActionsMenu from "../../_components/ActionsMenu";
-import ConfirmDialog from "../../_components/ConfirmDialog";
-import MessageDialog from "../../_components/MessageDialog";
-import EditUpdateDialog from "../../_components/EditUpdateDialog";
-import FormattedMessage from "../../_components/FormattedMessage";
-import LoadMoreButton from "../../_components/LoadMoreButton";
-import DeleteSelectedButton from "../../_components/DeleteSelectedButton";
-import SelectAllCheckbox from "../../_components/SelectAllCheckbox";
+import Pill from "../../_components/controls/Pill";
+import ActionsMenu from "../../_components/controls/ActionsMenu";
+import ConfirmDialog from "../../_components/dialogs/ConfirmDialog";
+import MessageDialog from "../../_components/dialogs/MessageDialog";
+import EditUpdateDialog from "../../_components/admin/inbox/EditUpdateDialog";
+import FormattedMessage from "../../_components/formatting/FormattedMessage";
+import LoadMoreButton from "../../_components/controls/LoadMoreButton";
+import DeleteSelectedButton from "../../_components/inbox/DeleteSelectedButton";
+import SelectAllCheckbox from "../../_components/controls/SelectAllCheckbox";
 
 import styles from "../../_styling/inbox.module.css";
 

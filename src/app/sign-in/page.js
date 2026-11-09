@@ -1,7 +1,7 @@
 // Sign-in page (Server Component): reads ?expired=1 on the server and renders SignInForm,
 // which holds the Google button and the sign-in dialog.
 
-import SignInForm from "../_components/SignInForm";
+import SignInForm from "../_components/auth/SignInForm";
 
 import styles from "../_styling/signIn.module.css";
 

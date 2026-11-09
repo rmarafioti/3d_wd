@@ -113,8 +113,8 @@ const eslintConfig = defineConfig([
     files: [
       "src/app/_hooks/**",
       "src/app/_lib/**",
-      "src/app/_components/SignInForm.jsx",
-      "src/app/_components/AuthButton.jsx",
+      "src/app/_components/auth/SignInForm.jsx",
+      "src/app/_components/auth/AuthButton.jsx",
     ],
     ignores: TEST_FILES,
     rules: {

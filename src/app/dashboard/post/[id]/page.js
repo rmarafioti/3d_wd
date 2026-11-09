@@ -13,13 +13,15 @@ import {
   deletePostMessage,
   POST_PUBLISH_DATE_NOTE,
 } from "../../../_lib/postFields";
-import PostForm, { postToFormValues } from "../../../_components/PostForm";
-import MessageDialog from "../../../_components/MessageDialog";
-import ConfirmDialog from "../../../_components/ConfirmDialog";
-import Toggle from "../../../_components/Toggle";
-import Pill from "../../../_components/Pill";
-import PublishDateEditor from "../../../_components/PublishDateEditor";
-import FormattedText from "../../../_components/FormattedText";
+import PostForm, {
+  postToFormValues,
+} from "../../../_components/siteOwner/posts/PostForm";
+import MessageDialog from "../../../_components/dialogs/MessageDialog";
+import ConfirmDialog from "../../../_components/dialogs/ConfirmDialog";
+import Toggle from "../../../_components/controls/Toggle";
+import Pill from "../../../_components/controls/Pill";
+import PublishDateEditor from "../../../_components/siteOwner/contentForm/PublishDateEditor";
+import FormattedText from "../../../_components/formatting/FormattedText";
 
 import styles from "../../../_styling/postPage.module.css";
 

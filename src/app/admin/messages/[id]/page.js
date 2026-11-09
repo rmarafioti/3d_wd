@@ -4,7 +4,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import ThreadView from "../../../_components/ThreadView";
+import ThreadView from "../../../_components/inbox/ThreadView";
 
 import styles from "../../../_styling/inbox.module.css";
 

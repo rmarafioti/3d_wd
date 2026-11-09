@@ -4,7 +4,7 @@
 "use client";
 
 import { useNav } from "../../_hooks/useNav";
-import RecentlyDeleted from "../../_components/RecentlyDeleted";
+import RecentlyDeleted from "../../_components/recentlyDeleted/RecentlyDeleted";
 
 export default function AdminRecentlyDeletedPage() {
   const { refreshUnread } = useNav();

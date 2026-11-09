@@ -8,8 +8,8 @@ import { GoChevronLeft, GoChevronRight } from "react-icons/go";
 import { useAuth } from "../../_hooks/useAuth";
 import { auditEventsQuery, useAuditEvents } from "../../_hooks/useAuditEvents";
 import { useAuditEventMonths } from "../../_hooks/useAuditEventMonths";
-import AuditEventTable from "../../_components/AuditEventTable";
-import Toggle from "../../_components/Toggle";
+import AuditEventTable from "../../_components/admin/auditEvents/AuditEventTable";
+import Toggle from "../../_components/controls/Toggle";
 
 import styles from "../../_styling/auditEvents.module.css";
 
