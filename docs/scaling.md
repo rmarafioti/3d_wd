@@ -31,7 +31,7 @@ The frontend's rules for changing the app since launch. Read on demand (`CLAUDE.
 
 ## 6. Pagination
 
-- The shape is backend → 6. `GET /api/admin/auditEvents` is the first paginated endpoint: `apiFetch(path, { paginated: true })` returns `{ data, nextCursor, pages }` instead of `data` (`pages` null for a list that sends no count), and `useAuditEvents` appends each page ("Load more"). A later paginated list reuses `usePagedList(path)`, as `useDeletedPosts` and `useMailbox(role)` (two lists merged by date) do.
+- The shape is backend → 6. `GET /api/admin/auditEvents` is the first paginated endpoint: `apiFetch(path, { paginated: true })` returns `{ data, nextCursor, pages }` instead of `data` (`pages` null for a list that sends no count), and `useAuditEvents` appends each page ("Load more"). A later paginated list reuses `usePagedList(path)`, as `useDeleted(role)` and `useMailbox(role)` (two lists merged by date) do.
 - Adding pagination to an existing endpoint is a breaking change, so it arrives through a contract change and a handoff. Build paging into the hooks (`useApiResource` and its callers) only then, not ahead of time.
 
 ## 7. Environment variables

@@ -20,7 +20,7 @@ export default function MailLink({ role }) {
       href={MESSAGES_BY_ROLE[role]}
       aria-label={hasUnread ? `Messages, ${unread} unread` : "Messages"}
       title="Messages"
-      className={styles.mailLink}
+      className={styles.iconLink}
     >
       <RxEnvelopeClosed aria-hidden="true" />
       {hasUnread && <span aria-hidden="true" className={styles.badge} />}

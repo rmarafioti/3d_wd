@@ -4,8 +4,9 @@
 "use client";
 
 import { useId } from "react";
+import Image from "next/image";
 import { GoChevronDown, GoChevronUp } from "react-icons/go";
-import { MdImage, MdNotes } from "react-icons/md";
+import { MdNotes } from "react-icons/md";
 import ToolbarRow from "./ToolbarRow";
 import { serverErrorsFor } from "./ImageField";
 import { parseParagraph } from "../_lib/postFormatting";
@@ -133,7 +134,15 @@ export default function PostToolbar({
             {element.type === "paragraph" ? (
               <MdNotes aria-hidden="true" className={styles.rowIcon} />
             ) : (
-              <MdImage aria-hidden="true" className={styles.rowIcon} />
+              // The photo itself, so it is told apart at a glance; alt="" since its alt text follows.
+              <Image
+                src={element.src}
+                width={element.width}
+                height={element.height}
+                alt=""
+                unoptimized
+                className={styles.rowThumbnail}
+              />
             )}
             {element.type === "paragraph"
               ? plainText(parseParagraph(element.text.trim()))

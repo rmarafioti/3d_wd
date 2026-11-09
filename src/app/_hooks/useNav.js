@@ -1,4 +1,5 @@
-// useNav: reads NavContext, returns { canCreateGallery, setCanCreateGallery }.
+// useNav: reads NavContext, returns { canCreateGallery, setCanCreateGallery, unreadVersion,
+// refreshUnread }.
 
 "use client";
 

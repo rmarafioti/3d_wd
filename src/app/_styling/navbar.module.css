@@ -50,9 +50,9 @@
   list-style: none;
 }
 
-/* The mail icon, black and thin-lined like the menu's hamburger (the same icon set), with its
-   unread dot over its top right corner. */
-.mailLink {
+/* The mail and trash icons, black and thin-lined like the menu's hamburger. Positioned for the
+   mail icon's unread dot over its top right corner. */
+.iconLink {
   position: relative;
   display: inline-flex;
   align-items: center;

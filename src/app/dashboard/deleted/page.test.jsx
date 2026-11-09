@@ -1,6 +1,6 @@
-// Tests for the Recently Deleted page, through the real hooks and apiFetch: the rows and their days
-// left, the Website column, Restore and its return to /dashboard, a refused restore, the states
-// and Load more.
+// Tests for the site owner's Recently Deleted page, through the real hooks and apiFetch: a row per
+// type with its pill and days left, the Website column, ticking and restoring together and back to
+// the dashboard, a partial restore staying, the states and Load more.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -15,9 +15,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/deleted",
 }));
 
-const DELETED = "GET /api/siteOwner/posts/deleted";
+const DELETED = "GET /api/siteOwner/deleted";
 const WEBSITES = "GET /api/siteOwner/websites";
-const RESTORE = "POST /api/siteOwner/posts/p1/restore";
+const RESTORE = "POST /api/siteOwner/deleted/restore";
 
 const WEBSITE = {
   id: "w1",
@@ -29,14 +29,15 @@ const WEBSITE = {
   galleries: [],
 };
 
-function deletedPost(id, overrides = {}) {
+// A DeletedItem (docs/api.md → Shapes): websiteId and websiteName are null for mail.
+function deletedItem(type, id, overrides = {}) {
+  const isMail = type === "update" || type === "thread";
   return {
+    type,
     id,
-    websiteId: "w1",
-    websiteName: "Stevie The Dog",
-    postName: `Post ${id}`,
-    postDate: null,
-    status: "published",
+    name: `${type} ${id}`,
+    websiteId: isMail ? null : "w1",
+    websiteName: isMail ? null : "Stevie The Dog",
     deletedAt: "2026-11-04T12:00:00.000Z",
     restorableUntil: "2026-12-04T12:00:00.000Z",
     ...overrides,
@@ -60,6 +61,10 @@ function bodyRows() {
   return screen.getAllByRole("row").slice(1);
 }
 
+function websiteFetches(calls) {
+  return calls.filter((call) => `GET ${call.path}` === WEBSITES);
+}
+
 describe("Recently Deleted page", () => {
   beforeEach(() => {
     vi.useFakeTimers({
@@ -72,13 +77,14 @@ describe("Recently Deleted page", () => {
     vi.useRealTimers();
   });
 
-  it("lists each deleted post with its status and the days left from restorableUntil", async () => {
+  it("lists posts, galleries, updates and threads, each with its type and the days left from restorableUntil", async () => {
     mockFetch({
       [WEBSITES]: { body: { data: [WEBSITE] } },
       [DELETED]: list([
-        deletedPost("p1"),
-        deletedPost("p2", {
-          status: "draft",
+        deletedItem("post", "p1"),
+        deletedItem("gallery", "g1"),
+        deletedItem("update", "n1"),
+        deletedItem("thread", "t1", {
           restorableUntil: "2026-11-06T06:00:00.000Z",
         }),
       ]),
@@ -86,25 +92,27 @@ describe("Recently Deleted page", () => {
 
     renderPage();
 
-    await screen.findByText("Post p1");
-    const [first, second] = bodyRows();
-    expect(within(first).getByText("published")).toBeInTheDocument();
-    expect(within(first).getByText("29 days")).toBeInTheDocument();
-    expect(within(second).getByText("draft")).toBeInTheDocument();
-    expect(within(second).getByText("1 day")).toBeInTheDocument();
+    await screen.findByText("post p1");
+    const [post, gallery, update, thread] = bodyRows();
+    expect(within(post).getByText("post")).toBeInTheDocument();
+    expect(within(post).getByText("29 days")).toBeInTheDocument();
+    expect(within(gallery).getByText("gallery")).toBeInTheDocument();
+    expect(within(update).getByText("update")).toBeInTheDocument();
+    expect(within(thread).getByText("message")).toBeInTheDocument();
+    expect(within(thread).getByText("1 day")).toBeInTheDocument();
   });
 
-  it("shows the Website column only for an account with more than one website", async () => {
+  it("shows the Website column only for an account with more than one website, empty for mail", async () => {
     mockFetch({
       [WEBSITES]: [
         { body: { data: [WEBSITE] } },
         { body: { data: [WEBSITE, { ...WEBSITE, id: "w2" }] } },
       ],
-      [DELETED]: list([deletedPost("p1")]),
+      [DELETED]: list([deletedItem("post", "p1"), deletedItem("update", "n1")]),
     });
     const { unmount } = renderPage();
 
-    await screen.findByText("Post p1");
+    await screen.findByText("post p1");
     await waitFor(() =>
       expect(
         screen.queryByRole("columnheader", { name: "Website" }),
@@ -116,55 +124,181 @@ describe("Recently Deleted page", () => {
     expect(
       await screen.findByRole("columnheader", { name: "Website" }),
     ).toBeInTheDocument();
+    const [post, update] = bodyRows();
+    expect(within(post).getByText("Stevie The Dog")).toBeInTheDocument();
+    expect(within(update).queryByText("Stevie The Dog")).toBeNull();
   });
 
-  it("restores a post with the CSRF header, then refetches the websites and goes back to /dashboard", async () => {
+  it("restores the ticked items together through the bulk route, then goes back to /dashboard", async () => {
     const { calls } = mockFetch({
       [WEBSITES]: { body: { data: [WEBSITE] } },
-      [DELETED]: list([deletedPost("p1")]),
-      [RESTORE]: { body: { data: { id: "p1" } } },
-    });
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Restore Post p1" }),
-    );
-
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
-    const restore = calls.find((call) => call.method === "POST");
-    expect(restore.path).toBe("/api/siteOwner/posts/p1/restore");
-    expect(restore.headers["X-CSRF-Protection"]).toBe("1");
-    expect(restore.credentials).toBe("include");
-    expect(
-      calls.filter((call) => `GET ${call.path}` === WEBSITES),
-    ).toHaveLength(2);
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("shows the API's message when a restore is refused, and refetches the list", async () => {
-    const { calls } = mockFetch({
-      [WEBSITES]: { body: { data: [WEBSITE] } },
-      [DELETED]: [list([deletedPost("p1")]), list([])],
+      [DELETED]: list([
+        deletedItem("post", "p1"),
+        deletedItem("gallery", "g1"),
+        deletedItem("update", "n1"),
+        deletedItem("thread", "t1"),
+      ]),
       [RESTORE]: {
-        status: 404,
-        body: { error: { message: "Post not found." } },
+        body: {
+          data: {
+            restored: [
+              { type: "post", id: "p1" },
+              { type: "thread", id: "t1" },
+            ],
+            failed: [],
+          },
+        },
       },
     });
     const user = userEvent.setup();
     renderPage();
 
     await user.click(
-      await screen.findByRole("button", { name: "Restore Post p1" }),
+      await screen.findByRole("checkbox", { name: "Select post p1" }),
     );
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select thread t1" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Restore" }));
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/dashboard"));
+    const restore = calls.find((call) => call.method === "POST");
+    expect(restore.path).toBe("/api/siteOwner/deleted/restore");
+    expect(restore.headers["X-CSRF-Protection"]).toBe("1");
+    expect(restore.body).toEqual({
+      items: [
+        { type: "post", id: "p1" },
+        { type: "thread", id: "t1" },
+      ],
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps Restore disabled until something is ticked", async () => {
+    mockFetch({
+      [WEBSITES]: { body: { data: [WEBSITE] } },
+      [DELETED]: list([deletedItem("post", "p1")]),
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    const restore = await screen.findByRole("button", { name: "Restore" });
+    expect(restore).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: "Select post p1" }));
+
+    expect(restore).toBeEnabled();
+  });
+
+  it("ticks every row with Select all, and shows it partly ticked when only some are", async () => {
+    mockFetch({
+      [WEBSITES]: { body: { data: [WEBSITE] } },
+      [DELETED]: list([deletedItem("post", "p1"), deletedItem("update", "n1")]),
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select post p1" }),
+    );
+    const selectAll = screen.getByRole("checkbox", { name: "Select all" });
+    expect(selectAll).toBePartiallyChecked();
+    await user.click(selectAll);
+
+    expect(selectAll).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Select update n1" }),
+    ).toBeChecked();
+  });
+
+  it.each([
+    ["update", "n1", 1],
+    ["thread", "t1", 1],
+    ["post", "p1", 2],
+    ["gallery", "g1", 2],
+  ])(
+    "after restoring a %s, fetches the websites again only for a post or gallery",
+    async (type, id, websiteFetchCount) => {
+      const { calls } = mockFetch({
+        [WEBSITES]: { body: { data: [WEBSITE] } },
+        [DELETED]: list([deletedItem(type, id)]),
+        [RESTORE]: {
+          body: { data: { restored: [{ type, id }], failed: [] } },
+        },
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(
+        await screen.findByRole("checkbox", { name: `Select ${type} ${id}` }),
+      );
+      await user.click(screen.getByRole("button", { name: "Restore" }));
+
+      await waitFor(() =>
+        expect(router.push).toHaveBeenCalledWith("/dashboard"),
+      );
+      expect(websiteFetches(calls)).toHaveLength(websiteFetchCount);
+    },
+  );
+
+  it("names a gallery whose name was taken since while the rest are restored", async () => {
+    mockFetch({
+      [WEBSITES]: { body: { data: [WEBSITE] } },
+      [DELETED]: [
+        list([deletedItem("post", "p1"), deletedItem("gallery", "g1")]),
+        list([deletedItem("gallery", "g1")]),
+      ],
+      [RESTORE]: {
+        body: {
+          data: {
+            restored: [{ type: "post", id: "p1" }],
+            failed: [
+              {
+                type: "gallery",
+                id: "g1",
+                message: "A gallery with this name already exists.",
+              },
+            ],
+          },
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select all" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Restore" }));
 
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("Post not found.")).toBeInTheDocument();
-    await screen.findByText("No recently deleted posts.");
-    expect(router.push).not.toHaveBeenCalled();
     expect(
-      calls.filter((call) => `GET ${call.path}` === WEBSITES),
-    ).toHaveLength(1);
+      within(dialog).getByText(
+        "Couldn't restore: gallery g1 (A gallery with this name already exists.)",
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(bodyRows()).toHaveLength(1));
+    expect(
+      screen.getByRole("checkbox", { name: "Select gallery g1" }),
+    ).not.toBeChecked();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("says so when nothing has been deleted", async () => {
+    mockFetch({
+      [WEBSITES]: { body: { data: [WEBSITE] } },
+      [DELETED]: list([]),
+    });
+
+    renderPage();
+
+    expect(
+      await screen.findByText("Nothing has been deleted in the last 30 days."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Deleted posts, galleries and messages can be restored for 30 days.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows the API's message when the list can't load", async () => {
@@ -186,7 +320,7 @@ describe("Recently Deleted page", () => {
   it("keeps the rows and shows the message when Load more fails", async () => {
     mockFetch({
       [WEBSITES]: { body: { data: [WEBSITE] } },
-      [DELETED]: list([deletedPost("p2")], "p2"),
+      [DELETED]: list([deletedItem("post", "p2")], "p2"),
       [`${DELETED}?cursor=p2`]: {
         status: 500,
         body: { error: { message: "Something went wrong, please try again." } },
@@ -207,18 +341,18 @@ describe("Recently Deleted page", () => {
   it("appends the next page with Load more, offered only while nextCursor isn't null", async () => {
     const { calls } = mockFetch({
       [WEBSITES]: { body: { data: [WEBSITE] } },
-      [DELETED]: list([deletedPost("p2")], "p2"),
-      [`${DELETED}?cursor=p2`]: list([deletedPost("p1")]),
+      [DELETED]: list([deletedItem("post", "p2")], "p2"),
+      [`${DELETED}?cursor=p2`]: list([deletedItem("thread", "t1")]),
     });
     const user = userEvent.setup();
     renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Load more" }));
 
-    await screen.findByText("Post p1");
+    await screen.findByText("thread t1");
     expect(bodyRows()).toHaveLength(2);
     expect(calls.map((call) => call.path)).toContain(
-      "/api/siteOwner/posts/deleted?cursor=p2",
+      "/api/siteOwner/deleted?cursor=p2",
     );
     expect(
       screen.queryByRole("button", { name: "Load more" }),

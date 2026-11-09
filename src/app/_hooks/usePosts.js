@@ -1,5 +1,5 @@
-// usePosts (site owner): a post's mutations, create, setStatus, remove and restore. It fetches
-// nothing; the caller refetches the lists it affects.
+// usePosts (site owner): a post's mutations, create, setStatus and remove. It fetches nothing;
+// the caller refetches the lists it affects.
 
 "use client";
 
@@ -35,15 +35,5 @@ export function usePosts() {
     [],
   );
 
-  // Brings back a post deleted in the last 30 days, as it was deleted. Returns the restored Post;
-  // throws the ApiError on failure ("Post not found." once it can no longer be restored).
-  const restore = useCallback(
-    (id) =>
-      apiFetch(`/api/siteOwner/posts/${encodeURIComponent(id)}/restore`, {
-        method: "POST",
-      }),
-    [],
-  );
-
-  return { create, setStatus, remove, restore };
+  return { create, setStatus, remove };
 }

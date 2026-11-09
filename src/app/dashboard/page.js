@@ -16,6 +16,7 @@ import {
   postsRequestCopy,
 } from "../_lib/abilities";
 import { deletePostMessage } from "../_lib/postFields";
+import { deleteGalleryMessage } from "../_lib/galleryFields";
 import PostForm from "../_components/PostForm";
 import GalleryForm from "../_components/GalleryForm";
 import WebsiteList from "../_components/WebsiteList";
@@ -165,7 +166,7 @@ export default function DashboardPage() {
         )}
         {deleting?.gallery && (
           <ConfirmDialog
-            message={`Delete ${deleting.gallery.galleryName}? It will be removed from your dashboard and your website. This can't be undone.`}
+            message={deleteGalleryMessage(deleting.gallery.galleryName)}
             confirmLabel="Delete Gallery"
             onConfirm={confirmDelete}
             onClose={() => setDeleting(null)}

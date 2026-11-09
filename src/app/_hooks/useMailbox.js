@@ -34,6 +34,11 @@ function oldestIfMore(list, items) {
   return list.hasMore ? items[items.length - 1].date : null;
 }
 
+// An update and a thread may share an id, so an item is keyed by both, for its row and its checkbox.
+export function mailboxItemKey(item) {
+  return `${item.type}-${item.id}`;
+}
+
 export function useMailbox(role) {
   const paths = PATHS_BY_ROLE[role];
   const updates = usePagedList(paths.updates);

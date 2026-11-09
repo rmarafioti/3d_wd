@@ -4,9 +4,9 @@
 
 Headless CMS project. Two repos for frontend and backend.
 
-The frontend serves a public, static landing page and sign-in for two separate authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each with their own dashboard view, auth and API routes. The Administrator uses the frontend to see a summary of site owner accounts and their websites, create new site owner accounts, link websites to them, and read the audit log. The Site Owner uses the frontend to view, create, edit, publish, draft and delete posts.
+The frontend serves a public, static landing page and sign-in for two separate authenticated dashboards. Two roles to account for, an Administrator and a Site Owner, each with their own dashboard view, auth and API routes. The Administrator uses the frontend to see a summary of site owner accounts and their websites, create new site owner accounts, link websites to them, read the audit log, set abilities and galleries live, send site-wide updates and message site owners. The Site Owner uses the frontend to view, create, edit, publish, draft and delete posts and photo galleries, manage their website's abilities, and read the inbox (updates and threads with the admin).
 
-The backend also serves published post content to each site owner's live website via their API key, and triggers on-demand revalidation on that site by calling its webhook endpoint whenever a post changes.
+The backend also serves published posts and galleries to each site owner's live website via their API key, and triggers on-demand revalidation on that site by calling its webhook endpoint whenever a post or gallery changes.
 
 - Production frontend: `https://3dwebdev.com` (Vercel)
 - Production API: `https://api.3dwebdev.com` (Render)

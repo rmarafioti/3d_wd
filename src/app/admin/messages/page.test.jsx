@@ -1,5 +1,5 @@
 // Tests for the admin's Messages page, through the real hooks: sent updates and threads in one list,
-// the read tally, Edit, Withdraw, Load more, and the error and empty states.
+// the read tally, Edit, Withdraw, ticking and deleting, Load more, and the error and empty states.
 
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
@@ -164,5 +164,48 @@ describe("Admin Messages page", () => {
     render(<AdminMessagesPage />);
 
     expect(await screen.findByText("No messages yet.")).toBeInTheDocument();
+  });
+  it("deletes a ticked sent update from the admin's mailbox only, never withdrawing it", async () => {
+    const { calls } = mockFetch({
+      [UPDATES]: [list([sent("n1")]), list([])],
+      [THREADS]: list([]),
+      "POST /api/admin/deleted": {
+        body: { data: { deleted: [{ type: "update", id: "n1" }], failed: [] } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<AdminMessagesPage />);
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select Update n1" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("No messages yet.")).toBeInTheDocument();
+    expect(calls.find((call) => call.method === "POST").body).toEqual({
+      items: [{ type: "update", id: "n1" }],
+    });
+    expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(0);
+  });
+
+  it("offers only Edit and Withdraw in a sent update's ⋮, and no ⋮ on a thread", async () => {
+    mockFetch({
+      [UPDATES]: list([sent("n1")]),
+      [THREADS]: list([thread("t1", false)]),
+    });
+    const user = userEvent.setup();
+    render(<AdminMessagesPage />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Update n1" }),
+    );
+
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Withdraw" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Actions for Thread t1" }),
+    ).not.toBeInTheDocument();
   });
 });

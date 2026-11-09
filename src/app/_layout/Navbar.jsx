@@ -1,17 +1,19 @@
-// Navbar: the home link, dashboard title, mail icon and Sign in / out, then the signed-in user's
-// links, which at phone width move into a hamburger menu.
+// Navbar: the home link, dashboard title, mail and trash icons and Sign in / out, then the
+// signed-in user's links, which at phone width move into a hamburger menu.
 
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { RxCross2, RxHamburgerMenu } from "react-icons/rx";
+import { GoTrash } from "react-icons/go";
 import { useAuth } from "../_hooks/useAuth";
 import { useNav } from "../_hooks/useNav";
 import HomeLink from "../_components/HomeLink";
 import DashboardTitle from "../_components/DashboardTitle";
 import AuthButton from "../_components/AuthButton";
 import MailLink from "../_components/MailLink";
+import { DELETED_BY_ROLE } from "../_lib/roles";
 
 import styles from "../_styling/navbar.module.css";
 
@@ -34,7 +36,6 @@ function navLinks(user, canCreateGallery) {
       href: "/dashboard?create=gallery",
     });
   }
-  links.push({ label: "Recently Deleted", href: "/dashboard/deleted" });
   return links;
 }
 
@@ -74,6 +75,17 @@ export default function Navbar() {
         <DashboardTitle />
         <div className={styles.navActions}>
           {user && <MailLink role={user.role} />}
+          {/* Recently Deleted, with no badge; it stays in the top row at phone width. */}
+          {user && (
+            <Link
+              href={DELETED_BY_ROLE[user.role]}
+              aria-label="Recently Deleted"
+              title="Recently Deleted"
+              className={styles.iconLink}
+            >
+              <GoTrash aria-hidden="true" />
+            </Link>
+          )}
           {/* Signed in, Sign out moves into the phone menu. */}
           <div className={links ? styles.desktopOnly : undefined}>
             <AuthButton />

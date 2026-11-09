@@ -34,7 +34,7 @@ describe("Dashboard layout", () => {
     const { calls } = mockFetch({
       "GET /api/auth/me": { body: { data: SITE_OWNER } },
       "GET /api/siteOwner/websites": { body: { data: [WEBSITE] } },
-      "GET /api/siteOwner/posts/deleted": {
+      "GET /api/siteOwner/deleted": {
         body: { data: [], nextCursor: null },
       },
     });
@@ -51,7 +51,7 @@ describe("Dashboard layout", () => {
       await screen.findByRole("button", { name: "Abilities" }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText("No recently deleted posts."),
+      await screen.findByText("Nothing has been deleted in the last 30 days."),
     ).toBeInTheDocument();
     expect(
       calls.filter((call) => call.path === "/api/siteOwner/websites"),

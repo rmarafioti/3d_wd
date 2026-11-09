@@ -4,8 +4,8 @@
 "use client";
 
 import { useId } from "react";
+import Image from "next/image";
 import { GoChevronDown, GoChevronUp } from "react-icons/go";
-import { MdImage } from "react-icons/md";
 import ToolbarRow from "./ToolbarRow";
 import { serverErrorsFor } from "./ImageField";
 import { isBlank } from "../_lib/validation";
@@ -127,7 +127,15 @@ export default function GalleryToolbar({
               .filter(Boolean)
               .join(" ")}
           >
-            <MdImage aria-hidden="true" className={styles.rowIcon} />
+            {/* The photo itself, so it is told apart at a glance; alt="" since its alt text follows. */}
+            <Image
+              src={image.src}
+              width={image.width}
+              height={image.height}
+              alt=""
+              unoptimized
+              className={styles.rowThumbnail}
+            />
             {image.altText.trim()}
           </ToolbarRow>
         ))}

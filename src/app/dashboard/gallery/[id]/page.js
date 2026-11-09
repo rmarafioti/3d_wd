@@ -21,7 +21,10 @@ import PublishDateEditor from "../../../_components/PublishDateEditor";
 import CropPreview from "../../../_components/CropPreview";
 import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
 import { galleryRequestCopy, placementTone } from "../../../_lib/abilities";
-import { GALLERY_PUBLISH_DATE_NOTE } from "../../../_lib/galleryFields";
+import {
+  GALLERY_PUBLISH_DATE_NOTE,
+  deleteGalleryMessage,
+} from "../../../_lib/galleryFields";
 
 import styles from "../../../_styling/postPage.module.css";
 
@@ -298,7 +301,7 @@ export default function GalleryPage() {
         )}
         {confirmingDelete && (
           <ConfirmDialog
-            message={`Delete ${gallery.galleryName}? It will be removed from your dashboard and your website. This can't be undone.`}
+            message={deleteGalleryMessage(gallery.galleryName)}
             confirmLabel="Delete Gallery"
             onConfirm={deleteGallery}
             onClose={() => setConfirmingDelete(false)}
