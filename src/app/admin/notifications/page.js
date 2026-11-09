@@ -5,7 +5,7 @@
 
 import { useRouter } from "next/navigation";
 import { useInboxActions } from "../../_hooks/useInboxActions";
-import UpdateForm from "../../_components/UpdateForm";
+import UpdateForm from "../../_components/admin/inbox/UpdateForm";
 
 import styles from "../../_styling/inbox.module.css";
 

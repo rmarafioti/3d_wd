@@ -180,6 +180,8 @@ Use the limits in `docs/api.md` → Validation rules, through `_lib/validation.j
 **File naming:**
 Components in PascalCase.jsx, hooks in camelCase.js prefixed with use, following standard React convention.
 
+**Component folders:** `_components/` has no loose files. A component both roles use sits in the top-level folder for what it is or the area it serves (`dialogs/`, `controls/`, `fields/`, `formatting/`, `auth/`, `navbar/`, `inbox/`, `recentlyDeleted/`). A component only one role uses goes under `admin/` or `siteOwner/`, then the folder for its area (`admin/auditEvents/`, `siteOwner/galleries/`). A component's place follows its importers: one that comes to serve both roles moves up to a shared folder. Its test sits beside it.
+
 **In-line comments:**
 Keep all code readable and explicit. Comments should be used to inform other developers of the logic in more abstract code. Make sure all comments have been validated and are truthful. Each JS / JSX file starts with a one- or two-line header comment on what it is for, with no history (issue numbers, dates, who decided): the PR holds decisions, and a reason a reader needs sits as an inline comment by the code it explains. CSS files need no header comment: a module is named for what it styles, and a rule whose reason isn't obvious gets its own comment.
 
@@ -304,7 +306,11 @@ root
 │   ├── instrumentation-client.js *starts Sentry before the app's own code (production only)
 │   ├── test/                     *setup.js (jest-dom, <dialog> polyfill) and helpers.js (mockFetch, the only fake network)
 │   └── app/
-│       ├── _components/          *every component, one-time and reusable
+│       ├── _components/          *every component, in folders by use (Patterns → Component folders)
+│       │   ├── auth/, navbar/, inbox/, recentlyDeleted/, formatting/ *shared by both roles, by area
+│       │   ├── dialogs/, controls/, fields/ *shared building blocks (ConfirmDialog, Pill, Toggle, FieldLabel…)
+│       │   ├── admin/            *admin only: accounts/, auditEvents/, inbox/
+│       │   └── siteOwner/        *site owner only: abilities/, dashboard/, posts/, galleries/, contentForm/ (shared by the post and gallery forms)
 │       ├── _context/             *AuthContext, AdminDataContext, SiteOwnerDataContext, NavContext
 │       ├── _hooks/               *every hook (Patterns → Data fetching)
 │       ├── _layout/              *Navbar, Footer, and the client DashboardLayout / AdminLayout the route layouts render
@@ -364,11 +370,11 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-09** `chore/organize-components` (no issue, frontend only): `_components/` moves from one flat folder of 61 components into folders by use, shared ones by area and role-only ones under `admin/` and `siteOwner/` (Patterns → Component folders), with every import and the `apiFetch` lint allowlist updated; no behaviour change.
 - **2026-11-09** `feat/delete-mail` (issue #89; backend issue #100, the lead): each mailbox row gets a checkbox, with Select all, Delete (two or more confirmed; the admin's sent update leaves their mailbox only), and one Recently Deleted per role (`/dashboard/deleted`, new `/admin/deleted`) lists posts, galleries and mail, ticked and restored together, then back to the dashboard, through the backend's bulk routes; a trash icon beside the envelope replaces the "Recently Deleted" link, and a deleted gallery's confirmation says it can be restored. The post and gallery toolbars show each image's thumbnail in place of the image icon. `docs/api.md` copies the backend's contract. Also the 2026-11-06 Documentation Sync's doc fixes.
 - **2026-11-06** `feat/notification-inbox` (issue #87; backend issue #98, the lead): the Navbar's mail icon with a green unread dot for both roles; the admin's Send a Notification page (title and formatted body) and the admin's mailbox, its sent updates with "Read by N of M", Edit and Withdraw beside the threads, and the Accounts aside's ⋮ → Message; the site owner's mailbox, updates and threads in one list with an "update" / "message" pill, and Message Admin; each thread on its own page with replies. `usePagedList` now holds the paging. `docs/api.md` copies the backend's contract.
 - **2026-11-06** `feat/scheduled-publish` (issue #85; backend issue #96, the lead): a draft post or gallery gets a publish date (a day, published at its local midnight), set in the forms under the Status switch and on its own page with Set publish date / Clear; the dashboard tables gain a Live on column (`publishedAt ?? publishAt`) and turn on their side at phone width, with an Actions tap menu; Audit Events shows a scheduled publish as "Scheduled". Also: a sent posts placement is never asked for again, restoring a post goes back to `/dashboard`, the post page fits a phone, and "Your Websites" is gone. `docs/api.md` copies the backend's contract.
 - **2026-11-05** `feat/recently-deleted-posts` (issue #83; backend issue #85, the lead): `/dashboard/deleted` lists the posts deleted in the last 30 days with their days left (from `restorableUntil`) and a Restore button, reached from a Navbar link, and Delete a Post's confirmation says the post can be restored for 30 days; Audit Events shows "Page N of M" beside Load more; each website's Posts heading gets a Placement row with the posts' placement pill, shown even with no posts; the Abilities aside moves into the dashboard layout, so it shows on every `/dashboard` route. `docs/api.md` copies the backend's contract (`DeletedPostSummary`, the list and restore routes, `pages`).
-- **2026-11-05** `feat/ui-adjustments` (issue #81; backend issue #93): every pill is 1rem; the gallery table gets a Placement column with each gallery's placement pill, and the admin's gallery dropdown shows its Gallery Code (`placementTone` shared by the three placement pills); BBH Hegarty and Montserrat load through `next/font` as `--logoFont`, `--headerFont` and `--copyFont`; the landing page gets its first copy and meta description; the tables grow with their contents; the navbar reads "3D | WD" with semibold links; Audit Events gains a Date field for one local day (`from` / `to`); each ability in the Abilities aside gets an "i" saying what it does. `docs/api.md` copies the backend's contract. The backend clears the Posts placement once the last post is deleted, and generates new galleries' codes.
 
 ## Features
 

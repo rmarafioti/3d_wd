@@ -12,14 +12,14 @@ import { useGalleries } from "../../../_hooks/useGalleries";
 import { useWebsites } from "../../../_hooks/useWebsites";
 import GalleryForm, {
   galleryToFormValues,
-} from "../../../_components/GalleryForm";
-import MessageDialog from "../../../_components/MessageDialog";
-import ConfirmDialog from "../../../_components/ConfirmDialog";
-import Toggle from "../../../_components/Toggle";
-import Pill from "../../../_components/Pill";
-import PublishDateEditor from "../../../_components/PublishDateEditor";
-import CropPreview from "../../../_components/CropPreview";
-import AbilityRequestDialog from "../../../_components/AbilityRequestDialog";
+} from "../../../_components/siteOwner/galleries/GalleryForm";
+import MessageDialog from "../../../_components/dialogs/MessageDialog";
+import ConfirmDialog from "../../../_components/dialogs/ConfirmDialog";
+import Toggle from "../../../_components/controls/Toggle";
+import Pill from "../../../_components/controls/Pill";
+import PublishDateEditor from "../../../_components/siteOwner/contentForm/PublishDateEditor";
+import CropPreview from "../../../_components/siteOwner/galleries/CropPreview";
+import AbilityRequestDialog from "../../../_components/siteOwner/abilities/AbilityRequestDialog";
 import { galleryRequestCopy, placementTone } from "../../../_lib/abilities";
 import {
   GALLERY_PUBLISH_DATE_NOTE,

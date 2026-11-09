@@ -4,7 +4,7 @@
 "use client";
 
 import { useAdminData } from "../../_hooks/useAdminData";
-import CreateAccountForm from "../../_components/CreateAccountForm";
+import CreateAccountForm from "../../_components/admin/accounts/CreateAccountForm";
 
 import styles from "../../_styling/dashPages.module.css";
 

@@ -17,12 +17,12 @@ import {
 } from "../_lib/abilities";
 import { deletePostMessage } from "../_lib/postFields";
 import { deleteGalleryMessage } from "../_lib/galleryFields";
-import PostForm from "../_components/PostForm";
-import GalleryForm from "../_components/GalleryForm";
-import WebsiteList from "../_components/WebsiteList";
-import MessageDialog from "../_components/MessageDialog";
-import ConfirmDialog from "../_components/ConfirmDialog";
-import AbilityRequestDialog from "../_components/AbilityRequestDialog";
+import PostForm from "../_components/siteOwner/posts/PostForm";
+import GalleryForm from "../_components/siteOwner/galleries/GalleryForm";
+import WebsiteList from "../_components/siteOwner/dashboard/WebsiteList";
+import MessageDialog from "../_components/dialogs/MessageDialog";
+import ConfirmDialog from "../_components/dialogs/ConfirmDialog";
+import AbilityRequestDialog from "../_components/siteOwner/abilities/AbilityRequestDialog";
 
 import styles from "../_styling/dashPages.module.css";
 

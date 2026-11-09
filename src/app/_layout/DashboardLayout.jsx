@@ -6,7 +6,7 @@
 import { useRoleGate } from "../_hooks/useRoleGate";
 import { useSiteOwnerData } from "../_hooks/useSiteOwnerData";
 import { SiteOwnerDataProvider } from "../_context/SiteOwnerDataContext";
-import AbilitiesAside from "../_components/AbilitiesAside";
+import AbilitiesAside from "../_components/siteOwner/abilities/AbilitiesAside";
 
 import styles from "../_styling/dashPages.module.css";
 

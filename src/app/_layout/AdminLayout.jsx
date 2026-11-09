@@ -5,7 +5,7 @@
 
 import { useRoleGate } from "../_hooks/useRoleGate";
 import { AdminDataProvider } from "../_context/AdminDataContext";
-import AccountsAside from "../_components/AccountsAside";
+import AccountsAside from "../_components/admin/accounts/AccountsAside";
 
 import styles from "../_styling/accountsAside.module.css";
 

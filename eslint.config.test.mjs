@@ -104,10 +104,13 @@ describe("eslint.config.mjs", () => {
     const inComponent = await ruleIds(code, "src/app/_components/Load.jsx");
     const inLayout = await ruleIds(code, "src/app/_layout/Shell.jsx");
     const inHook = await ruleIds(code, "src/app/_hooks/useLoad.js");
-    const inSignIn = await ruleIds(code, "src/app/_components/SignInForm.jsx");
+    const inSignIn = await ruleIds(
+      code,
+      "src/app/_components/auth/SignInForm.jsx",
+    );
     const inAuthButton = await ruleIds(
       code,
-      "src/app/_components/AuthButton.jsx",
+      "src/app/_components/auth/AuthButton.jsx",
     );
 
     expect(inComponent).toEqual(["no-restricted-imports"]);

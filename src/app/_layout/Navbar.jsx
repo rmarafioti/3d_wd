@@ -9,10 +9,10 @@ import { RxCross2, RxHamburgerMenu } from "react-icons/rx";
 import { GoTrash } from "react-icons/go";
 import { useAuth } from "../_hooks/useAuth";
 import { useNav } from "../_hooks/useNav";
-import HomeLink from "../_components/HomeLink";
-import DashboardTitle from "../_components/DashboardTitle";
-import AuthButton from "../_components/AuthButton";
-import MailLink from "../_components/MailLink";
+import HomeLink from "../_components/navbar/HomeLink";
+import DashboardTitle from "../_components/navbar/DashboardTitle";
+import AuthButton from "../_components/auth/AuthButton";
+import MailLink from "../_components/navbar/MailLink";
 import { DELETED_BY_ROLE } from "../_lib/roles";
 
 import styles from "../_styling/navbar.module.css";
