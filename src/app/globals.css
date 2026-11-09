@@ -164,6 +164,15 @@ select {
   margin-top: 1rem;
 }
 
+/* A checkbox keeps the browser's own size, without the input rule's full width, padding and bottom
+   margin above. */
+input[type="checkbox"] {
+  width: auto;
+  margin: 0rem;
+  padding: 0rem;
+  cursor: pointer;
+}
+
 input:has(+ .fieldError),
 select:has(+ .fieldError),
 textarea:has(+ .fieldError) {

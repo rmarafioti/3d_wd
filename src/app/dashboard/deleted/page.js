@@ -1,77 +1,29 @@
-// Recently Deleted page (site owner): the posts deleted in the last 30 days, each with a Restore
-// button. A Client Component on purpose, since per-user data is only ever fetched client-side.
+// Recently Deleted page (site owner): posts, galleries and mail deleted in the last 30 days, each
+// with Restore. A Client Component on purpose, since per-user data is only ever fetched client-side.
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSiteOwnerData } from "../../_hooks/useSiteOwnerData";
-import { useDeletedPosts } from "../../_hooks/useDeletedPosts";
-import { usePosts } from "../../_hooks/usePosts";
-import DeletedPostTable from "../../_components/DeletedPostTable";
-import MessageDialog from "../../_components/MessageDialog";
-import LoadMoreButton from "../../_components/LoadMoreButton";
-
-import styles from "../../_styling/dashPages.module.css";
+import { useNav } from "../../_hooks/useNav";
+import RecentlyDeleted from "../../_components/RecentlyDeleted";
 
 export default function RecentlyDeletedPage() {
-  const router = useRouter();
   const websites = useSiteOwnerData();
-  const deleted = useDeletedPosts();
-  const posts = usePosts();
-  // The post whose Restore is in flight, or null.
-  const [restoringId, setRestoringId] = useState(null);
-  // A failed restore's message, held only while its dialog is open.
-  const [restoreError, setRestoreError] = useState(null);
+  const { refreshUnread } = useNav();
 
-  // No success dialog: a restored post sends the site owner back to /dashboard, where it is listed
-  // again. A failure stays here, and the list is fetched again, since "Post not found." means its
-  // window has passed.
-  async function restore(post) {
-    setRestoringId(post.id);
-    try {
-      await posts.restore(post.id);
-      websites.refetch();
-      router.push("/dashboard");
-      return;
-    } catch (err) {
-      setRestoreError(err.message);
-    }
-    deleted.refetch();
-    setRestoringId(null);
+  // restored: [{ type, id }]. A restored post or gallery is back in the websites the dashboard and
+  // the Abilities aside read; restored mail may be unread, so the mail icon counts again.
+  function handleRestored(restored) {
+    const types = restored.map((item) => item.type);
+    if (types.includes("post") || types.includes("gallery")) websites.refetch();
+    if (types.includes("update") || types.includes("thread")) refreshUnread();
   }
 
-  let content;
-  if (deleted.error) content = <p>{deleted.error.message}</p>;
-  else if (deleted.loading) content = <p>Loading…</p>;
-  else if (deleted.data.length === 0)
-    content = <p>No recently deleted posts.</p>;
-  else
-    content = (
-      <DeletedPostTable
-        posts={deleted.data}
-        showWebsite={websites.data?.length > 1}
-        restoringId={restoringId}
-        onRestore={restore}
-      />
-    );
-
   return (
-    <article>
-      <section className={styles.siteOwnerAccount}>
-        <h1 className={styles.postHeader}>Recently Deleted</h1>
-        <p className={styles.postHeader}>
-          Deleted posts can be restored for 30 days.
-        </p>
-        {content}
-        <LoadMoreButton list={deleted} />
-        {restoreError && (
-          <MessageDialog
-            message={restoreError}
-            onClose={() => setRestoreError(null)}
-          />
-        )}
-      </section>
-    </article>
+    <RecentlyDeleted
+      role="site_owner"
+      showWebsite={websites.data?.length > 1}
+      onRestored={handleRestored}
+    />
   );
 }

@@ -42,10 +42,15 @@
 }
 
 .statusColumn,
+.typeColumn,
 .placementColumn,
-.daysColumn,
-.restoreColumn {
+.daysColumn {
   width: 6rem;
+}
+
+/* Recently Deleted's checkboxes, as narrow as the box. */
+.selectColumn {
+  width: 2rem;
 }
 
 /* The gallery table's slug, beside the gallery name, which takes the rest. */
@@ -83,28 +88,6 @@
 .table td.wrapCell {
   white-space: normal;
   overflow-wrap: anywhere;
-}
-
-/* Recently Deleted's Restore: the button fills its cell, so the cell is the button. Two classes,
-   so its padding wins over the shared cell rule above. */
-.table .restoreCell {
-  padding: 0rem;
-}
-
-/* Plain like the Navbar's links: black on white, gray under the pointer or reached with Tab. */
-.restoreButton {
-  display: block;
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0px;
-  color: black;
-  background-color: white;
-}
-
-.restoreButton:hover:not(:disabled),
-.restoreButton:focus-visible {
-  background-color: lightgray;
 }
 
 /* For screen readers only: the menu column's heading. */

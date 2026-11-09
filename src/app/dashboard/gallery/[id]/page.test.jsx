@@ -158,7 +158,7 @@ describe("Gallery page", () => {
     await user.click(screen.getByRole("button", { name: "Delete Gallery" }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent(
-      "Delete Our Interior? It will be removed from your dashboard and your website. This can't be undone.",
+      "Delete Our Interior? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.",
     );
     await user.click(
       within(dialog).getByRole("button", { name: "Delete Gallery" }),

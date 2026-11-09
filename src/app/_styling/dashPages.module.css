@@ -145,6 +145,14 @@
   position: relative;
 }
 
+/* Recently Deleted's Restore, for the ticked rows, above the table at its right edge, like the
+   mailbox's Delete: as wide as its word rather than the global button's 140px. */
+.restoreButton {
+  align-self: flex-end;
+  width: auto;
+  margin-bottom: 1rem;
+}
+
 /* Recently Deleted's Load more, under its table. */
 .loadMore {
   margin-top: 1rem;

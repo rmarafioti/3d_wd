@@ -1,5 +1,10 @@
 // galleryFields: the gallery's own fields (label, name in sentences, limit, help text, empty row),
-// shared by GalleryForm and GalleryToolbar so a field reads the same everywhere.
+// shared by GalleryForm and GalleryToolbar so a field reads the same everywhere, and shared texts.
+
+// Delete a Gallery's confirmation, the same on the gallery page and the dashboard's ⋮ menu.
+export function deleteGalleryMessage(galleryName) {
+  return `Delete ${galleryName}? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.`;
+}
 
 // The limits match docs/api.md → Validation rules (validateGallery checks them).
 export const GALLERY_FIELDS = {

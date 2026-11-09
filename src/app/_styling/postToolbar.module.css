@@ -87,11 +87,22 @@
   text-overflow: ellipsis;
 }
 
-/* A body element's paragraph or image icon, on the line before its words. */
+/* A paragraph's icon, on the line before its words. */
 .rowIcon {
   vertical-align: middle;
   margin-right: 0.5rem;
   font-size: 20px;
+}
+
+/* An image's own photo in place of an icon, before its alt text: a small square, cropped to fill
+   it, with a light gray border so a pale photo still reads as one. */
+.rowThumbnail {
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+  border: 1px solid lightgray;
 }
 
 @media (max-width: 667px) {

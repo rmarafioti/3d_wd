@@ -2,7 +2,7 @@
 // the phone menu's opening and closing.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Navbar from "./Navbar";
 import { AuthContext } from "../_context/AuthContext";
@@ -63,7 +63,7 @@ describe("Navbar", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
-  it("links the admin to Create an Account, Send a Notification, Audit Events and Messages", async () => {
+  it("links the admin to Create an Account, Send a Notification, Audit Events, Messages and Recently Deleted", async () => {
     mockFetch({ [ADMIN_UNREAD]: NONE_UNREAD });
 
     renderNavbar(ADMIN);
@@ -81,9 +81,12 @@ describe("Navbar", () => {
     expect(
       await screen.findByRole("link", { name: "Messages" }),
     ).toHaveAttribute("href", "/admin/messages");
+    expect(
+      screen.getByRole("link", { name: "Recently Deleted" }),
+    ).toHaveAttribute("href", "/admin/deleted");
   });
 
-  it("links the site owner to Create a Post, Recently Deleted, and Create a Gallery only once a website has Photo Galleries", async () => {
+  it("links the site owner to Create a Post, and Create a Gallery only once a website has Photo Galleries, with Recently Deleted as the trash icon outside the links", async () => {
     mockFetch({
       "GET /api/siteOwner/notifications/unreadCount": {
         body: { data: { updates: 0, threads: 0 } },
@@ -102,6 +105,11 @@ describe("Navbar", () => {
     expect(
       screen.getByRole("link", { name: "Recently Deleted" }),
     ).toHaveAttribute("href", "/dashboard/deleted");
+    expect(
+      within(screen.getByRole("list")).queryByRole("link", {
+        name: "Recently Deleted",
+      }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Create a Gallery" }),
     ).not.toBeInTheDocument();

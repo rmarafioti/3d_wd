@@ -16,17 +16,37 @@
   margin-bottom: 1rem;
 }
 
-/* The mailbox's heading with "Message Admin" beside it, wrapping under it on a narrow screen. */
+/* The mailbox's heading with Message Admin beside it, wrapping under it on a narrow screen, set
+   apart from the selection row under it by the lighter line under a heading. */
 .topRow {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgb(230, 230, 230);
 }
 
-/* Message Admin on one line: as wide as its words rather than the global button's 140px. */
-.messageAdminButton {
+/* The row's padding sets the space above its line, so the heading's own margin doesn't add to it.
+   Two classes, so it wins over .heading. */
+.topRow .heading {
+  margin-bottom: 0rem;
+}
+
+/* Select all and Delete, under the heading's line at the right, above the list. */
+.selectionRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* The mailbox's buttons on one line: as wide as their words rather than the global button's
+   140px. */
+.topButton {
   width: auto;
   white-space: nowrap;
 }
@@ -67,57 +87,93 @@
   overflow-wrap: anywhere;
 }
 
-/* An item's pill, title and date (or its title and ⋮ menu) on one row. No global summary margin,
-   and no link underline, so an update's row and a thread's row read the same. */
+/* An item's pill, title and date on one row, never wrapping: the title gives way (.itemTitle). No
+   global summary margin, and no link underline, so an update's row and a thread's row read the
+   same. */
 .itemRow {
   display: flex;
-  flex-wrap: wrap;
+  white-space: nowrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0rem;
+  min-height: 2rem;
+  list-style: none;
   text-decoration: none;
   cursor: pointer;
 }
 
-/* The admin's sent update: its disclosure takes the row, with the ⋮ beside it rather than inside
-   the summary, so opening the menu never opens the update, and centred in the row's height.
-   Positioned, so the ⋮ list opens from this row (ActionsMenu), at its right edge, rather than from
-   the page. */
-.updateRow {
-  position: relative;
+/* An update's summary: a flex summary loses the browser's open / closed marker (hidden here for
+   Safari too, with the list-style above), so .marker draws it, the account list's triangle,
+   pointing right when closed and down when open. */
+.itemRow::-webkit-details-marker {
+  display: none;
+}
+
+[open] > .itemRow > .marker {
+  transform: rotate(90deg);
+}
+
+/* Space between an opened update's row and its message, so the two read apart. */
+[open] > .itemRow {
+  margin-bottom: 1rem;
+}
+
+/* Delete, in the red of Pill's red tone and the Published switch's off track, since it removes
+   mail from the mailbox. */
+.deleteButton {
+  background-color: red;
+}
+
+/* A mailbox row: its checkbox, the item taking the row, and the admin's update's ⋮, each beside the
+   item rather than inside it, so ticking or opening the menu never opens the update. Top-aligned,
+   so the checkbox and the ⋮ stay level with the item's row when an update opens below it. */
+.controlRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 
-.updateDetails {
+/* min-width 0 lets the item shrink below its one-line width, so its title can be cut. */
+.controlRowItem {
   flex-grow: 1;
+  min-width: 0rem;
+}
+
+/* The row's checkbox, centred in a cell as tall as an item's row (.itemRow's min-height). */
+.selectCell {
+  display: flex;
+  align-items: center;
+  height: 2rem;
+}
+
+/* The ⋮, as tall as an item's row (.itemRow's min-height) and centred in it. Positioned, so the ⋮
+   list opens from under the ⋮ (ActionsMenu), at the row's right edge, even with an update open. */
+.menuRowActions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 2rem;
 }
 
 /* Down by the list item's 0.5rem bottom padding, so the ⋮ list's top border lies on the item's
    bottom line. Two classes, so it wins over ActionsMenu's own top. */
-.updateRow .updateMenuList {
+.controlRow .menuList {
   top: calc(100% + 0.5rem);
 }
 
-/* Takes the row's spare width, so the date or the ⋮ sits at the right. */
+/* Takes the row's spare width, so the date or the ⋮ sits at the right; when the row runs out of
+   width, the title alone is cut with "…" (its full text is the hover title), so the pills, read
+   count and date stay whole. */
 .itemTitle {
   flex-grow: 1;
+  min-width: 0rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Montserrat SemiBold while something in it is unread. */
 .unread {
   font-weight: 600;
-}
-
-/* For screen readers only: an item's "(unread)". */
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 /* A thread's messages, oldest first, each set apart by a line under it, all lined up on the left:

@@ -1,5 +1,6 @@
 // Tests for the site owner's Messages page, through the real hooks and apiFetch: the merged list
-// with its pills, opening an unread update marking it read, Message Admin, and the error and empty states.
+// with its pills, opening an unread update marking it read, ticking and deleting items,
+// Message Admin, and the error and empty states.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -13,6 +14,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const UPDATES = "GET /api/siteOwner/notifications";
 const THREADS = "GET /api/siteOwner/threads";
+const DELETE_SELECTED = "POST /api/siteOwner/deleted";
 
 const UPDATE = {
   id: "n1",
@@ -52,11 +54,49 @@ describe("Site owner Messages page", () => {
     const items = within(await screen.findByRole("list")).getAllByRole(
       "listitem",
     );
-    expect(items[0]).toHaveTextContent("messageA question (unread)");
+    expect(items[0]).toHaveTextContent("messageA question");
     expect(items[1]).toHaveTextContent("updateYour posts are now live!");
     expect(
       within(items[0]).getByRole("link", { name: /A question/ }),
     ).toHaveAttribute("href", "/dashboard/messages/t1");
+  });
+
+  it("marks unread updates and threads with an unread pill, and read ones with none", async () => {
+    mockFetch({
+      [UPDATES]: list([
+        UPDATE,
+        {
+          ...UPDATE,
+          id: "n2",
+          title: "Read update",
+          readAt: "2026-11-05T13:00:00.000Z",
+        },
+      ]),
+      [THREADS]: list([
+        THREAD,
+        {
+          ...THREAD,
+          id: "t2",
+          subject: "Read thread",
+          lastMessageAt: "2026-11-04T12:00:00.000Z",
+          unread: false,
+        },
+      ]),
+    });
+
+    renderPage();
+
+    const items = within(await screen.findByRole("list")).getAllByRole(
+      "listitem",
+    );
+    const unreadOf = (title) =>
+      within(
+        items.find((item) => item.textContent.includes(title)),
+      ).queryByText("unread");
+    expect(unreadOf("A question")).toBeInTheDocument();
+    expect(unreadOf("Your posts are now live!")).toBeInTheDocument();
+    expect(unreadOf("Read thread")).not.toBeInTheDocument();
+    expect(unreadOf("Read update")).not.toBeInTheDocument();
   });
 
   it("marks an unread update read the first time it is opened, then refreshes the badge", async () => {
@@ -77,7 +117,7 @@ describe("Site owner Messages page", () => {
       screen.getByText("Your posts now show on Stevie The Dog."),
     ).toBeVisible();
     await waitFor(() => expect(refreshUnread).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("(unread)")).not.toBeInTheDocument();
+    expect(screen.queryByText("unread")).not.toBeInTheDocument();
     expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
   });
 
@@ -165,6 +205,143 @@ describe("Site owner Messages page", () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Your posts are now live!"),
+    ).not.toBeInTheDocument();
+  });
+  it("deletes one ticked item with no confirmation, then fetches the mailbox and the badge again", async () => {
+    const refreshUnread = vi.fn();
+    const { calls } = mockFetch({
+      [UPDATES]: [list([UPDATE]), list([])],
+      [THREADS]: [list([]), list([])],
+      [DELETE_SELECTED]: {
+        body: { data: { deleted: [{ type: "update", id: "n1" }], failed: [] } },
+      },
+    });
+    const user = userEvent.setup();
+    renderPage(refreshUnread);
+
+    await user.click(
+      await screen.findByRole("checkbox", {
+        name: "Select Your posts are now live!",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("No messages yet.")).toBeInTheDocument();
+    const del = calls.find((call) => call.method === "POST");
+    expect(del.path).toBe("/api/siteOwner/deleted");
+    expect(del.headers["X-CSRF-Protection"]).toBe("1");
+    expect(del.body).toEqual({ items: [{ type: "update", id: "n1" }] });
+    expect(refreshUnread).toHaveBeenCalled();
+  });
+
+  it("confirms before deleting two or more, sending a thread as a thread", async () => {
+    const { calls } = mockFetch({
+      [UPDATES]: [list([UPDATE]), list([])],
+      [THREADS]: [list([THREAD]), list([])],
+      [DELETE_SELECTED]: {
+        body: {
+          data: {
+            deleted: [
+              { type: "thread", id: "t1" },
+              { type: "update", id: "n1" },
+            ],
+            failed: [],
+          },
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select all" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    const confirm = within(screen.getByRole("dialog"));
+    expect(
+      confirm.getByText("Delete 2 messages? You can restore them for 30 days."),
+    ).toBeInTheDocument();
+    await user.click(confirm.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("No messages yet.")).toBeInTheDocument();
+    expect(calls.find((call) => call.method === "POST").body).toEqual({
+      items: [
+        { type: "thread", id: "t1" },
+        { type: "update", id: "n1" },
+      ],
+    });
+  });
+
+  it("sends nothing when deleting several is cancelled", async () => {
+    const { calls } = mockFetch({
+      [UPDATES]: list([UPDATE]),
+      [THREADS]: list([THREAD]),
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select all" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(calls.filter((call) => call.method !== "GET")).toHaveLength(0);
+  });
+
+  it("keeps Delete disabled until something is ticked", async () => {
+    mockFetch({ [UPDATES]: list([UPDATE]), [THREADS]: list([]) });
+
+    renderPage();
+
+    expect(
+      await screen.findByRole("button", { name: "Delete" }),
+    ).toBeDisabled();
+  });
+
+  it("names an item that couldn't be deleted", async () => {
+    mockFetch({
+      [UPDATES]: list([]),
+      [THREADS]: [list([THREAD]), list([])],
+      [DELETE_SELECTED]: {
+        body: {
+          data: {
+            deleted: [],
+            failed: [
+              { type: "thread", id: "t1", message: "Thread not found." },
+            ],
+          },
+        },
+      },
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("checkbox", { name: "Select A question" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText(
+        "Couldn't delete: A question (Thread not found.)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("offers Select all and Delete only while the mailbox has items", async () => {
+    mockFetch({ [UPDATES]: list([]), [THREADS]: list([]) });
+
+    renderPage();
+
+    await screen.findByText("No messages yet.");
+    expect(
+      screen.queryByRole("checkbox", { name: "Select all" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Delete" }),
     ).not.toBeInTheDocument();
   });
 });

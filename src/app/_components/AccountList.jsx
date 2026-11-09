@@ -289,12 +289,12 @@ export default function AccountList({
                         label={`Actions for ${account.name}`}
                         items={[
                           {
-                            label: "Link a Website",
-                            onClick: () => onLink(account),
-                          },
-                          {
                             label: "Message",
                             onClick: () => onMessage(account),
+                          },
+                          {
+                            label: "Link a Website",
+                            onClick: () => onLink(account),
                           },
                         ]}
                       />
