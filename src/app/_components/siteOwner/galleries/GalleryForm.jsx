@@ -4,7 +4,10 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useFormTimeout } from "../../../_hooks/useFormTimeout";
+import {
+  FORM_TIMED_OUT_MESSAGE,
+  useFormTimeout,
+} from "../../../_hooks/useFormTimeout";
 import PostStepDialog from "../contentForm/PostStepDialog";
 import GalleryPreview from "./GalleryPreview";
 import GalleryToolbar from "./GalleryToolbar";
@@ -24,12 +27,14 @@ import PublishDateField from "../contentForm/PublishDateField";
 import {
   GALLERY_NAME_TAKEN_MESSAGE,
   isBlank,
+  optional,
   takenGalleryNames,
   validateGallery,
   validateGalleryImage,
   validatePublishAt,
 } from "../../../_lib/validation";
 import { uploadPicked } from "../../../_lib/uploadImages";
+import { withoutFieldErrors } from "../../../_lib/serverErrors";
 import {
   cropIssues,
   cropRules,
@@ -69,9 +74,6 @@ const EMPTY_IMAGE = {
   mobileCrop: null,
 };
 
-const TIMED_OUT_MESSAGE =
-  "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again.";
-
 // Form values for a Gallery loaded by useGallery: nulls become "", so every input is controlled.
 // Each image keeps its id (and uses it as its key), src, size and crops. status and the stored
 // publishAt are read, never sent: Edit shows the publish date only on a draft, and accepts the
@@ -109,11 +111,6 @@ function releaseDraftOnly(image, images) {
 function releaseAll(images, editing) {
   images.forEach((image) => releaseObjectUrl(image.src));
   if (editing?.image) releaseDraftOnly(editing.image, images);
-}
-
-// Optional text: trimmed, or null when blank.
-function optional(value) {
-  return isBlank(value) ? null : value.trim();
 }
 
 // One image in the contract's shape, once it is uploaded. The client-only key is dropped, id is
@@ -286,13 +283,7 @@ export default function GalleryForm({
 
   // Drops the backend's messages whose path matches, once what they described has changed.
   function dropServerErrors(matches) {
-    setServerError((current) => {
-      if (!current?.fields) return current;
-      const fields = Object.fromEntries(
-        Object.entries(current.fields).filter(([path]) => !matches(path)),
-      );
-      return { ...current, fields };
-    });
+    setServerError((current) => withoutFieldErrors(current, matches));
   }
 
   // Adding, moving or deleting an image shifts the indices the server's "images.N.…" messages
@@ -772,7 +763,7 @@ export default function GalleryForm({
   }
 
   if (timedOut) {
-    return <MessageDialog message={TIMED_OUT_MESSAGE} onClose={onClose} />;
+    return <MessageDialog message={FORM_TIMED_OUT_MESSAGE} onClose={onClose} />;
   }
 
   return (

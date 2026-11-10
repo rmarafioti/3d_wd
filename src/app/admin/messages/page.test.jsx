@@ -121,6 +121,36 @@ describe("Admin Messages page", () => {
     expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
   });
 
+  it("shows a failed Withdraw's message in a dialog and keeps the update listed", async () => {
+    mockFetch({
+      [UPDATES]: list([sent("n1")]),
+      [THREADS]: list([]),
+      "DELETE /api/admin/notifications/n1": {
+        status: 404,
+        body: { error: { message: "Update not found." } },
+      },
+    });
+    const user = userEvent.setup();
+    render(<AdminMessagesPage />);
+    await user.click(
+      await screen.findByRole("button", { name: "Actions for Update n1" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Withdraw" }));
+
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Withdraw",
+      }),
+    );
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Update not found.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Actions for Update n1" }),
+    ).toBeInTheDocument();
+  });
+
   it("appends the next page with Load more until nextCursor is null", async () => {
     mockFetch({
       [UPDATES]: list([]),

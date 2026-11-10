@@ -10,7 +10,7 @@ const GOOGLE_SIGN_IN = "https://accounts.google.com/gsi/";
 
 // The Sentry DSN's origin (https://o123.ingest.us.sentry.io), or null while Sentry is off
 // (NEXT_PUBLIC_SENTRY_DSN is set on production only) or the DSN can't be read.
-export function sentryOrigin() {
+function sentryOrigin() {
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
   if (!dsn) return null;
   try {

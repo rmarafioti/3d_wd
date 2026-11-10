@@ -1,5 +1,5 @@
 // Tests for useDeletedActions: the bulk routes by role, and a selection over the contract's cap of
-// 100 sent as several requests whose answers merge.
+// 100 sent as several requests whose answers merge, even when a later one fails.
 
 import { describe, expect, it } from "vitest";
 import { renderHook } from "@testing-library/react";
@@ -39,6 +39,47 @@ describe("useDeletedActions", () => {
     expect(answer.failed).toEqual([
       { type: "update", id: "n149", message: "Update not found." },
     ]);
+  });
+
+  it("keeps the batches already done when a later one fails, listing the rest as failed", async () => {
+    const items = updates(BATCH_SIZE + 1);
+    mockFetch({
+      "POST /api/siteOwner/deleted": [
+        { body: { data: { deleted: items.slice(0, 100), failed: [] } } },
+        {
+          status: 500,
+          body: {
+            error: { message: "Something went wrong, please try again." },
+          },
+        },
+      ],
+    });
+    const { result } = renderHook(() => useDeletedActions("site_owner"));
+
+    const answer = await result.current.moveToDeleted(items);
+
+    expect(answer.deleted).toHaveLength(100);
+    expect(answer.failed).toEqual([
+      {
+        type: "update",
+        id: "n100",
+        message: "Something went wrong, please try again.",
+      },
+    ]);
+  });
+
+  it("throws the ApiError when the first batch fails, since nothing was done", async () => {
+    mockFetch({
+      "POST /api/siteOwner/deleted": {
+        status: 500,
+        body: { error: { message: "Something went wrong, please try again." } },
+      },
+    });
+    const { result } = renderHook(() => useDeletedActions("site_owner"));
+
+    await expect(result.current.moveToDeleted(updates(3))).rejects.toThrow(
+      "Something went wrong, please try again.",
+    );
   });
 
   it("restores through the admin's route, sending only each item's type and id", async () => {

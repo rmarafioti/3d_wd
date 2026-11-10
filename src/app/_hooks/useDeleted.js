@@ -1,6 +1,5 @@
-// useDeleted(role): GET /api/{siteOwner|admin}/deleted, the role's Recently Deleted (posts,
-// galleries and mail for a site owner, mail for the admin), a page at a time. Returns
-// usePagedList's { data, loading, error, refetch } plus hasMore, loadMore, loadingMore, loadMoreError.
+// useDeleted(role): GET /api/{siteOwner|admin}/deleted, the role's Recently Deleted, paged. Returns
+// usePagedList's { data, loading, error, refetch } and its paging fields.
 
 "use client";
 

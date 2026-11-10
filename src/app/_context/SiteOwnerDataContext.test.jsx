@@ -2,13 +2,13 @@
 // keeping the rows meanwhile, and the first page doesn't fetch twice.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { useContext } from "react";
 import {
   SiteOwnerDataContext,
   SiteOwnerDataProvider,
 } from "./SiteOwnerDataContext";
-import { mockFetch } from "../../test/helpers";
+import { deferred, mockFetch } from "../../test/helpers";
 
 let pathname = "/dashboard";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
@@ -37,12 +37,14 @@ function renderProvider() {
 }
 
 describe("SiteOwnerDataProvider", () => {
-  it("fetches the websites again on returning to /dashboard, and only once on the first page", async () => {
+  it("fetches the websites again on returning to /dashboard, keeping the rows meanwhile, and only once on the first page", async () => {
     pathname = "/dashboard/post/p1";
+    // The refetch is held back, so the test can see the rows kept meanwhile.
+    const refetched = deferred();
     const { calls } = mockFetch({
       "GET /api/siteOwner/websites": [
         { body: { data: [WEBSITE] } },
-        { body: { data: [{ ...WEBSITE, websiteName: "Stevie Renamed" }] } },
+        () => refetched.promise,
       ],
     });
     const { rerender } = renderProvider();
@@ -57,7 +59,11 @@ describe("SiteOwnerDataProvider", () => {
       </SiteOwnerDataProvider>,
     );
 
+    await waitFor(() => expect(calls).toHaveLength(2));
+    expect(screen.getByText("Stevie The Dog")).toBeInTheDocument();
+    refetched.resolve({
+      body: { data: [{ ...WEBSITE, websiteName: "Stevie Renamed" }] },
+    });
     expect(await screen.findByText("Stevie Renamed")).toBeInTheDocument();
-    expect(calls).toHaveLength(2);
   });
 });

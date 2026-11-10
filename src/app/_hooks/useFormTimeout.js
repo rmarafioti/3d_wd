@@ -7,6 +7,9 @@ import { useEffect, useRef } from "react";
 import { apiFetch } from "../_lib/apiFetch";
 
 export const FORM_TIMEOUT_MS = 20 * 60 * 60 * 1000;
+// What a form shows once it times out (docs/flows.md → Form timeout), the same in every form.
+export const FORM_TIMED_OUT_MESSAGE =
+  "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again.";
 const CHECK_EVERY_MS = 60 * 1000;
 
 export function useFormTimeout(onTimeout) {

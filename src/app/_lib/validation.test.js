@@ -417,21 +417,19 @@ describe("validateGalleryImage", () => {
       altText: "Alt text is required.",
     });
   });
+});
 
-  describe("validateRequestNote", () => {
-    it("requires a note that isn't blank", () => {
-      expect(validateRequestNote({ requestNote: " \n " })).toEqual({
-        requestNote: "Request note is required.",
-      });
+describe("validateRequestNote", () => {
+  it("requires a note that isn't blank", () => {
+    expect(validateRequestNote({ requestNote: " \n " })).toEqual({
+      requestNote: "Request note is required.",
     });
+  });
 
-    it("allows 1000 characters and refuses 1001", () => {
-      expect(validateRequestNote({ requestNote: "a".repeat(1000) })).toEqual(
-        {},
-      );
-      expect(validateRequestNote({ requestNote: "a".repeat(1001) })).toEqual({
-        requestNote: "Request note must be 1000 characters or fewer.",
-      });
+  it("allows 1000 characters and refuses 1001", () => {
+    expect(validateRequestNote({ requestNote: "a".repeat(1000) })).toEqual({});
+    expect(validateRequestNote({ requestNote: "a".repeat(1001) })).toEqual({
+      requestNote: "Request note must be 1000 characters or fewer.",
     });
   });
 });

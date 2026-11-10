@@ -4,6 +4,6 @@ The biweekly code sweep: `CLAUDE.md` → Code Review → Checklist over the code
 
 1. Open a Claude Code session in this repo (`3d_wd`), on an up-to-date `main`. No backend or database is needed: the tests mock every request.
 2. Type `{{COMMAND}}`.
-3. Decide each finding. Fixes become their own issue or branch; the sweep itself changes nothing.
+3. Decide each finding. The fixes are folded into one fixes issue (`/code-sweep` → After), with anything big enough for its own plan split out; the sweep itself changes nothing.
 4. Paste the tracker row the sweep prints (a `frontend` row) into the Code Sweep Tracker sheet.
 5. Close this issue once the findings are settled.

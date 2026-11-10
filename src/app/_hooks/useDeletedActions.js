@@ -12,20 +12,31 @@ import { DELETED_PATH_BY_ROLE } from "./useDeleted";
 export const BATCH_SIZE = 100;
 
 // items: [{ type, id }]. One request per batch, one after another; the answers merge into
-// { [doneKey]: [{ type, id }], failed: [{ type, id, message }] }. A request that fails outright
-// throws its ApiError, as every mutation does.
+// { [doneKey]: [{ type, id }], failed: [{ type, id, message }] }. If the first request fails
+// outright it throws its ApiError, as every mutation does, since nothing was done. A later one
+// can't throw: the batches before it are done on the backend, so the merged answer comes back with
+// every item not yet sent listed as failed, with that error's message.
 async function sendInBatches(path, items, doneKey) {
   const result = { [doneKey]: [], failed: [] };
   for (let start = 0; start < items.length; start += BATCH_SIZE) {
     const batch = items
       .slice(start, start + BATCH_SIZE)
       .map(({ type, id }) => ({ type, id }));
-    const data = await apiFetch(path, {
-      method: "POST",
-      body: { items: batch },
-    });
-    result[doneKey].push(...data[doneKey]);
-    result.failed.push(...data.failed);
+    try {
+      const data = await apiFetch(path, {
+        method: "POST",
+        body: { items: batch },
+      });
+      result[doneKey].push(...data[doneKey]);
+      result.failed.push(...data.failed);
+    } catch (err) {
+      if (start === 0) throw err;
+      const unsent = items
+        .slice(start)
+        .map(({ type, id }) => ({ type, id, message: err.message }));
+      result.failed.push(...unsent);
+      return result;
+    }
   }
   return result;
 }

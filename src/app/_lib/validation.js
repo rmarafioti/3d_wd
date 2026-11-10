@@ -3,6 +3,8 @@
 
 import { findLinks } from "./postFormatting";
 import { toPublishAt } from "./publishAt";
+import { POST_FIELDS } from "./postFields";
+import { GALLERY_FIELDS, MAX_CAPTION } from "./galleryFields";
 
 // Deliberately loose (something@something.something); the backend has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,6 +23,11 @@ export const GALLERY_NAME_TAKEN_MESSAGE =
 
 export function isBlank(value) {
   return (value ?? "").trim() === "";
+}
+
+// An optional text field as the contract wants it: trimmed, or null when blank.
+export function optional(value) {
+  return isBlank(value) ? null : value.trim();
 }
 
 export function isTooLong(value, max) {
@@ -109,23 +116,24 @@ function linkErrorIn(text) {
   return null;
 }
 
-// Validates text that may hold paragraph formatting (docs/api.md → Paragraph formatting): a post
-// paragraph, an update's body or a thread message. Returns the message, or null. Only the ends are
-// trimmed when sent, so line breaks inside the text, and its markup, count toward the length.
-export function formattedTextError(text, label, max) {
-  if (isBlank(text)) return `${label} is required.`;
-  if (isTooLong(text, max))
-    return `${label} must be ${max} characters or fewer.`;
-  return linkErrorIn(text);
+// A field's message for text over its limit, as the backend words it.
+function tooLongMessage(label, max) {
+  return `${label} must be ${max} characters or fewer.`;
 }
 
 // A required plain text field with a limit (an update's title, a thread's subject). Returns the
 // message, or null.
 function requiredTextError(text, label, max) {
   if (isBlank(text)) return `${label} is required.`;
-  if (isTooLong(text, max))
-    return `${label} must be ${max} characters or fewer.`;
+  if (isTooLong(text, max)) return tooLongMessage(label, max);
   return null;
+}
+
+// Validates text that may hold paragraph formatting (docs/api.md → Paragraph formatting): a post
+// paragraph, an update's body or a thread message. Returns the message, or null. Only the ends are
+// trimmed when sent, so line breaks inside the text, and its markup, count toward the length.
+export function formattedTextError(text, label, max) {
+  return requiredTextError(text, label, max) ?? linkErrorIn(text);
 }
 
 // Keeps only the fields that have a message.
@@ -168,14 +176,14 @@ export function validatePost(
   if (requireWebsite && isBlank(websiteId))
     errors.websiteId = "Website is required.";
   if (isBlank(postName)) errors.postName = "Post name is required.";
-  else if (isTooLong(postName, 100))
-    errors.postName = "Post name must be 100 characters or fewer.";
+  else if (isTooLong(postName, POST_FIELDS.postName.max))
+    errors.postName = tooLongMessage("Post name", POST_FIELDS.postName.max);
   if (!isBlank(postDate) && !isValidDate(postDate))
     errors.postDate = "Enter a valid date (YYYY-MM-DD).";
-  if (isTooLong(header, 150))
-    errors.header = "Header must be 150 characters or fewer.";
-  if (isTooLong(subHeader, 200))
-    errors.subHeader = "Sub header must be 200 characters or fewer.";
+  if (isTooLong(header, POST_FIELDS.header.max))
+    errors.header = tooLongMessage("Header", POST_FIELDS.header.max);
+  if (isTooLong(subHeader, POST_FIELDS.subHeader.max))
+    errors.subHeader = tooLongMessage("Sub header", POST_FIELDS.subHeader.max);
   return errors;
 }
 
@@ -218,14 +226,17 @@ export function validateGallery(
   if (requireWebsite && isBlank(websiteId))
     errors.websiteId = "Website is required.";
   if (isBlank(galleryName)) errors.galleryName = "Gallery name is required.";
-  else if (isTooLong(galleryName, 100))
-    errors.galleryName = "Gallery name must be 100 characters or fewer.";
+  else if (isTooLong(galleryName, GALLERY_FIELDS.galleryName.max))
+    errors.galleryName = tooLongMessage(
+      "Gallery name",
+      GALLERY_FIELDS.galleryName.max,
+    );
   else if (takenNames.includes(galleryName.trim().toLowerCase()))
     errors.galleryName = GALLERY_NAME_TAKEN_MESSAGE;
-  if (isTooLong(title, 150))
-    errors.title = "Title must be 150 characters or fewer.";
-  if (isTooLong(copy, 2000))
-    errors.copy = "Copy must be 2000 characters or fewer.";
+  if (isTooLong(title, GALLERY_FIELDS.title.max))
+    errors.title = tooLongMessage("Title", GALLERY_FIELDS.title.max);
+  if (isTooLong(copy, GALLERY_FIELDS.copy.max))
+    errors.copy = tooLongMessage("Copy", GALLERY_FIELDS.copy.max);
   return errors;
 }
 
@@ -234,8 +245,8 @@ export function validateGallery(
 // they need no check here.
 export function validateGalleryImage(image) {
   const errors = validateImage(image);
-  if (isTooLong(image.caption, 300))
-    errors.caption = "Caption must be 300 characters or fewer.";
+  if (isTooLong(image.caption, MAX_CAPTION))
+    errors.caption = tooLongMessage("Caption", MAX_CAPTION);
   return errors;
 }
 

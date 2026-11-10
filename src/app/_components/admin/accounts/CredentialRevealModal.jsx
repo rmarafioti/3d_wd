@@ -20,17 +20,17 @@ export default function CredentialRevealModal({
   // Confirms on the button that the copy worked.
   const [copied, setCopied] = useState(false);
 
-  function handleClose() {
-    dialogRef.current.close();
-    onClose();
-  }
-
   const rows = [
     ["Website Name", website.websiteName],
     ["Website Url", website.url],
     ["API KEY", credentials.apiKey],
     ["Webhook Secret", credentials.webhookSecret],
   ];
+
+  function handleClose() {
+    dialogRef.current.close();
+    onClose();
+  }
 
   // Copies every value in one go, one "Label: value" per line, ready to paste into a doc.
   async function copyAll() {

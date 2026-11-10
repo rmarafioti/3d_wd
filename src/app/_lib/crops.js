@@ -1,5 +1,5 @@
-// crops: a gallery image's thumbnail and mobile crops, in the stored image's pixels, and the rules
-// that keep a gallery's crops consistent (docs/api.md → Notes, Crops).
+// crops: a gallery image's thumbnail and mobile crops, kept in the pixels of the image the browser
+// shows and scaled to the stored size on Submit, and the rules that keep them consistent.
 
 // The shapes the mobile crop offers, as width / height, 4:5 first (the default).
 export const MOBILE_SHAPES = [
@@ -11,6 +11,15 @@ export const MOBILE_SHAPES = [
 
 // The thumbnail is always square.
 export const THUMBNAIL_ASPECT = 1;
+
+// The gallery's crop messages, on "images" (docs/api.md → Validation rules), and each image's own.
+const THUMBNAILS_MESSAGE =
+  "Add a thumbnail crop to every image, or remove them all.";
+const MOBILES_MESSAGE = "Add a mobile crop to every image, or remove them all.";
+const SHAPES_MESSAGE = "Every mobile crop must be the same shape.";
+const NEEDS_THUMBNAIL = "Needs a thumbnail crop.";
+const NEEDS_MOBILE = "Needs a mobile crop.";
+export const DIFFERENT_SHAPE = "Mobile crop is a different shape.";
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -69,15 +78,6 @@ export function reshapeCrop(crop, aspect, size) {
     height,
   };
 }
-
-// The gallery's crop messages, on "images" (docs/api.md → Validation rules), and each image's own.
-const THUMBNAILS_MESSAGE =
-  "Add a thumbnail crop to every image, or remove them all.";
-const MOBILES_MESSAGE = "Add a mobile crop to every image, or remove them all.";
-const SHAPES_MESSAGE = "Every mobile crop must be the same shape.";
-const NEEDS_THUMBNAIL = "Needs a thumbnail crop.";
-const NEEDS_MOBILE = "Needs a mobile crop.";
-export const DIFFERENT_SHAPE = "Mobile crop is a different shape.";
 
 // Two crops have the same shape when their width / height are within 1%, which allows for
 // whole-pixel rounding (a 4:5 crop scaled to 750 × 938).

@@ -6,7 +6,11 @@
 import { useCallback } from "react";
 import { apiFetch } from "../_lib/apiFetch";
 
-const UPDATES_PATH = "/api/admin/notifications";
+// The admin's updates are the ones it sent; a site owner's, the ones it received.
+export const UPDATES_PATH_BY_ROLE = {
+  admin: "/api/admin/notifications",
+  site_owner: "/api/siteOwner/notifications",
+};
 
 export const THREADS_PATH_BY_ROLE = {
   admin: "/api/admin/threads",
@@ -45,22 +49,26 @@ export function useInboxActions(role) {
   // Site owner only: the admin receives no updates. Safe to send again.
   const markUpdateRead = useCallback(
     (id) =>
-      apiFetch(`/api/siteOwner/notifications/${encodeURIComponent(id)}/read`, {
-        method: "POST",
-      }),
+      apiFetch(
+        `${UPDATES_PATH_BY_ROLE.site_owner}/${encodeURIComponent(id)}/read`,
+        {
+          method: "POST",
+        },
+      ),
     [],
   );
 
   // Admin only. update: { title, body }. Returns the AdminNotification.
   const sendUpdate = useCallback(
-    (update) => apiFetch(UPDATES_PATH, { method: "POST", body: update }),
+    (update) =>
+      apiFetch(UPDATES_PATH_BY_ROLE.admin, { method: "POST", body: update }),
     [],
   );
 
   // Admin only. update: { title, body }, the only fields an update can change.
   const editUpdate = useCallback(
     (id, update) =>
-      apiFetch(`${UPDATES_PATH}/${encodeURIComponent(id)}`, {
+      apiFetch(`${UPDATES_PATH_BY_ROLE.admin}/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: update,
       }),
@@ -70,7 +78,7 @@ export function useInboxActions(role) {
   // Admin only. Removes it from every mailbox; resolves once the API answers 204.
   const withdrawUpdate = useCallback(
     (id) =>
-      apiFetch(`${UPDATES_PATH}/${encodeURIComponent(id)}`, {
+      apiFetch(`${UPDATES_PATH_BY_ROLE.admin}/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
     [],

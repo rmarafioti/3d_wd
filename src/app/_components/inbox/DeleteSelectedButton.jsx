@@ -1,6 +1,5 @@
 // DeleteSelectedButton: a mailbox's "Delete" for the ticked updates and threads, confirmed first
-// when there are two or more. The page shows its errors: a refetch may empty the mailbox and
-// unmount this button.
+// when there are two or more.
 
 "use client";
 
@@ -20,6 +19,8 @@ function toDeletedItem(item) {
   };
 }
 
+// onError(message): the page shows the errors, since a refetch may empty the mailbox and unmount
+// this button.
 export default function DeleteSelectedButton({
   role,
   items,

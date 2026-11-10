@@ -1,6 +1,5 @@
-// useUnreadCount(role): the mail badge's count. The admin's is GET /api/admin/threads/unreadCount
-// (threads), the site owner's GET /api/siteOwner/notifications/unreadCount (updates + threads).
-// Returns { data, loading, error }, data being the count.
+// useUnreadCount(role): the mail badge's count, from GET .../unreadCount (the admin's unread
+// threads, the site owner's unread updates and threads). Returns { data, loading, error }.
 
 "use client";
 

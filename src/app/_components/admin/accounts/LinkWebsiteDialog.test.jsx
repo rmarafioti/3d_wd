@@ -1,5 +1,5 @@
 // Tests for LinkWebsiteDialog, through the real useAccounts: the request, an error keeping the
-// picker, and Close. The title is covered by the admin page tests.
+// picker, and Close. The title is covered by AccountsAside's tests.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
