@@ -170,10 +170,8 @@ describe("AccountList", () => {
     };
     renderList([ACCOUNT, other]);
 
-    const names = screen
-      .getAllByRole("group")
-      .map((details) => details.querySelector("summary").textContent);
-    expect(names[0]).toMatch(/^Acme Bakery/);
+    const [first] = screen.getAllByRole("group");
+    expect(first).toHaveTextContent(/^Acme Bakery/);
   });
 
   it('leaves out an account without websites, showing "No site owner accounts yet." when none has one', () => {

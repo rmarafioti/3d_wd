@@ -1,23 +1,11 @@
-// useMailbox(role): the mailbox, the role's updates (GET .../notifications) and threads
-// (GET .../threads) merged into one list, newest first, each item tagged { type: "update" |
-// "message", date }. Returns { data, loading, error, refetch } plus the paging fields.
+// useMailbox(role): the role's updates and threads in one list, newest first, each tagged { type:
+// "update" | "message", date }. Returns { data, loading, error, refetch } and the paging fields.
 
 "use client";
 
 import { useCallback } from "react";
 import { usePagedList } from "./usePagedList";
-
-// The admin's updates are the ones it sent; a site owner's, the ones it received.
-const PATHS_BY_ROLE = {
-  admin: {
-    updates: "/api/admin/notifications",
-    threads: "/api/admin/threads",
-  },
-  site_owner: {
-    updates: "/api/siteOwner/notifications",
-    threads: "/api/siteOwner/threads",
-  },
-};
+import { THREADS_PATH_BY_ROLE, UPDATES_PATH_BY_ROLE } from "./useInboxActions";
 
 // The date an item sorts by: an update's sending, a thread's latest message.
 function tag(items, type, dateField) {
@@ -40,9 +28,8 @@ export function mailboxItemKey(item) {
 }
 
 export function useMailbox(role) {
-  const paths = PATHS_BY_ROLE[role];
-  const updates = usePagedList(paths.updates);
-  const threads = usePagedList(paths.threads);
+  const updates = usePagedList(UPDATES_PATH_BY_ROLE[role]);
+  const threads = usePagedList(THREADS_PATH_BY_ROLE[role]);
   const lists = [updates, threads];
 
   const updateItems = tag(updates.data, "update", "createdAt");

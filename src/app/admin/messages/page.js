@@ -1,6 +1,5 @@
 // Messages page (admin): the mailbox, the updates the admin sent and every site owner's threads in
-// one list, newest first, each with a checkbox to delete it. A Client Component, so no per-user
-// data is server-rendered.
+// one list, newest first, each with a checkbox to delete it.
 
 "use client";
 
@@ -21,11 +20,9 @@ import FormattedMessage from "../../_components/formatting/FormattedMessage";
 import LoadMoreButton from "../../_components/controls/LoadMoreButton";
 import DeleteSelectedButton from "../../_components/inbox/DeleteSelectedButton";
 import SelectAllCheckbox from "../../_components/controls/SelectAllCheckbox";
+import { MAIL_TONE } from "../../_lib/pillTones";
 
 import styles from "../../_styling/inbox.module.css";
-
-// The pill that says what an item is, as in the site owner's mailbox.
-const PILL_TONE = { update: "plain", message: "purple" };
 
 export default function AdminMessagesPage() {
   const mailbox = useMailbox("admin");
@@ -84,7 +81,7 @@ export default function AdminMessagesPage() {
         {checkbox(update, update.title)}
         <details className={styles.controlRowItem}>
           <summary className={styles.itemRow}>
-            <Pill label="update" tone={PILL_TONE.update} />
+            <Pill label="update" tone={MAIL_TONE.update} />
             <GoTriangleRight aria-hidden="true" className={styles.marker} />
             <span className={styles.itemTitle} title={update.title}>
               {update.title}
@@ -122,7 +119,7 @@ export default function AdminMessagesPage() {
       <div className={styles.controlRow}>
         {checkbox(thread, thread.subject)}
         <div className={`${styles.itemRow} ${styles.controlRowItem}`}>
-          <Pill label="message" tone={PILL_TONE.message} />
+          <Pill label="message" tone={MAIL_TONE.message} />
           <Link
             href={`/admin/messages/${thread.id}`}
             className={`${styles.itemTitle} ${thread.unread ? styles.unread : ""}`}

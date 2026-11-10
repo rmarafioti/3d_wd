@@ -1,6 +1,5 @@
-// Tests for the site owner's Recently Deleted page, through the real hooks and apiFetch: a row per
-// type with its pill and days left, the Website column, ticking and restoring together and back to
-// the dashboard, a partial restore staying, the states and Load more.
+// Tests for the site owner's Recently Deleted page, through the real hooks: each row's pill, days
+// left and website, restoring together and back to the dashboard, a partial restore, the states.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";

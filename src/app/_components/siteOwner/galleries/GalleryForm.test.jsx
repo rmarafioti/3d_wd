@@ -405,6 +405,8 @@ describe("GalleryForm submit", () => {
       await screen.findByText("A gallery with this name already exists."),
     ).toBeInTheDocument();
     expect(button("Submit")).toBeEnabled();
+    expect(screen.getAllByText("Inside").length).toBeGreaterThan(0);
+    expect(button("Actions for image 1")).toBeInTheDocument();
   });
 
   it('names the save step "Saving your gallery…" in the progress dialog', async () => {

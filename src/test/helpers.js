@@ -4,6 +4,13 @@
 import { vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
 
+// A request's body as a test reads it: parsed from JSON, or a FormData body as its entries.
+function readBody(body) {
+  if (body === undefined) return undefined;
+  if (body instanceof FormData) return Object.fromEntries(body.entries());
+  return JSON.parse(body);
+}
+
 // Replaces global fetch with a route table keyed "METHOD /path", e.g.
 //   mockFetch({ "GET /api/admin/accounts": { status: 200, body: { data: [] } } })
 // A route value is one of:
@@ -16,12 +23,6 @@ import { fireEvent } from "@testing-library/react";
 // parsed from JSON, or a FormData body (an upload to Cloudinary) as an object of its entries. An
 // unknown route answers 500 with a message naming it, so a missing route shows up in the failing
 // assertion instead of hiding behind the generic error.
-function readBody(body) {
-  if (body === undefined) return undefined;
-  if (body instanceof FormData) return Object.fromEntries(body.entries());
-  return JSON.parse(body);
-}
-
 export function mockFetch(routes) {
   const calls = [];
   const queues = {};

@@ -4,9 +4,10 @@
 import Link from "next/link";
 
 import Pill from "../../controls/Pill";
-import PostActionsMenu from "./PostActionsMenu";
+import RowActionsMenu from "./RowActionsMenu";
 
 import { liveOnDate } from "../../../_lib/publishAt";
+import { statusTone } from "../../../_lib/pillTones";
 
 import styles from "../../../_styling/postTable.module.css";
 
@@ -45,18 +46,17 @@ export default function PostTable({ posts, onStatusChange, onDelete }) {
               <Link href={`/dashboard/post/${post.id}`}>{post.postName}</Link>
             </td>
             <td data-label="Status">
-              <Pill
-                label={post.status}
-                tone={post.status === "published" ? "green" : "red"}
-              />
+              <Pill label={post.status} tone={statusTone(post.status)} />
             </td>
             <td data-label="Live on">{liveOnDate(post)}</td>
             {/* Positioned, so the menu's list opens from this cell's edges. */}
             <td className={styles.actionsCell}>
-              <PostActionsMenu
-                post={post}
-                onStatusChange={onStatusChange}
-                onDelete={onDelete}
+              <RowActionsMenu
+                path={`/dashboard/post/${post.id}`}
+                name={post.postName}
+                status={post.status}
+                onStatusChange={(status) => onStatusChange(post, status)}
+                onDelete={() => onDelete(post)}
               />
             </td>
           </tr>

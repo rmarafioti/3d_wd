@@ -3,6 +3,7 @@
 
 import SelectAllCheckbox from "../controls/SelectAllCheckbox";
 import Pill from "../controls/Pill";
+import { MAIL_TONE } from "../../_lib/pillTones";
 
 import styles from "../../_styling/postTable.module.css";
 
@@ -12,8 +13,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const PILL_BY_TYPE = {
   post: { label: "post", tone: "plain" },
   gallery: { label: "gallery", tone: "plain" },
-  update: { label: "update", tone: "plain" },
-  thread: { label: "message", tone: "purple" },
+  update: { label: "update", tone: MAIL_TONE.update },
+  thread: { label: "message", tone: MAIL_TONE.message },
 };
 
 // Items of different types may share an id, so a row is keyed by both.

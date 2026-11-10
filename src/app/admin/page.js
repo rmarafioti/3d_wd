@@ -1,5 +1,7 @@
 // Admin dashboard (/admin): a prompt to pick an action from the Navbar's links, each its own page.
 
+"use client";
+
 import styles from "../_styling/dashPages.module.css";
 
 export default function AdminPage() {

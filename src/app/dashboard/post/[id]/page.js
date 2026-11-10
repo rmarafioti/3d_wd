@@ -13,6 +13,7 @@ import {
   deletePostMessage,
   POST_PUBLISH_DATE_NOTE,
 } from "../../../_lib/postFields";
+import { statusTone } from "../../../_lib/pillTones";
 import PostForm, {
   postToFormValues,
 } from "../../../_components/siteOwner/posts/PostForm";
@@ -78,7 +79,7 @@ export default function PostPage() {
   }
 
   // The confirm dialog closes first; Delete Post reads "Deleting…" while the request is in flight.
-  // The dashboard fetches its list on mount, so the deleted post is no longer listed there.
+  // Back on /dashboard the layout fetches the websites again, so the deleted post isn't listed.
   async function deletePost() {
     setConfirmingDelete(false);
     setDeletePending(true);
@@ -99,7 +100,7 @@ export default function PostPage() {
         <div className={styles.statusRow}>
           <Pill
             label={post.status}
-            tone={post.status === "published" ? "green" : "red"}
+            tone={statusTone(post.status)}
             className={styles.statusPill}
           />
           <Toggle

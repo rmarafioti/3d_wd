@@ -1,6 +1,5 @@
-// roles: where each role's pages live. HOME_BY_ROLE routes after login, a wrong role's dashboard
-// and a sent reply; MESSAGES_BY_ROLE is the mail icon's link and a thread's base; DELETED_BY_ROLE
-// is the trash icon's link.
+// roles: where each role's pages live: its dashboard (HOME_BY_ROLE), its mailbox (MESSAGES_BY_ROLE)
+// and its Recently Deleted (DELETED_BY_ROLE).
 
 export const HOME_BY_ROLE = { admin: "/admin", site_owner: "/dashboard" };
 

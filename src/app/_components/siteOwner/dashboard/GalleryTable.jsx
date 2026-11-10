@@ -4,9 +4,10 @@
 import Link from "next/link";
 
 import Pill from "../../controls/Pill";
-import GalleryActionsMenu from "./GalleryActionsMenu";
+import RowActionsMenu from "./RowActionsMenu";
 import { placementTone } from "../../../_lib/abilities";
 import { liveOnDate } from "../../../_lib/publishAt";
+import { statusTone } from "../../../_lib/pillTones";
 
 import styles from "../../../_styling/postTable.module.css";
 
@@ -50,10 +51,7 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
               {gallery.slug}
             </td>
             <td data-label="Status">
-              <Pill
-                label={gallery.status}
-                tone={gallery.status === "published" ? "green" : "red"}
-              />
+              <Pill label={gallery.status} tone={statusTone(gallery.status)} />
             </td>
             <td data-label="Live on">{liveOnDate(gallery)}</td>
             {/* Once its request form was sent, as on the gallery page: requested until the admin
@@ -68,10 +66,12 @@ export default function GalleryTable({ galleries, onStatusChange, onDelete }) {
             </td>
             {/* Positioned, so the menu's list opens from this cell's edges. */}
             <td className={styles.actionsCell}>
-              <GalleryActionsMenu
-                gallery={gallery}
-                onStatusChange={onStatusChange}
-                onDelete={onDelete}
+              <RowActionsMenu
+                path={`/dashboard/gallery/${gallery.id}`}
+                name={gallery.galleryName}
+                status={gallery.status}
+                onStatusChange={(status) => onStatusChange(gallery, status)}
+                onDelete={() => onDelete(gallery)}
               />
             </td>
           </tr>

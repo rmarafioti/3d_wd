@@ -1,5 +1,5 @@
 // AccountList (admin): every website with a site owner, each a disclosure holding its URL, its site
-// owners with a ⋮ to link a website, and its abilities with their items and Live switches.
+// owners with a ⋮ to message them or link a website, and its abilities with items and Live switches.
 
 import { GoTriangleRight } from "react-icons/go";
 import {
@@ -9,6 +9,7 @@ import {
   findAbility,
   placementTone,
 } from "../../../_lib/abilities";
+import { statusTone } from "../../../_lib/pillTones";
 import ActionsMenu from "../../controls/ActionsMenu";
 import Pill from "../../controls/Pill";
 import Toggle from "../../controls/Toggle";
@@ -36,9 +37,7 @@ function RequestNote({ note }) {
 
 // A post's or gallery's "published" / "draft" pill, as on the dashboard's tables.
 function ItemStatus({ status }) {
-  return (
-    <Pill label={status} tone={status === "published" ? "green" : "red"} />
-  );
+  return <Pill label={status} tone={statusTone(status)} />;
 }
 
 function PostItems({ posts }) {

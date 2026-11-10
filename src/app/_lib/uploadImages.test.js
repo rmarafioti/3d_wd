@@ -39,8 +39,7 @@ function picked(...names) {
 
 // The sign endpoint and Cloudinary, which answers each file by its name: answers[name] is a
 // mockFetch route (or a promise of one, to hold it back), or a list answered in order for that
-// file's tries. Returns the upload calls
-// made so far, as a list that grows as more are made.
+// file's tries. Returns the upload calls made so far, as a list that grows as more are made.
 function mockUploads(answers) {
   const tries = {};
   const uploads = [];

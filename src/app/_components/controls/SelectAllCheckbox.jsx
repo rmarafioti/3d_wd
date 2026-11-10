@@ -6,7 +6,6 @@
 import { useEffect, useRef } from "react";
 
 export default function SelectAllCheckbox({
-  label = "Select all",
   checked,
   indeterminate,
   onChange,
@@ -22,7 +21,7 @@ export default function SelectAllCheckbox({
     <input
       ref={inputRef}
       type="checkbox"
-      aria-label={label}
+      aria-label="Select all"
       checked={checked}
       onChange={onChange}
     />

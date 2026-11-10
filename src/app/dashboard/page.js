@@ -35,6 +35,10 @@ export default function DashboardPage() {
   const abilities = useAbilities();
   // The form open on top of the page: "post", "gallery" or null.
   const [creating, setCreating] = useState(null);
+  // What is being deleted, from its row's ⋮ menu, or null: { post } or { gallery }.
+  const [deleting, setDeleting] = useState(null);
+  // A failed status change's or delete's message, held only while its dialog is open.
+  const [actionError, setActionError] = useState(null);
   // The ?create= value last read, so a Navbar link opens its form whenever it is followed, even
   // with the dashboard already open (adjusting state while rendering, not in an effect).
   const createParam = searchParams.get("create");
@@ -45,31 +49,12 @@ export default function DashboardPage() {
       setCreating(createParam);
     }
   }
-  // What is being deleted, from its row's ⋮ menu, or null: { post } or { gallery }.
-  const [deleting, setDeleting] = useState(null);
-  // A failed status change's or delete's message, held only while its dialog is open.
-  const [actionError, setActionError] = useState(null);
 
   // Only websites with the Photo Galleries ability can have galleries, so only they are offered to
   // Create a Gallery.
   const galleryWebsites = websites.data?.filter((website) =>
     findAbility(website, "galleries"),
   );
-  // A request form's heading, message and request: a gallery's names the gallery, which has its own
-  // place on the website; the posts' is the ability's.
-  function requestCopy({ website, ability, gallery }) {
-    if (gallery) {
-      return {
-        ...galleryRequestCopy(website.websiteName, gallery),
-        onSubmit: (requestNote) => galleries.request(gallery.id, requestNote),
-      };
-    }
-    return {
-      ...postsRequestCopy(website),
-      onSubmit: (requestNote) => abilities.request(ability.id, requestNote),
-    };
-  }
-
   // A form shows once what it needs has loaded: the websites for a post, and a website with Photo
   // Galleries for a gallery (a ?create=gallery without one opens nothing).
   const postFormOpen = creating === "post" && Boolean(websites.data);
@@ -94,6 +79,21 @@ export default function DashboardPage() {
   function handleCreated() {
     setCreating(null);
     websites.refetch();
+  }
+
+  // A request form's heading, message and request: a gallery's names the gallery, which has its own
+  // place on the website; the posts' is the ability's.
+  function requestCopy({ website, ability, gallery }) {
+    if (gallery) {
+      return {
+        ...galleryRequestCopy(website.websiteName, gallery),
+        onSubmit: (requestNote) => galleries.request(gallery.id, requestNote),
+      };
+    }
+    return {
+      ...postsRequestCopy(website),
+      onSubmit: (requestNote) => abilities.request(ability.id, requestNote),
+    };
   }
 
   // No confirmation: a status change is undone the same way. The row's pill changes once the list

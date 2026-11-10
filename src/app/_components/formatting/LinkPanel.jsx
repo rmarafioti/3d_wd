@@ -1,5 +1,5 @@
-// LinkPanel (site owner): the panel for adding a link to a paragraph, or editing one from its
-// links list: Link text, Link URL and a Bold toggle. onSave gets { text, url, level }, trimmed.
+// LinkPanel: the panel for adding a link to a paragraph, or editing one from its links list: Link
+// text, Link URL and a Bold toggle. onSave gets { text, url, level }, trimmed.
 
 "use client";
 
@@ -33,7 +33,7 @@ export default function LinkPanel({
   const [text, setText] = useState(initial.text);
   const [url, setUrl] = useState(initial.url);
   const [level, setLevel] = useState(initial.level);
-  // Fields the site owner has left at least once; only their messages are shown.
+  // Fields the user has left at least once; only their messages are shown.
   const [touched, setTouched] = useState({});
 
   const errors = validateParagraphLink({ linkText: text, url });

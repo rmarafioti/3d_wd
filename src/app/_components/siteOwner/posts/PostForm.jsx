@@ -4,7 +4,10 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useFormTimeout } from "../../../_hooks/useFormTimeout";
+import {
+  FORM_TIMED_OUT_MESSAGE,
+  useFormTimeout,
+} from "../../../_hooks/useFormTimeout";
 import PostStepDialog from "../contentForm/PostStepDialog";
 import PostPreview from "./PostPreview";
 import PostToolbar from "./PostToolbar";
@@ -22,12 +25,14 @@ import SubmitProgressDialog from "../contentForm/SubmitProgressDialog";
 import PublishDateField from "../contentForm/PublishDateField";
 import {
   isBlank,
+  optional,
   validateImage,
   validateParagraph,
   validatePost,
   validatePublishAt,
 } from "../../../_lib/validation";
 import { uploadPicked } from "../../../_lib/uploadImages";
+import { withoutFieldErrors } from "../../../_lib/serverErrors";
 import {
   elementNames,
   OPTIONAL_FIELDS,
@@ -60,9 +65,6 @@ const EMPTY_IMAGE = {
   height: null,
   altText: "",
 };
-
-const TIMED_OUT_MESSAGE =
-  "This form was open for 20 hours, so it timed out. Nothing was saved. Please open it again.";
 
 // Form values for a Post loaded by usePost: nulls become "", so every input is controlled. Body
 // elements are flattened; paragraphs have no id, so they get a fresh key. Existing images keep
@@ -116,11 +118,6 @@ function releaseDraftOnly(element, body) {
 function releaseAll(body, editing) {
   body.forEach(releaseImage);
   if (editing?.element) releaseDraftOnly(editing.element, body);
-}
-
-// Optional text: trimmed, or null when blank.
-function optional(value) {
-  return isBlank(value) ? null : value.trim();
 }
 
 // One body element in the contract's shape. A paragraph is trimmed only at its ends, so the
@@ -287,13 +284,7 @@ export default function PostForm({
 
   // Drops the backend's messages whose path matches, once what they described has changed.
   function dropServerErrors(matches) {
-    setServerError((current) => {
-      if (!current?.fields) return current;
-      const fields = Object.fromEntries(
-        Object.entries(current.fields).filter(([path]) => !matches(path)),
-      );
-      return { ...current, fields };
-    });
+    setServerError((current) => withoutFieldErrors(current, matches));
   }
 
   // Adding, moving or deleting a body element shifts the indices the server's "body.N.…"
@@ -706,7 +697,7 @@ export default function PostForm({
   }
 
   if (timedOut) {
-    return <MessageDialog message={TIMED_OUT_MESSAGE} onClose={onClose} />;
+    return <MessageDialog message={FORM_TIMED_OUT_MESSAGE} onClose={onClose} />;
   }
 
   return (

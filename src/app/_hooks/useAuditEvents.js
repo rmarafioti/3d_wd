@@ -1,6 +1,5 @@
-// useAuditEvents(query) (admin): GET /api/admin/auditEvents for one UTC month or one local day, a
-// page at a time. Returns { data, loading, error } plus hasMore, loadMore, loadingMore, loadMoreError,
-// and pageNumber of pages for the "Page N of M" counter.
+// useAuditEvents(query) (admin): GET /api/admin/auditEvents for a UTC month or local day, paged.
+// Returns { data, loading, error }, the paging fields, and pageNumber and pages ("Page N of M").
 
 "use client";
 

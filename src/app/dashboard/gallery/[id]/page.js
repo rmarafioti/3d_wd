@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useGallery } from "../../../_hooks/useGallery";
 import { useGalleries } from "../../../_hooks/useGalleries";
-import { useWebsites } from "../../../_hooks/useWebsites";
+import { useSiteOwnerData } from "../../../_hooks/useSiteOwnerData";
 import GalleryForm, {
   galleryToFormValues,
 } from "../../../_components/siteOwner/galleries/GalleryForm";
@@ -25,14 +25,14 @@ import {
   GALLERY_PUBLISH_DATE_NOTE,
   deleteGalleryMessage,
 } from "../../../_lib/galleryFields";
+import { statusTone } from "../../../_lib/pillTones";
 
 import styles from "../../../_styling/postPage.module.css";
 
-// Edit Gallery: the form, given the site owner's websites so a name another gallery on this
-// website has is refused before submit. They are fetched only while the form is open; until they
-// arrive, the backend's 409 still catches a taken name.
+// Edit Gallery: the form, given the websites the dashboard layout fetched, so a name another
+// gallery on this website has is refused before submit; the backend's 409 still catches the rest.
 function EditGalleryForm({ gallery, onSubmit, onClose }) {
-  const websites = useWebsites();
+  const websites = useSiteOwnerData();
   return (
     <GalleryForm
       mode="edit"
@@ -126,7 +126,7 @@ export default function GalleryPage() {
   }
 
   // The confirm dialog closes first; Delete Gallery reads "Deleting…" while the request is in
-  // flight. The dashboard fetches its list on mount, so the deleted gallery is no longer listed.
+  // flight. Back on /dashboard the layout fetches the websites again, so it is no longer listed.
   async function deleteGallery() {
     setConfirmingDelete(false);
     setDeletePending(true);
@@ -147,7 +147,7 @@ export default function GalleryPage() {
         <div className={styles.statusRow}>
           <Pill
             label={gallery.status}
-            tone={gallery.status === "published" ? "green" : "red"}
+            tone={statusTone(gallery.status)}
             className={styles.statusPill}
           />
           <Toggle

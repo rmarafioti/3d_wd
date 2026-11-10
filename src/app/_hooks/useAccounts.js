@@ -33,7 +33,7 @@ export function useAccounts() {
   const linkWebsite = useCallback(
     async (accountId, payload) => {
       const result = await apiFetch(
-        `/api/admin/accounts/${accountId}/websites`,
+        `/api/admin/accounts/${encodeURIComponent(accountId)}/websites`,
         { method: "POST", body: payload },
       );
       refetch();

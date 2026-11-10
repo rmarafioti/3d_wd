@@ -1,5 +1,5 @@
-// ActionsMenu: the shared ⋮ menu of the dashboard's tables and the review toolbars, a disclosure
-// of links and buttons (not an ARIA menu), its list opening from the nearest positioned ancestor.
+// ActionsMenu: the shared ⋮ menu, a disclosure of links and buttons (not an ARIA menu), its list
+// opening from the nearest positioned ancestor.
 
 "use client";
 
@@ -50,12 +50,12 @@ export default function ActionsMenu({
     };
   }, [open]);
 
+  const Triangle = open ? GoTriangleDown : GoTriangleRight;
+
   function handleItemClick(item) {
     if (!item.keepOpen) setOpen(false);
     item.onClick?.();
   }
-
-  const Triangle = open ? GoTriangleDown : GoTriangleRight;
 
   return (
     <div

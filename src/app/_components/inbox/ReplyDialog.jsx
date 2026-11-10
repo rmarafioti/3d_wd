@@ -1,5 +1,5 @@
-// ReplyDialog: the Reply dialog on a thread, a Message with its preview and Send reply. Opens when
-// mounted; the parent unmounts it once the reply is sent or in onClose.
+// ReplyDialog: the Reply dialog on a thread, a Message and Send reply. Opens when mounted; the
+// parent unmounts it once the reply is sent or in onClose.
 
 "use client";
 

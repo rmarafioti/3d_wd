@@ -1,6 +1,5 @@
 // Messages page (site owner): the mailbox, updates and threads with the admin in one list, newest
-// first, each with a checkbox to delete it, and "Message Admin". A Client Component, so no per-user data
-// is server-rendered.
+// first, each with a checkbox to delete it, and "Message Admin".
 
 "use client";
 
@@ -20,11 +19,9 @@ import SelectAllCheckbox from "../../_components/controls/SelectAllCheckbox";
 import FormattedMessage from "../../_components/formatting/FormattedMessage";
 import StartThreadDialog from "../../_components/inbox/StartThreadDialog";
 import LoadMoreButton from "../../_components/controls/LoadMoreButton";
+import { MAIL_TONE } from "../../_lib/pillTones";
 
 import styles from "../../_styling/inbox.module.css";
-
-// The pill that says what an item is: an update can't be replied to, a message can.
-const PILL_TONE = { update: "plain", message: "purple" };
 
 export default function SiteOwnerMessagesPage() {
   const router = useRouter();
@@ -74,7 +71,7 @@ export default function SiteOwnerMessagesPage() {
     const name = item.type === "update" ? item.title : item.subject;
     return (
       <>
-        <Pill label={item.type} tone={PILL_TONE[item.type]} />
+        <Pill label={item.type} tone={MAIL_TONE[item.type]} />
         {/* An update opens in place, so it has the open / closed marker; a thread is a link. */}
         {item.type === "update" && (
           <GoTriangleRight aria-hidden="true" className={styles.marker} />

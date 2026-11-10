@@ -1,6 +1,5 @@
 // RecentlyDeleted: a role's Recently Deleted page, the items deleted in the last 30 days, ticked
-// and restored together, then back to the dashboard. The site owner's lists posts, galleries and
-// mail; the admin's, mail only.
+// and restored together, then back to the dashboard.
 
 "use client";
 
@@ -17,6 +16,7 @@ import LoadMoreButton from "../controls/LoadMoreButton";
 
 import styles from "../../_styling/dashPages.module.css";
 
+// The site owner's lists posts, galleries and mail; the admin's, mail only.
 const NOTE_BY_ROLE = {
   admin: "Deleted messages can be restored for 30 days.",
   site_owner:

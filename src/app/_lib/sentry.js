@@ -1,6 +1,5 @@
-// sentry: the one place the app talks to Sentry, production only (off while NEXT_PUBLIC_SENTRY_DSN
-// is empty). An event carries the error and the page's path (and a failed upload's counts), never
-// what a user typed or sent.
+// sentry: the one place the app talks to Sentry, production only (off while its DSN is empty). An
+// event carries the error and the page's path, never what a user typed or sent.
 
 import * as Sentry from "@sentry/browser";
 import { ApiError } from "./apiFetch";

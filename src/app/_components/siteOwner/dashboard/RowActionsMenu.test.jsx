@@ -1,20 +1,20 @@
-// Tests for PostActionsMenu: its items, what each hands back, and how the menu opens and closes.
+// Tests for RowActionsMenu: its items, what each hands back, and how the menu opens and closes.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import PostActionsMenu from "./PostActionsMenu";
+import RowActionsMenu from "./RowActionsMenu";
 
-const POST = { id: "p1", postName: "Walk day", status: "published" };
-
-function renderMenu(post = POST) {
+function renderMenu(status = "published") {
   const onStatusChange = vi.fn();
   const onDelete = vi.fn();
   const user = userEvent.setup();
   render(
     <>
-      <PostActionsMenu
-        post={post}
+      <RowActionsMenu
+        path="/dashboard/post/p1"
+        name="Walk day"
+        status={status}
         onStatusChange={onStatusChange}
         onDelete={onDelete}
       />
@@ -25,7 +25,7 @@ function renderMenu(post = POST) {
   return { user, onStatusChange, onDelete, button };
 }
 
-describe("PostActionsMenu", () => {
+describe("RowActionsMenu", () => {
   it("is closed by default", () => {
     const { button } = renderMenu();
 
@@ -52,33 +52,32 @@ describe("PostActionsMenu", () => {
     ).toEqual(["View", "Edit", "Status to draft", "Delete"]);
   });
 
-  it("moves a published post to draft from Status, and closes", async () => {
+  it("asks for draft from Status on a published row, and closes", async () => {
     const { user, onStatusChange, button } = renderMenu();
     await user.click(button);
 
     await user.click(screen.getByRole("button", { name: "Status to draft" }));
 
-    expect(onStatusChange).toHaveBeenCalledWith(POST, "draft");
+    expect(onStatusChange).toHaveBeenCalledWith("draft");
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
 
   it("offers Status to publish on a draft", async () => {
-    const draft = { ...POST, status: "draft" };
-    const { user, onStatusChange, button } = renderMenu(draft);
+    const { user, onStatusChange, button } = renderMenu("draft");
     await user.click(button);
 
     await user.click(screen.getByRole("button", { name: "Status to publish" }));
 
-    expect(onStatusChange).toHaveBeenCalledWith(draft, "published");
+    expect(onStatusChange).toHaveBeenCalledWith("published");
   });
 
-  it("hands the post to onDelete from Delete, and closes", async () => {
+  it("calls onDelete from Delete, and closes", async () => {
     const { user, onDelete, button } = renderMenu();
     await user.click(button);
 
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
-    expect(onDelete).toHaveBeenCalledWith(POST);
+    expect(onDelete).toHaveBeenCalled();
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
 

@@ -1,10 +1,11 @@
 // Tests for the single gallery page's own wiring: its fields, the 404 view, the Published switch,
-// Delete Gallery, ?edit=1 opening Edit, and the placement with its edit.
+// Delete Gallery and their failures, ?edit=1 opening Edit with the names taken, and the placement.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GalleryPage from "./page";
+import { SiteOwnerDataProvider } from "../../../_context/SiteOwnerDataContext";
 import { mockFetch, pressEscape } from "../../../../test/helpers";
 import { toPublishAt } from "../../../_lib/publishAt";
 
@@ -15,6 +16,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => router,
   useParams: () => ({ id: "g1" }),
   useSearchParams: () => new URLSearchParams(search),
+  usePathname: () => "/dashboard/gallery/g1",
 }));
 
 const GALLERY = {
@@ -53,14 +55,31 @@ const REQUESTED = {
   requestedAt: "2026-11-01T00:00:00.000Z",
 };
 
+// Stevie's website, holding this gallery and one other.
+const WEBSITE = {
+  id: "w1",
+  websiteName: "Stevie The Dog",
+  url: "https://www.steviethedog.com",
+  active: true,
+  abilities: [],
+  posts: [],
+  galleries: [GALLERY, { ...GALLERY, id: "g2", galleryName: "The Yard" }],
+};
+
 async function setup(routes, query = "", gallery = GALLERY) {
   search = query;
   const { calls } = mockFetch({
     "GET /api/siteOwner/galleries/g1": { body: { data: gallery } },
+    // The dashboard layout's websites, which Edit Gallery reads for the names already taken.
+    "GET /api/siteOwner/websites": { body: { data: [WEBSITE] } },
     ...routes,
   });
   const user = userEvent.setup();
-  render(<GalleryPage />);
+  render(
+    <SiteOwnerDataProvider>
+      <GalleryPage />
+    </SiteOwnerDataProvider>,
+  );
   await screen.findByRole("heading", { name: "Gallery Name: Our Interior" });
   return { user, calls };
 }
@@ -168,40 +187,83 @@ describe("Gallery page", () => {
     expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
   });
 
-  it("opens the Edit form from ?edit=1, fetching the websites for the names already taken, then drops ?edit=1", async () => {
-    const { calls } = await setup(
-      {
-        "GET /api/siteOwner/websites": {
-          body: { data: [{ id: "w1", posts: [], galleries: [] }] },
-        },
+  it("shows a failed status change in a dialog and leaves the switch as it was", async () => {
+    const { user } = await setup({
+      "PATCH /api/siteOwner/galleries/g1/status": {
+        status: 500,
+        body: { error: { message: "Something went wrong, please try again." } },
       },
-      "?edit=1",
+    });
+    await user.click(screen.getByRole("switch", { name: "Published" }));
+
+    await screen.findByText("Something went wrong, please try again.");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.getByRole("switch", { name: "Published" })).toHaveAttribute(
+      "aria-checked",
+      "true",
     );
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("shows a failed delete in a dialog and stays on the gallery", async () => {
+    const { user } = await setup({
+      "DELETE /api/siteOwner/galleries/g1": {
+        status: 404,
+        body: { error: { message: "Gallery not found." } },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Delete Gallery" }));
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Delete Gallery",
+      }),
+    );
+
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Gallery not found.",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Gallery Name: Our Interior" }),
+    ).toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("opens the Edit form from ?edit=1, then drops ?edit=1", async () => {
+    await setup({}, "?edit=1");
 
     expect(
       await screen.findByRole("dialog", { name: "Edit Gallery" }),
     ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(
-        calls.some((call) => call.path === "/api/siteOwner/websites"),
-      ).toBe(true),
-    );
     expect(router.replace).toHaveBeenCalledWith("/dashboard/gallery/g1");
   });
 
-  it("fetches no websites while the Edit form is closed", async () => {
-    const { calls } = await setup();
-
-    expect(calls.some((call) => call.path === "/api/siteOwner/websites")).toBe(
-      false,
+  it("refuses a name another gallery on the website has, from the dashboard's websites", async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole("button", { name: "Edit Gallery" }));
+    await user.click(
+      screen.getByRole("button", { name: "Actions for gallery name" }),
     );
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const nameDialog = screen.getByRole("dialog", {
+      name: "Edit gallery name",
+    });
+
+    await user.clear(within(nameDialog).getByLabelText("Gallery Name"));
+    await user.type(
+      within(nameDialog).getByLabelText("Gallery Name"),
+      "the yard",
+    );
+
+    expect(
+      await within(nameDialog).findByText(
+        "A gallery with this name already exists.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("closes the form and shows the edit after Edit Gallery succeeds, with no success dialog", async () => {
     const { user } = await setup({
-      "GET /api/siteOwner/websites": {
-        body: { data: [{ id: "w1", posts: [], galleries: [GALLERY] }] },
-      },
       "PATCH /api/siteOwner/galleries/g1": {
         body: { data: { ...GALLERY, galleryName: "Inside" } },
       },

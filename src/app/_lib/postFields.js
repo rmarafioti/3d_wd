@@ -5,12 +5,7 @@
 export const POST_PUBLISH_DATE_NOTE =
   "Your post is listed by the day it was created, so you may want to set its Post Date to the publish day.";
 
-// Delete a Post's confirmation, the same on the post page and the dashboard's ⋮ menu.
-export function deletePostMessage(postName) {
-  return `Delete ${postName}? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.`;
-}
-
-// The limits match docs/api.md → Validation rules (checked in validation.js's validatePost).
+// The limits match docs/api.md → Validation rules, written only here: validation.js reads them.
 export const POST_FIELDS = {
   postName: {
     label: "Post Name",
@@ -44,6 +39,11 @@ export const POST_FIELDS = {
 
 // The optional fields, in the order they show on the post.
 export const OPTIONAL_FIELDS = ["postDate", "header", "subHeader"];
+
+// Delete a Post's confirmation, the same on the post page and the dashboard's ⋮ menu.
+export function deletePostMessage(postName) {
+  return `Delete ${postName}? It will be removed from your dashboard and your website. You can restore it from Recently Deleted for 30 days.`;
+}
 
 // Each body element's name for screen readers, counted within its type ("paragraph 2",
 // "image 1"), so its buttons and menu can be told apart.

@@ -1,7 +1,7 @@
 # Reminders: opens an issue for each routine job on a calendar (CLAUDE.md → Reminders), so GitHub
-# emails Rich and the issue is the to-do. Times are UTC. Copied from the backend's reminders.yml
-# (backend issue #51), which also opens the restore drill and Documentation Sync reminders; those
-# two run only in the backend.
+# emails Rich and the issue is the to-do. Times are UTC. Copied from the backend's reminders.yml,
+# which also opens the restore drill and Documentation Sync reminders; those two run only in the
+# backend.
 #   - dependency audit: the 1st of every month, opened only when the full npm audit (dev
 #     dependencies included) finds a moderate, high or critical advisory
 #   - code sweep: every other Monday (even ISO weeks, the same Mondays as the backend's; GitHub's

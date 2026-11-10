@@ -90,7 +90,7 @@ export default function ParagraphField({
 }) {
   const id = useId();
   const textareaRef = useRef(null);
-  // Until the site owner first clicks into the paragraph, the buttons act at the end of its text.
+  // Until the user first clicks into the paragraph, the buttons act at the end of its text.
   const hasFocused = useRef(false);
   // The selection to restore once the text a button changed has rendered, and a count that
   // each button change bumps so the restore runs even when the text itself didn't change.

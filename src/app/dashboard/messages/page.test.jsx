@@ -1,6 +1,5 @@
-// Tests for the site owner's Messages page, through the real hooks and apiFetch: the merged list
-// with its pills, opening an unread update marking it read, ticking and deleting items,
-// Message Admin, and the error and empty states.
+// Tests for the site owner's Messages page, through the real hooks: the merged list and its pills,
+// an opened update marked read, deleting, Message Admin, and the error and empty states.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
