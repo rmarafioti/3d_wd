@@ -1,15 +1,14 @@
-# Reminders: opens an issue for each routine job on a calendar (CLAUDE.md → Reminders), so GitHub
-# emails Rich and the issue is the to-do. Times are UTC. Copied from the backend's reminders.yml,
-# which also opens the restore drill and Documentation Sync reminders; those two run only in the
-# backend.
+# Reminders: opens an issue for each routine job (CLAUDE.md → Reminders), so GitHub emails Rich and
+# the issue is the to-do. Times are UTC. Copied from the backend's reminders.yml, which also opens
+# the restore drill and Documentation Sync reminders; those two run only in the backend.
 #   - dependency audit: the 1st of every month, opened only when the full npm audit (dev
 #     dependencies included) finds a moderate, high or critical advisory
-#   - code sweep: every other Monday (even ISO weeks, the same Mondays as the backend's; GitHub's
-#     cron has no "every 2 weeks", so the job runs weekly and skips odd weeks; after a year with a
-#     week 53, the gap is 3 weeks once)
+#   - code sweep: checked every Monday, opened by the merges to this repo's main since the last
+#     sweep reminder closed (due.sh, docs/process.md → Reminders), and in full the first Monday of
+#     January, April, July and October
 # A reminder isn't opened while the previous one of its kind is still open. Each job can be run by
-# hand from the Actions tab (workflow_dispatch), which skips the even-week check. Uses only this
-# workflow's GITHUB_TOKEN; the issue bodies are the templates in .github/reminders/.
+# hand from the Actions tab (workflow_dispatch), which opens the code sweep whatever the count. Uses
+# only this workflow's GITHUB_TOKEN; the issue bodies are the templates in .github/reminders/.
 name: Reminders
 
 on:
@@ -21,11 +20,12 @@ on:
       job:
         description: Which reminder to run
         type: choice
-        options: [dependency-audit, biweekly]
+        options: [dependency-audit, activity]
 
 permissions:
   contents: read
   issues: write
+  pull-requests: read
 
 env:
   GH_TOKEN: ${{ github.token }}
@@ -69,28 +69,33 @@ jobs:
           } > body.md
           .github/reminders/open.sh audit "Dependency audit, $(date -u +%Y-%m)" body.md
 
-  biweekly:
-    if: github.event.schedule == '0 13 * * 1' || inputs.job == 'biweekly'
+  activity:
+    if: github.event.schedule == '0 13 * * 1' || inputs.job == 'activity'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Open the code sweep reminder (even ISO weeks)
+      # The sweep opens only when due.sh finds merges to check (docs/process.md → Reminders). A run
+      # by hand opens it whatever the count, which is still logged.
+      - name: Open the code sweep reminder when due, or the quarterly full sweep
         run: |
-          if [ "${{ github.event_name }}" = schedule ] && [ $(( 10#$(date -u +%V) % 2 )) -ne 0 ]; then
-            echo "Odd ISO week: skipped."
-            exit 0
-          fi
-          today=$(date -u +%Y-%m-%d)
-
-          # The first sweep in January, April, July and October is the quarterly full sweep. Exactly
-          # one even-week Monday falls on days 1 to 14 of a month.
+          # The quarter's full sweep opens on the first Monday of January, April, July or October,
+          # whatever was merged. While a sweep reminder is still open, open.sh skips it and the next
+          # Monday of that month tries again, since no issue with its title exists yet.
           month=$(date -u +%-m)
-          day=$(date -u +%-d)
-          if [ $(( month % 3 )) -eq 1 ] && [ "$day" -le 14 ]; then
+          full_title="Full code sweep, $(date -u +%Y)-Q$(( (month + 2) / 3 ))"
+          full_count=$(gh issue list --label code-sweep --state all --limit 100 --json title \
+            --jq "map(select(.title == \"$full_title\")) | length")
+          if [ $(( month % 3 )) -eq 1 ] && [ "$full_count" -eq 0 ]; then
+            title=$full_title
             command='/code-sweep full'
           else
+            decision=$(.github/reminders/due.sh code-sweep "$GH_REPO")
+            if [ "$decision" = skip ] && [ "${{ github.event_name }}" = schedule ]; then
+              exit 0
+            fi
+            title="Code sweep, $(date -u +%Y-%m-%d)"
             command='/code-sweep <the end commit of the last frontend row in the Code Sweep Tracker>'
           fi
           sed "s|{{COMMAND}}|$command|" .github/reminders/code-sweep.md > body.md
-          .github/reminders/open.sh code-sweep "Code sweep, $today" body.md
+          .github/reminders/open.sh code-sweep "$title" body.md

@@ -254,8 +254,8 @@ These rules guide writing code as well as reviewing it. The `/code-sweep` skill 
 The review's Scope, its Output format and the concrete check behind each Checklist item are the `/code-sweep` skill (`.claude/skills/code-sweep/SKILL.md`), their only copy, so every review runs the same way:
 
 - **`/code-sweep diff`** is the self-review at the end of every piece of work (Workflow Checklist). Claude can't type a skill's command, so it reads the skill file and follows its `diff` mode.
-- **`/code-sweep <commit>`** every 2 weeks, from the code sweep reminder (Reminders): the code changed since the last sweep, plus three checks over the whole repo (items 6, 7 and 9), which catch drift between files that a diff can't show.
-- **`/code-sweep full`** once a quarter (the first sweep in January, April, July and October), and for the first sweep ever.
+- **`/code-sweep <commit>`** from the code sweep reminder, opened after merges (Reminders): the code changed since the last sweep, plus three checks over the whole repo (items 6, 7 and 9), which catch drift between files that a diff can't show.
+- **`/code-sweep full`** once a quarter (the full sweep reminder, the first Monday of January, April, July and October), and for the first sweep ever.
 
 Each sweep ends with a row for Rich's Code Sweep Tracker sheet, kept outside the repo: repo (`frontend`), date, commit range, and the issues found. Its end commit is where the next sweep starts. Every few sweeps, an item that keeps producing findings is a sign this section needs tuning, and a change to it is proposed through a PR, so sweeps find fewer issues over time.
 
@@ -270,12 +270,12 @@ The backend's docs are the source of truth, and the sync runs from the backend o
 
 ## Reminders
 
-This repo's reminders (`.github/workflows/reminders.yml`); how reminders work is in `docs/process.md` → Reminders.
+This repo's reminders (`.github/workflows/reminders.yml`). How a reminder works, and the activity rule that opens the code sweep, is `docs/process.md` → Reminders.
 
-| Reminder         | When                                                                   | What to do                                                                                                                                              |
-| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dependency audit | the 1st of every month, if anything found                              | the full `npm audit` (dev included) found a moderate or worse advisory: fix on a branch, or accept it with the reason in Current progress               |
-| Code sweep       | every other Monday (even ISO weeks, the same Mondays as the backend's) | `/code-sweep <the end commit of the last frontend row in the tracker>`, or `full` once a quarter, then the tracker row (Code Review → Running a review) |
+| Reminder         | When                                                                                           | What to do                                                                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dependency audit | the 1st of every month, if anything found                                                      | the full `npm audit` (dev included) found a moderate or worse advisory: fix on a branch, or accept it with the reason in Current progress               |
+| Code sweep       | a Monday, after merges in this repo (not `docs/` branches); full the first Monday of a quarter | `/code-sweep <the end commit of the last frontend row in the tracker>`, or `full` once a quarter, then the tracker row (Code Review → Running a review) |
 
 The restore drill and the Documentation Sync reminders are the backend's only.
 
@@ -299,7 +299,7 @@ root
 │   ├── skills/code-sweep/        */code-sweep: the Code Review procedure, Scope and Output, run only when Rich types it
 │   └── settings.json             *registers the guard hook; the deny and ask rules (`docs/process.md` → Version Control)
 ├── .github/
-│   ├── reminders/                *open.sh (one reminder issue, never a duplicate) and the issue body templates
+│   ├── reminders/                *open.sh (one reminder issue, never a duplicate), due.sh (whether a sweep is due, from the merges) and the issue body templates
 │   └── workflows/                *ci.yml (lint, format:check, audit, tests, build) and reminders.yml (Reminders)
 ├── src/
 │   ├── proxy.js                  *Content Security Policy by page type; redirects signed-in users away from / and /sign-in
@@ -343,7 +343,7 @@ root
 
 \*underscore all folders that are excluded from routing. Every tested file has its `*.test.js(x)` next to it (see Unit Tests).
 
-## Current progress (as of 2026-11-10)
+## Current progress (as of 2026-11-11)
 
 - **Now:**
   - **Live since 2026-10-28:** the frontend at `https://3dwebdev.com` (Vercel Pro) and the API at `https://api.3dwebdev.com` (Render). Stevie The Dog is the first client website. Features 1 to 17 and issue #71 (placement apart from status) are live, the latest release `release-2026-11-09`.
@@ -355,6 +355,7 @@ root
 - **Next:**
   1. Stevie's galleries: Rich wires the gallery component into the Stevie The Dog site, which renders a gallery from `GET /api/public/galleries/:slug` (in its own repo, with its own handoff), then sets Photo Galleries live and its gallery live.
   2. Onboarding the two client websites waiting for launch.
+  3. The code sweep reminder now opens by activity: after the merge, Rich runs Reminders → `activity` by hand once from the Actions tab and checks the log shows this repo's merge count (a `docs/` merge as "not counted"), then closes the reminder it opens.
 - **Pending notes:**
   - Two client websites are waiting to onboard; Estudio Castelo and Good Boys Dog Grooming are onboarded, and Stevie The Dog stays the pilot.
   - Staging is kept, following `main`, with the `production` branch beside it. Its cost ($13.30/month for Render staging) is reassessed later; if it is ever deleted, it is added back to `render.yaml` before the first breaking change (backend `docs/scaling.md` §8).
@@ -370,11 +371,11 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-11** `chore/adaptive-reminders` (issue #96; backend issue #110, the lead): the code sweep reminder opens by activity (`docs/process.md` → Reminders): each Monday `.github/reminders/due.sh`, copied from the backend, counts this repo's PRs merged since the last sweep reminder closed, leaving out `docs/` branches (none skips, 5 opens now, fewer opens after 2 weeks), and the quarterly full sweep opens as `Full code sweep, YYYY-QN`; `docs/process.md` copies the backend's. Workflow and docs only.
 - **2026-11-10** `chore/code-sweep-fixes` (issue #93, frontend only): the fixes from the 2026-11-10 code sweep: a bulk delete or restore over 100 items keeps the batches done when a later one fails; field limits are written once, in `postFields.js` / `galleryFields.js`; Edit Gallery reads the dashboard layout's websites; every `/admin` and `/dashboard` page is a client component; one `RowActionsMenu` for post and gallery rows, `_lib/pillTones.js`, shared form helpers, missing failure tests, and comments and docs made true. Also the 2026-11-10 Documentation Sync's doc fixes (backend issue #105), with `docs/api.md` copied from the backend's contract.
 - **2026-11-09** `chore/organize-components` (no issue, frontend only): `_components/` moves from one flat folder of 61 components into folders by use, shared ones by area and role-only ones under `admin/` and `siteOwner/` (Patterns → Component folders), with every import and the `apiFetch` lint allowlist updated; no behaviour change.
 - **2026-11-09** `feat/delete-mail` (issue #89; backend issue #100, the lead): each mailbox row gets a checkbox, with Select all, Delete (two or more confirmed; the admin's sent update leaves their mailbox only), and one Recently Deleted per role (`/dashboard/deleted`, new `/admin/deleted`) lists posts, galleries and mail, ticked and restored together, then back to the dashboard, through the backend's bulk routes; a trash icon beside the envelope replaces the "Recently Deleted" link, and a deleted gallery's confirmation says it can be restored. The post and gallery toolbars show each image's thumbnail in place of the image icon. `docs/api.md` copies the backend's contract. Also the 2026-11-06 Documentation Sync's doc fixes.
 - **2026-11-06** `feat/notification-inbox` (issue #87; backend issue #98, the lead): the Navbar's mail icon with a green unread dot for both roles; the admin's Send a Notification page (title and formatted body) and the admin's mailbox, its sent updates with "Read by N of M", Edit and Withdraw beside the threads, and the Accounts aside's ⋮ → Message; the site owner's mailbox, updates and threads in one list with an "update" / "message" pill, and Message Admin; each thread on its own page with replies. `usePagedList` now holds the paging. `docs/api.md` copies the backend's contract.
-- **2026-11-06** `feat/scheduled-publish` (issue #85; backend issue #96, the lead): a draft post or gallery gets a publish date (a day, published at its local midnight), set in the forms under the Status switch and on its own page with Set publish date / Clear; the dashboard tables gain a Live on column (`publishedAt ?? publishAt`) and turn on their side at phone width, with an Actions tap menu; Audit Events shows a scheduled publish as "Scheduled". Also: a sent posts placement is never asked for again, restoring a post goes back to `/dashboard`, the post page fits a phone, and "Your Websites" is gone. `docs/api.md` copies the backend's contract.
 
 ## Features
 
