@@ -5,5 +5,5 @@ A code sweep, opened after merges or as the quarter's full sweep (`docs/process.
 1. Open a Claude Code session in this repo (`3d_wd`), on an up-to-date `main`. No backend or database is needed: the tests mock every request.
 2. Type `{{COMMAND}}`.
 3. Decide each finding. The fixes are folded into one fixes issue (`/code-sweep` → After), with anything big enough for its own plan split out; the sweep itself changes nothing.
-4. Paste the tracker row the sweep prints (a `frontend` row) into the Code Sweep Tracker sheet.
+4. Paste the tracker rows the sweep prints (`frontend` rows) into the Code Sweep Tracker sheet's Sweeps and Findings tabs.
 5. Close this issue once the findings are settled. Its close date starts the count for the next sweep.
