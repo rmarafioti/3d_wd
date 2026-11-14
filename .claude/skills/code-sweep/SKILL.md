@@ -1,6 +1,6 @@
 ---
 name: code-sweep
-description: Read-only code review of the frontend against CLAUDE.md → Code Review → Checklist, reported as findings in this file's Output format, with a row for the Code Sweep Tracker sheet. `full` reviews the whole Scope, `<sha>` the code changed since that commit, `diff` only the current branch (the per-step self-review).
+description: Read-only code review of the frontend against CLAUDE.md → Code Review → Checklist, reported as findings in this file's Output format, with a row per finding for the Code Sweep Tracker sheet. `full` reviews the whole Scope, `<sha>` the code changed since that commit, `diff` only the current branch (the per-step self-review).
 argument-hint: full | <last swept commit> | diff
 disable-model-invocation: true
 ---
@@ -46,7 +46,7 @@ Check each in order. If one fails, stop and tell Rich which, and how to fix it. 
 
 No backend, database or dev server is needed: the tests run in jsdom with every request mocked, and step 9 builds the app rather than serving it.
 
-Record the review's end commit now: `git rev-parse --short origin/main` (for `diff`, `git rev-parse --short HEAD`). The tracker row uses it.
+Record the review's end commit now: `git rev-parse --short origin/main` (for `diff`, `git rev-parse --short HEAD`). The tracker rows use it.
 
 ## 4. Scope
 
@@ -241,13 +241,19 @@ Findings are a list, most important first. A finding's type is **bug** (behaviou
    - **Type:** bug, cleanup, doc or decision
    - For a **decision**: the question for Rich.
 2. **What was checked:** the mode, the commit range, the number of files reviewed in steps 1–5 and 8, each step's result in one line, and the test files only grepped (if any). A sweep with no findings still reports this.
-3. **The tracker row**, for `full`, `<sha>` and `diff` alike (`diff` only when Rich asks for it to be tracked), tab-separated in a code block so it pastes into the four columns of the Code Sweep Tracker sheet:
+3. **The tracker rows**, for `full`, `<sha>` and `diff` alike, as two tab-separated code blocks for the Code Sweep Tracker sheet's two tabs. **Sweeps** (Repo, Date, Reviewed, Results), one row per review:
 
 ```
 frontend	<YYYY-MM-DD>	<range>	<N>: <type> <item> <file:line>; <type> <item> <file:line>; …
 ```
 
-`<range>` is `<sha>..<end>` (incremental), `full@<end>` (full) or `<branch>@<end>` (diff), with 7-character commits. `<N>` is the number of findings; `0` when none.
+**Findings** (Repo, Date, Reviewed, Item, Type, File:Line, Escaped, Outcome), one row per finding:
+
+```
+frontend	<YYYY-MM-DD>	<range>	<item>	<type>	<file:line>	<escaped>
+```
+
+`<range>` is `<sha>..<end>` (incremental), `full@<end>` (full) or `<branch>@<end>` (diff), with 7-character commits. `<N>` is the number of findings, `0` when none (with no Findings rows). `<item>` is the checklist item (1–9) and `<type>` the finding's type. `<escaped>` is `yes` for a finding a `full` or `<sha>` sweep makes under items 1–5 or 8 in merged code, since the branch's diff self-review read those lines and missed it. It is `no` under items 6, 7 and 9, whose drift between files no diff shows, and always `no` in `diff` mode. Outcome is left blank for Rich: `none`, `script`, `md rule` or `left`.
 
 ## 9. After
 
@@ -257,9 +263,9 @@ frontend	<YYYY-MM-DD>	<range>	<N>: <type> <item> <file:line>; <type> <item> <fil
   - **Body:** a link to the reminder issue (`#<n>`), the sweep's commit range, then each fix to make, grouped by type (bug, cleanup, doc), with its file:line, what's wrong and the fix Rich agreed. Each decision Rich made is written in as a rule to add (for example, to `CLAUDE.md` → Code Style). Findings Rich chose to leave are listed under "Left as is" with his reason, so the next sweep can tell they were seen. End with a "done when" checklist.
   - `gh` signs in as Rich, so the issue shows him as its author, and the Issue Workflow treats his issues as instructions: that is why it is only opened once he has read the draft.
   - In `diff` mode there is no fixes issue: the findings are fixed on the branch being reviewed, once Rich answers (Workflow Checklist).
-- Rich pastes the tracker row into the Code Sweep Tracker sheet. Its end commit is where the next incremental sweep starts.
+- Rich pastes the tracker rows into the Code Sweep Tracker sheet's Sweeps and Findings tabs and fills each finding's Outcome once it is decided. The end commit is where the next incremental sweep starts.
 - Rich closes the reminder issue once the findings are settled.
-- Every few sweeps, Rich and Claude read the sheet for a checklist item that keeps producing findings, and propose a change to `CLAUDE.md` → Code Review or this file so it stops recurring. That change goes through a PR. The aim is fewer findings per sweep over time.
+- **Tuning, at each `full` sweep:** count the sheet's rows by checklist item and type. Any finding that keeps recurring (the same kind of finding in 2 or more reviews), and every escaped one, gets a proposed change through a PR, so it stops recurring. A check in CI (a lint rule in `eslint.config.mjs`, proven in `eslint.config.test.mjs`, or a test) comes first, since a check can't be skipped and costs no tokens. A line in `CLAUDE.md` (Code Style, Patterns or Anti-Patterns) or this file is for what only judgment can catch. A repeat that a written rule already covers needs a check or shorter wording, not more words. The aim is fewer findings per review over time.
 
 ## 10. Done when
 
@@ -268,5 +274,5 @@ frontend	<YYYY-MM-DD>	<range>	<N>: <type> <item> <file:line>; <type> <item> <fil
 - [ ] Steps 1–9 each run, with steps 6, 7 and 9 over the whole repo
 - [ ] Findings reported in the Output format, with a question for each decision
 - [ ] What was checked reported, even with no findings
-- [ ] The tracker row printed
+- [ ] The tracker rows printed
 - [ ] Every finding decided, and the fixes issue drafted and, on Rich's yes, opened

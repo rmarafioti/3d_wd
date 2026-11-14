@@ -257,7 +257,7 @@ The review's Scope, its Output format and the concrete check behind each Checkli
 - **`/code-sweep <commit>`** from the code sweep reminder, opened after merges (Reminders): the code changed since the last sweep, plus three checks over the whole repo (items 6, 7 and 9), which catch drift between files that a diff can't show.
 - **`/code-sweep full`** once a quarter (the full sweep reminder, the first Monday of January, April, July and October), and for the first sweep ever.
 
-Each sweep ends with a row for Rich's Code Sweep Tracker sheet, kept outside the repo: repo (`frontend`), date, commit range, and the issues found. Its end commit is where the next sweep starts. Every few sweeps, an item that keeps producing findings is a sign this section needs tuning, and a change to it is proposed through a PR, so sweeps find fewer issues over time.
+Every review, `diff` included, ends with rows for Rich's Code Sweep Tracker sheet, kept outside the repo: one per review on its Sweeps tab and one per finding on its Findings tab (the skill's Output). The end commit is where the next sweep starts. At each full sweep the rows are counted by checklist item: a finding that recurs, or escaped a diff self-review, becomes a check in CI (a lint rule or a test) where one can catch it, and a written rule only where it can't, proposed through a PR, so reviews find fewer issues over time.
 
 A change to the Checklist changes the skill in the same PR.
 
@@ -272,10 +272,10 @@ The backend's docs are the source of truth, and the sync runs from the backend o
 
 This repo's reminders (`.github/workflows/reminders.yml`). How a reminder works, and the activity rule that opens the code sweep, is `docs/process.md` → Reminders.
 
-| Reminder         | When                                                                                           | What to do                                                                                                                                              |
-| ---------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dependency audit | the 1st of every month, if anything found                                                      | the full `npm audit` (dev included) found a moderate or worse advisory: fix on a branch, or accept it with the reason in Current progress               |
-| Code sweep       | a Monday, after merges in this repo (not `docs/` branches); full the first Monday of a quarter | `/code-sweep <the end commit of the last frontend row in the tracker>`, or `full` once a quarter, then the tracker row (Code Review → Running a review) |
+| Reminder         | When                                                                                           | What to do                                                                                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dependency audit | the 1st of every month, if anything found                                                      | the full `npm audit` (dev included) found a moderate or worse advisory: fix on a branch, or accept it with the reason in Current progress                |
+| Code sweep       | a Monday, after merges in this repo (not `docs/` branches); full the first Monday of a quarter | `/code-sweep <the end commit of the last frontend row in the tracker>`, or `full` once a quarter, then the tracker rows (Code Review → Running a review) |
 
 The restore drill and the Documentation Sync reminders are the backend's only.
 
@@ -371,7 +371,7 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
-- **2026-11-14** `docs/doc-facts-once` (issue #99; backend issue #109, the lead): the frontend docs point to the backend facts they used to restate (limits, timings, the cookie, hosting) by their heading in `docs/api.md` or the backend doc that holds them, keeping every UI string, so the backend's `check:sync` finds no restated fact; `docs/api.md` copies the backend's contract. Docs only.
+- **2026-11-14** `docs/doc-facts-once` (issue #99; backend issue #109, the lead): the frontend docs point to the backend facts they used to restate (limits, timings, the cookie, hosting) by their heading in `docs/api.md` or the backend doc that holds them, keeping every UI string, so the backend's `check:sync` finds no restated fact; `/code-sweep` prints a row per finding for the Code Sweep Tracker's new Findings tab, every `diff` review included; `docs/api.md` copies the backend's contract. Docs only.
 - **2026-11-11** `chore/adaptive-reminders` (issue #96; backend issue #110, the lead): the code sweep reminder opens by activity (`docs/process.md` → Reminders): each Monday `.github/reminders/due.sh`, copied from the backend, counts this repo's PRs merged since the last sweep reminder closed, leaving out `docs/` branches (none skips, 5 opens now, fewer opens after 2 weeks), and the quarterly full sweep opens as `Full code sweep, YYYY-QN`; `docs/process.md` copies the backend's. Workflow and docs only.
 - **2026-11-10** `chore/code-sweep-fixes` (issue #93, frontend only): the fixes from the 2026-11-10 code sweep: a bulk delete or restore over 100 items keeps the batches done when a later one fails; field limits are written once, in `postFields.js` / `galleryFields.js`; Edit Gallery reads the dashboard layout's websites; every `/admin` and `/dashboard` page is a client component; one `RowActionsMenu` for post and gallery rows, `_lib/pillTones.js`, shared form helpers, missing failure tests, and comments and docs made true. Also the 2026-11-10 Documentation Sync's doc fixes (backend issue #105), with `docs/api.md` copied from the backend's contract.
 - **2026-11-09** `chore/organize-components` (no issue, frontend only): `_components/` moves from one flat folder of 61 components into folders by use, shared ones by area and role-only ones under `admin/` and `siteOwner/` (Patterns → Component folders), with every import and the `apiFetch` lint allowlist updated; no behaviour change.
