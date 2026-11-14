@@ -6,7 +6,7 @@ The frontend's side of deploying the Client Portal. The backend repo's `docs/dep
 
 The frontend runs on **Vercel, in a Pro team** ($20/month). Vercel's fair use rules limit the Hobby plan to non-commercial use, and client websites pay a hosting fee, so the frontend and every client website project (Stevie The Dog today) move into the Pro team before launch.
 
-For reference (backend side): the API runs on Render, in a Hobby workspace with a Starter web service and the smallest paid Postgres 17 per environment, all defined in the backend's `render.yaml` (a Render Blueprint). Backups are Render's 3 days of point-in-time recovery plus the backend's own nightly encrypted `pg_dump` to Cloudflare R2, kept 30 days. Cloudinary stays on the free tier.
+For reference (backend side): the API runs on Render, defined in the backend's `render.yaml` (a Render Blueprint). Its plans, the database, backups and Cloudinary's tier are in backend `docs/deploy.md` → Hosting and plans.
 
 ## 2. Environments
 
@@ -19,7 +19,7 @@ For reference (backend side): the API runs on Render, in a Hobby workspace with 
 - Staging comes first and is tested end to end before production. Production is then added as its own environment in the backend's `render.yaml`, with its own database and secrets.
 - **Releases:** staging deploys every merge to `main`, in both repos (`staging.3dwebdev.com` follows this repo's `main` branch). Production deploys only from each repo's `production` branch, which receives `main` when `npm run release` runs in the backend repo (section 8): the backend first, then the frontend once Render reports the backend live. So a change runs on staging before it reaches production.
 - `www.3dwebdev.com` redirects to the apex. The frontend is always served from the one origin in the backend's `CORS_ORIGIN` for that environment, or the API refuses its requests.
-- **Staging and production share the session cookie** (`session`, `Domain=.3dwebdev.com`). Always test staging in a **separate browser profile**, so a staging sign-in never overwrites a production one. No code change.
+- **Staging and production share the session cookie** (backend `docs/endpoints.md` → Session Cookie). Always test staging in a **separate browser profile**, so a staging sign-in never overwrites a production one. No code change.
 
 ## 3. Vercel environment variables
 
