@@ -55,14 +55,16 @@ function renderNavbar(user, { dashboard = false, landing = false } = {}) {
         {landing && (
           <>
             <section id="pricing">
-              <h2 tabIndex={-1}>Pricing made simple.</h2>
+              <h2 tabIndex={-1}>
+                Pricing made simple. No investigator required.
+              </h2>
             </section>
             <section id="about">
-              <h2 tabIndex={-1}>From experience, I know where the hours go.</h2>
+              <h2 tabIndex={-1}>From experience, I know what makes the cut.</h2>
             </section>
             <section id="contact">
               <h2 tabIndex={-1}>
-                Let&apos;s make your website do more of the work.
+                Let&apos;s put your story on the big screen.
               </h2>
             </section>
           </>
@@ -137,7 +139,9 @@ describe("Navbar", () => {
 
     expect(menu).toHaveAttribute("aria-expanded", "false");
     expect(
-      screen.getByRole("heading", { name: "Pricing made simple." }),
+      screen.getByRole("heading", {
+        name: "Pricing made simple. No investigator required.",
+      }),
     ).toHaveFocus();
   });
 

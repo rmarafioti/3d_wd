@@ -33,18 +33,18 @@ export default function Home() {
     // move focus to them, so Tab continues from there.
     <article id={MAIN_CONTENT_ID} tabIndex={-1} className={styles.landing}>
       <section className={styles.section}>
-        <h1 tabIndex={-1} className={styles.heroHeading}>
-          Your website brings in the customers. You get your time back.
+        <h1 tabIndex={-1} className={styles.brandHeading}>
+          Now showing: your business.
         </h1>
         <p>
-          A website that presents your business in your own voice, designed and
+          A website that presents what you do in your own voice, designed and
           built for you, so you never have to take on the tech yourself.
         </p>
         <ContactLink />
       </section>
 
       <section className={styles.section}>
-        <h2>From the occasional inquiry to a steady stream of new business.</h2>
+        <h2>A steady stream of new customers awaits.</h2>
         <p>
           Clients have come to me with live websites that brought in 5 or fewer
           potential customers a month. I took over and rebuilt each site around
@@ -54,23 +54,25 @@ export default function Home() {
         </p>
         <ul className={styles.points}>
           <li>
-            <strong>More engagement.</strong> People who find your site fill out
-            your form, instead of moving on.
-          </li>
-          <li>
-            <strong>Hours back each week.</strong> Less time going back and
-            forth answering the same questions.
-          </li>
-          <li>
             <strong>Well-informed customers.</strong> Your site answers their
             questions clearly and correctly, so they reach out knowing what they
             want.
+          </li>
+          <li>
+            <strong>More engagement.</strong> People who find your site reach
+            out instead of moving on.
+          </li>
+          <li>
+            <strong>Time for the real work.</strong> Bookings, intake and
+            follow-ups run themselves, so you can focus on your craft.
           </li>
         </ul>
       </section>
 
       <section id={SECTION_IDS.pricing} className={styles.section}>
-        <h2 tabIndex={-1}>Pricing made simple.</h2>
+        <h2 tabIndex={-1} className={styles.brandHeading}>
+          Pricing made simple. No investigator required.
+        </h2>
         <p>
           Every site is custom designed, and the possibilities are endless, from
           illustration to animations, all quoted with your build.
@@ -134,7 +136,7 @@ export default function Home() {
           </li>
         </ul>
         <ContactLink />
-        <h3 className={styles.subheading}>Don&apos;t want to be boxed in?</h3>
+        <h3 className={styles.subheading}>I won&apos;t hold you hostage.</h3>
         <p>
           You&apos;re never locked in. Every site I build can be handed over if
           you choose to leave: keep it running on its yearly plan, move it to
@@ -144,7 +146,9 @@ export default function Home() {
       </section>
 
       <section id={SECTION_IDS.about} className={styles.section}>
-        <h2 tabIndex={-1}>From experience, I know where the hours go.</h2>
+        <h2 tabIndex={-1} className={styles.brandHeading}>
+          From experience, I know what makes the cut.
+        </h2>
         <p>
           I spent twenty years on the owner&apos;s side of a small business:
         </p>
@@ -168,11 +172,14 @@ export default function Home() {
         </ul>
         <p>
           Now I design and build websites for owners like I was: busy, hands-on,
-          and doing it all themselves. I studied illustration at the Rhode
-          Island School of Design and software engineering at Fullstack Academy.
+          and doing it all themselves. Running a business taught me how a site
+          should speak to your customers. As a graduate of the Rhode Island
+          School of Design, I bring an eye for aesthetics and design, and from
+          my training at Fullstack Academy and more than three years working in
+          tech, the engineering skills to build it.
         </p>
 
-        <h3 className={styles.subheading}>What clients have to say</h3>
+        <h3 className={styles.subheading}>The reviews are in.</h3>
         <figure className={styles.quote}>
           <blockquote>
             <p>
@@ -204,7 +211,9 @@ export default function Home() {
       </section>
 
       <section id={SECTION_IDS.contact} className={styles.section}>
-        <h2 tabIndex={-1}>Let&apos;s make your website do more of the work.</h2>
+        <h2 tabIndex={-1} className={styles.brandHeading}>
+          Let&apos;s put your story on the big screen.
+        </h2>
         <p>
           Tell me about your business and what you want your site to do.
           I&apos;ll come back with a few options at different prices, and you
