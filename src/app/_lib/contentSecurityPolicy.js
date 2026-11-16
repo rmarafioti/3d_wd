@@ -58,7 +58,13 @@ export function sessionPolicy(nonce) {
 }
 
 export function staticPolicy() {
-  const connectSources = ["'self'", sentryOrigin()].filter(Boolean);
+  // The landing page's contact form posts to the API, cross-origin outside local development
+  // (empty locally, where /api goes through the same-origin dev rewrite).
+  const connectSources = [
+    "'self'",
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+    sentryOrigin(),
+  ].filter(Boolean);
 
   return toHeader([
     "default-src 'self'",
