@@ -1,5 +1,6 @@
 // A link to one of the landing page's sections: a plain hash link that, once the page has loaded,
-// scrolls there smoothly (instant with reduced motion) and moves focus to its heading.
+// scrolls there with an eased scroll (instant with reduced motion), keeping the URL at "/", and
+// moves focus to its heading.
 
 "use client";
 

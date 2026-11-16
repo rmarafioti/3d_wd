@@ -1,0 +1,17 @@
+/* The public pages (the landing page and sign-in) fade in as they load. CSS only, so it runs
+   from the first paint, before any script. */
+.pageFade {
+  animation: fadeIn 2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageFade {
+    animation: none;
+  }
+}

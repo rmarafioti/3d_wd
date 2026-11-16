@@ -1,5 +1,5 @@
 // Test setup, run before every test file: jest-dom matchers, RTL cleanup, and the parts of
-// <dialog>, matchMedia and scrolling that jsdom doesn't implement.
+// <dialog>, matchMedia, scrolling and IntersectionObserver that jsdom doesn't implement.
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
@@ -47,4 +47,17 @@ if (typeof Element !== "undefined") {
 }
 if (typeof window !== "undefined") {
   window.scrollTo = function scrollTo() {};
+}
+
+// jsdom has no IntersectionObserver. This one never reports anything (next/link's prefetch uses
+// it too); stubIntersectionObserver in helpers.js lets a test bring an element into view.
+if (typeof window !== "undefined" && !window.IntersectionObserver) {
+  window.IntersectionObserver = class IntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  };
 }
