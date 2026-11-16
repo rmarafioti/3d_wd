@@ -12,7 +12,7 @@ function renderWithSection() {
     <>
       <SectionLink id="contact">Contact me</SectionLink>
       <section id="contact">
-        <h2 tabIndex={-1}>Let&apos;s make your website do more of the work.</h2>
+        <h2 tabIndex={-1}>Let&apos;s put your story on the big screen.</h2>
       </section>
     </>,
   );
@@ -33,7 +33,7 @@ describe("SectionLink", () => {
     expect(window.location.hash).toBe("#contact");
     expect(
       screen.getByRole("heading", {
-        name: "Let's make your website do more of the work.",
+        name: "Let's put your story on the big screen.",
       }),
     ).toHaveFocus();
   });

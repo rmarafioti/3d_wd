@@ -13,9 +13,7 @@ function renderScrolledTo(scrollY) {
   vi.spyOn(window, "scrollY", "get").mockReturnValue(scrollY);
   render(
     <article id={MAIN_CONTENT_ID}>
-      <h1 tabIndex={-1}>
-        Your website brings in the customers. You get your time back.
-      </h1>
+      <h1 tabIndex={-1}>Now showing: your business.</h1>
       <BackToTop />
     </article>,
   );
@@ -59,7 +57,7 @@ describe("BackToTop", () => {
     expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
     expect(
       screen.getByRole("heading", {
-        name: "Your website brings in the customers. You get your time back.",
+        name: "Now showing: your business.",
       }),
     ).toHaveFocus();
   });
