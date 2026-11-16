@@ -127,6 +127,69 @@ export function stubMatchMedia(matches) {
   };
 }
 
+// Holds every requestAnimationFrame callback until the test runs the next frame at `time` (ms),
+// so an animation is stepped through frame by frame. cancelAnimationFrame drops a held one.
+export function stubAnimationFrames() {
+  const pending = new Map();
+  let nextId = 1;
+  vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+    pending.set(nextId, callback);
+    return nextId++;
+  });
+  vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+    pending.delete(id);
+  });
+  return {
+    runFrame(time) {
+      const callbacks = [...pending.values()];
+      pending.clear();
+      callbacks.forEach((callback) => callback(time));
+    },
+    hasPendingFrame: () => pending.size > 0,
+  };
+}
+
+// Replaces IntersectionObserver with one the test drives: enterView() reports every observed
+// element as on screen, leaveView(top) as off it, its top `top` px from the screen's top.
+export function stubIntersectionObserver() {
+  const observers = new Set();
+  class FakeIntersectionObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.elements = [];
+      observers.add(this);
+    }
+    observe(element) {
+      this.elements.push(element);
+    }
+    unobserve(element) {
+      this.elements = this.elements.filter((other) => other !== element);
+    }
+    disconnect() {
+      observers.delete(this);
+    }
+    takeRecords() {
+      return [];
+    }
+  }
+  function report(isIntersecting, top) {
+    [...observers].forEach((observer) =>
+      observer.callback(
+        observer.elements.map((target) => ({
+          target,
+          isIntersecting,
+          boundingClientRect: { top },
+        })),
+      ),
+    );
+  }
+  vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver);
+  return {
+    enterView: () => report(true, 0),
+    leaveView: (top) => report(false, top),
+  };
+}
+
 // Stands in for the browser's Image so a test decides when (and whether) an image "loads".
 // Returns every load started, as { src, load(width, height), fail() }.
 export function stubImageLoading() {

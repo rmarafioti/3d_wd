@@ -1,13 +1,17 @@
 // Landing page: public and static for SEO, with the Pitch's hero, proof, pricing, about and contact
 // sections. A Server Component with no data fetching; its client islands send the contact form,
-// scroll to a section and back to the top.
+// scroll to a section and back to the top, fade each section in and out as it is scrolled, and keep
+// the URL at "/" so a refresh returns to the top.
 
 import ContactForm from "./_components/landing/ContactForm";
 import SectionLink from "./_components/landing/SectionLink";
 import BackToTop from "./_components/landing/BackToTop";
+import RevealSection from "./_components/landing/RevealSection";
+import LandingUrl from "./_components/landing/LandingUrl";
 import { SECTION_IDS, MAIN_CONTENT_ID } from "./_lib/landingSections";
 
 import styles from "./_styling/landing.module.css";
+import fade from "./_styling/pageFade.module.css";
 
 function ContactLink() {
   return (
@@ -31,19 +35,25 @@ export default function Home() {
   return (
     // tabIndex -1 on the article and the headings: the skip link, the section links and Back to top
     // move focus to them, so Tab continues from there.
-    <article id={MAIN_CONTENT_ID} tabIndex={-1} className={styles.landing}>
-      <section className={styles.section}>
+    <article
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className={`${styles.landing} ${fade.pageFade}`}
+    >
+      <LandingUrl />
+      <RevealSection className={styles.section}>
         <h1 tabIndex={-1} className={styles.brandHeading}>
           Now showing: your business.
         </h1>
         <p>
-          A website that presents what you do in your own voice, designed and
-          built for you, so you never have to take on the tech yourself.
+          A website that presents what you do in your own voice and brings in
+          the customers you want. Designed and built for you, so you never have
+          to take on the tech yourself.
         </p>
         <ContactLink />
-      </section>
+      </RevealSection>
 
-      <section className={styles.section}>
+      <RevealSection className={styles.section}>
         <h2>A steady stream of new customers awaits.</h2>
         <p>
           Clients have come to me with live websites that brought in 5 or fewer
@@ -63,13 +73,14 @@ export default function Home() {
             out instead of moving on.
           </li>
           <li>
-            <strong>Time for the real work.</strong> Bookings, intake and
-            follow-ups run themselves, so you can focus on your craft.
+            <strong>Time for the real work.</strong> Your site guides each
+            customer from first impression to booking, so there&apos;s less
+            back-and-forth and more time for running your business.
           </li>
         </ul>
-      </section>
+      </RevealSection>
 
-      <section id={SECTION_IDS.pricing} className={styles.section}>
+      <RevealSection id={SECTION_IDS.pricing} className={styles.section}>
         <h2 tabIndex={-1} className={styles.brandHeading}>
           Pricing made simple. No investigator required.
         </h2>
@@ -136,16 +147,16 @@ export default function Home() {
           </li>
         </ul>
         <ContactLink />
-        <h3 className={styles.subheading}>I won&apos;t hold you hostage.</h3>
+        <h3 className={styles.subheading}>No sequel needed.</h3>
         <p>
           You&apos;re never locked in. Every site I build can be handed over if
           you choose to leave: keep it running on its yearly plan, move it to
           another developer, or take your posts and photos with you. Your domain
           is always in your name.
         </p>
-      </section>
+      </RevealSection>
 
-      <section id={SECTION_IDS.about} className={styles.section}>
+      <RevealSection id={SECTION_IDS.about} className={styles.section}>
         <h2 tabIndex={-1} className={styles.brandHeading}>
           From experience, I know what makes the cut.
         </h2>
@@ -208,9 +219,9 @@ export default function Home() {
             </ClientLink>
           </figcaption>
         </figure>
-      </section>
+      </RevealSection>
 
-      <section id={SECTION_IDS.contact} className={styles.section}>
+      <RevealSection id={SECTION_IDS.contact} className={styles.section}>
         <h2 tabIndex={-1} className={styles.brandHeading}>
           Let&apos;s put your story on the big screen.
         </h2>
@@ -220,7 +231,7 @@ export default function Home() {
           pick what fits.
         </p>
         <ContactForm />
-      </section>
+      </RevealSection>
       <BackToTop />
     </article>
   );

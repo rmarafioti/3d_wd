@@ -4,12 +4,13 @@
 import SignInForm from "../_components/auth/SignInForm";
 
 import styles from "../_styling/signIn.module.css";
+import fade from "../_styling/pageFade.module.css";
 
 export default async function SignInPage({ searchParams }) {
   const params = await searchParams;
 
   return (
-    <article>
+    <article className={fade.pageFade}>
       <h1 className={styles.header}>Sign In</h1>
       <SignInForm expired={params.expired === "1"} />
     </article>

@@ -1,4 +1,4 @@
-// Tests for BackToTop: shown only past the first screen, and its scroll to the top, smooth or
+// Tests for BackToTop: shown only past the first screen, and its scroll to the top, eased or
 // instant by the reduced-motion setting, with focus moved to the hero heading.
 
 import { describe, expect, it, vi } from "vitest";
@@ -6,7 +6,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BackToTop from "./BackToTop";
 import { MAIN_CONTENT_ID } from "../../_lib/landingSections";
-import { stubMatchMedia } from "../../../test/helpers";
+import { stubAnimationFrames, stubMatchMedia } from "../../../test/helpers";
 
 // The page's hero heading and the button, scrolled to `scrollY` (jsdom's window is 768px tall).
 function renderScrolledTo(scrollY) {
@@ -47,14 +47,18 @@ describe("BackToTop", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("scrolls smoothly to the top and moves focus to the hero heading", async () => {
+  it("scrolls to the top over an eased scroll and moves focus to the hero heading", async () => {
+    const frames = stubAnimationFrames();
     const scroll = vi.spyOn(window, "scrollTo");
     const user = userEvent.setup();
     renderScrolledTo(2000);
 
     await user.click(screen.getByRole("button", { name: "Back to top" }));
+    frames.runFrame(0);
+    frames.runFrame(1400);
 
-    expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    expect(scroll).toHaveBeenLastCalledWith(0, 0);
+    expect(frames.hasPendingFrame()).toBe(false);
     expect(
       screen.getByRole("heading", {
         name: "Now showing: your business.",
@@ -70,6 +74,7 @@ describe("BackToTop", () => {
 
     await user.click(screen.getByRole("button", { name: "Back to top" }));
 
-    expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    expect(scroll).toHaveBeenCalledOnce();
+    expect(scroll).toHaveBeenCalledWith(0, 0);
   });
 });

@@ -1,13 +1,20 @@
-// Tests for SectionLink: the scroll to its section, smooth or instant by the reduced-motion
-// setting, the hash in the URL, and focus moved to the section's heading.
+// Tests for SectionLink: the eased scroll to its section (instant by the reduced-motion setting,
+// stopped by the visitor's own scroll), the URL kept at "/", and focus moved to the heading.
 
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SectionLink from "./SectionLink";
-import { stubMatchMedia } from "../../../test/helpers";
+import { stubAnimationFrames, stubMatchMedia } from "../../../test/helpers";
 
+// The contact section sits 1500px down the page (jsdom lays nothing out), so the scroll takes
+// 850ms plus 1500 / 5, 1150ms, and is halfway at 575ms.
 function renderWithSection() {
+  vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockImplementation(
+    function offsetTop() {
+      return this.id === "contact" ? 1500 : 0;
+    },
+  );
   render(
     <>
       <SectionLink id="contact">Contact me</SectionLink>
@@ -19,18 +26,22 @@ function renderWithSection() {
 }
 
 describe("SectionLink", () => {
-  it("scrolls smoothly to its section, puts its hash in the URL and focuses its heading", async () => {
-    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+  it("scrolls to its section over a little over a second, keeps the URL with no hash and focuses its heading", async () => {
+    const frames = stubAnimationFrames();
+    const scroll = vi.spyOn(window, "scrollTo");
     const user = userEvent.setup();
     renderWithSection();
 
     await user.click(screen.getByRole("link", { name: "Contact me" }));
+    frames.runFrame(0);
+    frames.runFrame(575);
+    const halfway = scroll.mock.lastCall;
+    frames.runFrame(1150);
 
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth" });
-    expect(scrollIntoView.mock.contexts[0]).toBe(
-      document.getElementById("contact"),
-    );
-    expect(window.location.hash).toBe("#contact");
+    expect(halfway).toEqual([0, 750]);
+    expect(scroll).toHaveBeenLastCalledWith(0, 1500);
+    expect(frames.hasPendingFrame()).toBe(false);
+    expect(window.location.hash).toBe("");
     expect(
       screen.getByRole("heading", {
         name: "Let's put your story on the big screen.",
@@ -38,14 +49,29 @@ describe("SectionLink", () => {
     ).toHaveFocus();
   });
 
+  it("stops scrolling once the visitor scrolls themselves", async () => {
+    const frames = stubAnimationFrames();
+    const user = userEvent.setup();
+    renderWithSection();
+
+    await user.click(screen.getByRole("link", { name: "Contact me" }));
+    frames.runFrame(0);
+    fireEvent.wheel(window);
+
+    expect(frames.hasPendingFrame()).toBe(false);
+  });
+
   it("jumps instantly when the device asks for reduced motion", async () => {
     stubMatchMedia(true);
-    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+    const frames = stubAnimationFrames();
+    const scroll = vi.spyOn(window, "scrollTo");
     const user = userEvent.setup();
     renderWithSection();
 
     await user.click(screen.getByRole("link", { name: "Contact me" }));
 
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto" });
+    expect(scroll).toHaveBeenCalledOnce();
+    expect(scroll).toHaveBeenCalledWith(0, 1500);
+    expect(frames.hasPendingFrame()).toBe(false);
   });
 });
