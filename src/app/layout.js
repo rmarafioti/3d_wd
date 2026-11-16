@@ -1,5 +1,5 @@
 // Root layout: loads the fonts and wraps every page in AuthProvider and NavProvider (both start
-// empty and never fetch), Navbar and Footer.
+// empty and never fetch), the landing page's skip link, Navbar and Footer.
 
 import { BBH_Hegarty, Montserrat } from "next/font/google";
 import "./globals.css";
@@ -7,6 +7,7 @@ import { AuthProvider } from "./_context/AuthContext";
 import { NavProvider } from "./_context/NavContext";
 import Navbar from "./_layout/Navbar";
 import Footer from "./_layout/Footer";
+import SkipLink from "./_components/landing/SkipLink";
 
 // Downloaded at build time and served from our own origin, so the CSP's font-src 'self' allows
 // them. globals.css names them --logoFont, --headerFont and --copyFont.
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <NavProvider>
+            <SkipLink />
             <Navbar />
             {children}
             <Footer />

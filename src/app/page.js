@@ -1,18 +1,19 @@
 // Landing page: public and static for SEO, with the Pitch's hero, proof, pricing, about and contact
-// sections. A Server Component with no data fetching; ContactForm, its one client island, sends.
+// sections. A Server Component with no data fetching; its client islands send the contact form,
+// scroll to a section and back to the top.
 
 import ContactForm from "./_components/landing/ContactForm";
+import SectionLink from "./_components/landing/SectionLink";
+import BackToTop from "./_components/landing/BackToTop";
+import { SECTION_IDS, MAIN_CONTENT_ID } from "./_lib/landingSections";
 
 import styles from "./_styling/landing.module.css";
 
-// The anchor both "Contact me" links jump to: a plain link, so the page needs no script for it.
-const CONTACT_ANCHOR = "contact";
-
 function ContactLink() {
   return (
-    <a href={`#${CONTACT_ANCHOR}`} className={styles.contactButton}>
+    <SectionLink id={SECTION_IDS.contact} className={styles.contactButton}>
       Contact me
-    </a>
+    </SectionLink>
   );
 }
 
@@ -28,9 +29,11 @@ function ClientLink({ href, children }) {
 
 export default function Home() {
   return (
-    <article className={styles.landing}>
+    // tabIndex -1 on the article and the headings: the skip link, the section links and Back to top
+    // move focus to them, so Tab continues from there.
+    <article id={MAIN_CONTENT_ID} tabIndex={-1} className={styles.landing}>
       <section className={styles.section}>
-        <h1 className={styles.heroHeading}>
+        <h1 tabIndex={-1} className={styles.heroHeading}>
           Your website brings in the customers. You get your time back.
         </h1>
         <p>
@@ -66,8 +69,8 @@ export default function Home() {
         </ul>
       </section>
 
-      <section className={styles.section}>
-        <h2>Pricing made simple.</h2>
+      <section id={SECTION_IDS.pricing} className={styles.section}>
+        <h2 tabIndex={-1}>Pricing made simple.</h2>
         <p>
           Every site is custom designed, and the possibilities are endless, from
           illustration to animations, all quoted with your build.
@@ -140,8 +143,8 @@ export default function Home() {
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2>From experience, I know where the hours go.</h2>
+      <section id={SECTION_IDS.about} className={styles.section}>
+        <h2 tabIndex={-1}>From experience, I know where the hours go.</h2>
         <p>
           I spent twenty years on the owner&apos;s side of a small business:
         </p>
@@ -200,8 +203,8 @@ export default function Home() {
         </figure>
       </section>
 
-      <section id={CONTACT_ANCHOR} className={styles.section}>
-        <h2>Let&apos;s make your website do more of the work.</h2>
+      <section id={SECTION_IDS.contact} className={styles.section}>
+        <h2 tabIndex={-1}>Let&apos;s make your website do more of the work.</h2>
         <p>
           Tell me about your business and what you want your site to do.
           I&apos;ll come back with a few options at different prices, and you
@@ -209,6 +212,7 @@ export default function Home() {
         </p>
         <ContactForm />
       </section>
+      <BackToTop />
     </article>
   );
 }

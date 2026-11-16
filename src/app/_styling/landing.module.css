@@ -4,6 +4,12 @@
   padding-bottom: 2rem;
 }
 
+/* Focused only by the skip link, so Tab continues from the page's content; a ring round the
+   whole page would say nothing. The headings the section links focus keep theirs. */
+.landing:focus {
+  outline: none;
+}
+
 /* A readable line length, with the screen's side gutter at phone width. 45rem up to a laptop's
    width, then 42% of the screen, capped at 54rem, so it grows a little on a larger screen with
    no extra breakpoint. */

@@ -1,0 +1,38 @@
+/* Off screen until reached with Tab, then over the top left of the navbar, drawn like the
+   "Contact me" button. Not display: none, which would take it out of the tab order. */
+.skipLink {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 30;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  color: white;
+  background-color: rgb(117, 99, 236);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+}
+
+/* Fixed in the bottom right corner, under the phone menu (z-index 20). Round and purple, the
+   icon centred. */
+.backToTop {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0rem;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: white;
+  background-color: rgb(117, 99, 236);
+  cursor: pointer;
+}
