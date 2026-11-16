@@ -1,7 +1,7 @@
-// Tests for Navbar: the signed-out row, each role's links (Create a Gallery through NavContext) and
-// the phone menu's opening and closing.
+// Tests for Navbar: the signed-out row, the landing page's section links, each role's
+// links (Create a Gallery through NavContext) and the phone menu's opening and closing.
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Navbar from "./Navbar";
@@ -9,6 +9,11 @@ import { AuthContext } from "../_context/AuthContext";
 import { NavProvider } from "../_context/NavContext";
 import { SiteOwnerDataProvider } from "../_context/SiteOwnerDataContext";
 import { mockFetch } from "../../test/helpers";
+
+const navigation = vi.hoisted(() => ({ pathname: "/admin" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => navigation.pathname,
+}));
 
 const ADMIN_UNREAD = "GET /api/admin/threads/unreadCount";
 const NONE_UNREAD = { body: { data: { threads: 0 } } };
@@ -40,20 +45,41 @@ const WEBSITE = {
 };
 
 // The Navbar as the root layout renders it, with the site owner's dashboard data beside it, as
-// the dashboard layout provides it.
-function renderNavbar(user, { dashboard = false } = {}) {
+// the dashboard layout provides it, or the landing page's linked sections under it.
+function renderNavbar(user, { dashboard = false, landing = false } = {}) {
   return render(
     <AuthContext.Provider value={{ user, setUser: vi.fn() }}>
       <NavProvider>
         <Navbar />
         {dashboard && <SiteOwnerDataProvider />}
+        {landing && (
+          <>
+            <section id="pricing">
+              <h2 tabIndex={-1}>Pricing made simple.</h2>
+            </section>
+            <section id="about">
+              <h2 tabIndex={-1}>From experience, I know where the hours go.</h2>
+            </section>
+            <section id="contact">
+              <h2 tabIndex={-1}>
+                Let&apos;s make your website do more of the work.
+              </h2>
+            </section>
+          </>
+        )}
       </NavProvider>
     </AuthContext.Provider>,
   );
 }
 
 describe("Navbar", () => {
-  it("shows only Sign in and no menu when no one is signed in", () => {
+  beforeEach(() => {
+    navigation.pathname = "/admin";
+  });
+
+  it("shows only Sign in and no menu before a dashboard's user has loaded", () => {
+    navigation.pathname = "/dashboard";
+
     renderNavbar(null);
 
     expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
@@ -61,6 +87,58 @@ describe("Navbar", () => {
       screen.queryByRole("button", { name: "Menu" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("links the landing page's sections in order, with Sign in kept in the top row", () => {
+    navigation.pathname = "/";
+
+    renderNavbar(null, { landing: true });
+
+    const links = within(screen.getByRole("list")).getAllByRole("link");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Pricing",
+      "About Me",
+      "Contact Me",
+    ]);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "#pricing",
+      "#about",
+      "#contact",
+    ]);
+    expect(
+      within(screen.getByRole("list")).queryByRole("link", { name: "Sign in" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
+  });
+
+  it("links the sign-in page's section links to the landing page's sections, with the hamburger", () => {
+    navigation.pathname = "/sign-in";
+
+    renderNavbar(null);
+
+    const links = within(screen.getByRole("list")).getAllByRole("link");
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/#pricing",
+      "/#about",
+      "/#contact",
+    ]);
+    expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
+  });
+
+  it("closes the menu and moves focus to the section's heading when a section link is picked", async () => {
+    navigation.pathname = "/";
+    const user = userEvent.setup();
+    renderNavbar(null, { landing: true });
+    const menu = screen.getByRole("button", { name: "Menu" });
+
+    await user.click(menu);
+    await user.click(screen.getByRole("link", { name: "Pricing" }));
+
+    expect(menu).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.getByRole("heading", { name: "Pricing made simple." }),
+    ).toHaveFocus();
   });
 
   it("links the admin to Create an Account, Send a Notification, Audit Events, Messages and Recently Deleted", async () => {

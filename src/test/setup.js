@@ -1,5 +1,5 @@
 // Test setup, run before every test file: jest-dom matchers, RTL cleanup, and the parts of
-// <dialog> and matchMedia that jsdom doesn't implement.
+// <dialog>, matchMedia and scrolling that jsdom doesn't implement.
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
@@ -38,4 +38,13 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     addEventListener() {},
     removeEventListener() {},
   });
+}
+
+// jsdom has no scrollIntoView and only logs "not implemented" for scrollTo. Both do nothing here;
+// a test that checks a scroll spies on them.
+if (typeof Element !== "undefined") {
+  Element.prototype.scrollIntoView = function scrollIntoView() {};
+}
+if (typeof window !== "undefined") {
+  window.scrollTo = function scrollTo() {};
 }

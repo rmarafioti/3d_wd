@@ -1,10 +1,12 @@
 // Navbar: the home link, dashboard title, mail and trash icons and Sign in / out, then the
-// signed-in user's links, which at phone width move into a hamburger menu.
+// signed-in user's links, or signed out the landing page's section links, which at phone width move
+// into a hamburger menu.
 
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { RxCross2, RxHamburgerMenu } from "react-icons/rx";
 import { GoTrash } from "react-icons/go";
 import { useAuth } from "../_hooks/useAuth";
@@ -13,9 +15,15 @@ import HomeLink from "../_components/navbar/HomeLink";
 import DashboardTitle from "../_components/navbar/DashboardTitle";
 import AuthButton from "../_components/auth/AuthButton";
 import MailLink from "../_components/navbar/MailLink";
+import SectionLink from "../_components/landing/SectionLink";
 import { DELETED_BY_ROLE } from "../_lib/roles";
+import { LANDING_SECTIONS } from "../_lib/landingSections";
 
 import styles from "../_styling/navbar.module.css";
+
+// The signed-out pages, which show the landing page's section links. Not every page with no user:
+// a dashboard's user is empty while the layout fetches it, and the links would flash there.
+const SIGNED_OUT_PATHS = ["/", "/sign-in"];
 
 // The signed-in user's links, or null when no one is signed in. next/link is fine here: every
 // dashboard page has the nonce policy, so a client-side route between them keeps the right one
@@ -39,13 +47,38 @@ function navLinks(user, canCreateGallery) {
   return links;
 }
 
+// A section link: on the landing page it scrolls there; elsewhere it is a plain link, a full page
+// load, since the landing page has its own static policy.
+function LandingSectionLink({ section, isLanding, onNavigate }) {
+  if (!isLanding) {
+    return (
+      <a href={`/#${section.id}`} className={styles.navLink}>
+        {section.label}
+      </a>
+    );
+  }
+  return (
+    <SectionLink
+      id={section.id}
+      onNavigate={onNavigate}
+      className={styles.navLink}
+    >
+      {section.label}
+    </SectionLink>
+  );
+}
+
 export default function Navbar() {
   const { user } = useAuth();
   const { canCreateGallery } = useNav();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const showsSections = !user && SIGNED_OUT_PATHS.includes(pathname);
+  const isLanding = pathname === "/";
   const links = navLinks(user, canCreateGallery);
+  const hasMenu = Boolean(links) || showsSections;
 
   // Listens only while the phone menu is open.
   useEffect(() => {
@@ -86,11 +119,11 @@ export default function Navbar() {
               <GoTrash aria-hidden="true" />
             </Link>
           )}
-          {/* Signed in, Sign out moves into the phone menu. */}
+          {/* Signed in, Sign out moves into the phone menu; Sign in stays in the top row. */}
           <div className={links ? styles.desktopOnly : undefined}>
             <AuthButton />
           </div>
-          {links && (
+          {hasMenu && (
             <button
               ref={menuButtonRef}
               type="button"
@@ -105,25 +138,39 @@ export default function Navbar() {
           )}
         </div>
       </div>
-      {links && (
+      {hasMenu && (
         <ul
           id="nav-links"
           className={`${styles.links} ${menuOpen ? styles.menuOpen : ""}`}
         >
-          {links.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className={styles.navLink}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-          <li className={styles.menuSignOut}>
-            <AuthButton className={styles.navLink} />
-          </li>
+          {links ? (
+            <>
+              {links.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={styles.navLink}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              <li className={styles.menuSignOut}>
+                <AuthButton className={styles.navLink} />
+              </li>
+            </>
+          ) : (
+            LANDING_SECTIONS.map((section) => (
+              <li key={section.id}>
+                <LandingSectionLink
+                  section={section}
+                  isLanding={isLanding}
+                  onNavigate={() => setMenuOpen(false)}
+                />
+              </li>
+            ))
+          )}
         </ul>
       )}
     </nav>
