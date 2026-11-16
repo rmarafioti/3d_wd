@@ -132,6 +132,15 @@ describe("proxy", () => {
     expect(connectSrc(policyOf("/"))).toBe("connect-src 'self'");
   });
 
+  it("lets the landing page's contact form reach the API origin once it is set", () => {
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "");
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.3dwebdev.com");
+
+    expect(connectSrc(policyOf("/"))).toBe(
+      "connect-src 'self' https://api.3dwebdev.com",
+    );
+  });
+
   it("adds 'unsafe-eval' in development only", () => {
     vi.stubEnv("NODE_ENV", "development");
 

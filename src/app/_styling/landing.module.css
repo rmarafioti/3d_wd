@@ -1,27 +1,141 @@
-/* The global article centres the block across the screen; its text reads from the left. */
+/* The global article centres the sections across the screen; their text reads from the left. */
 .landing {
   text-align: left;
+  padding-bottom: 2rem;
 }
 
-/* A readable line length, with the screen's side gutter at phone width. */
-.content {
-  max-width: 40rem;
+/* A readable line length, with the screen's side gutter at phone width. 45rem up to a laptop's
+   width, then 42% of the screen, capped at 54rem, so it grows a little on a larger screen with
+   no extra breakpoint. */
+.section {
+  width: 100%;
+  max-width: clamp(45rem, 42vw, 54rem);
   padding: 0 1rem;
+  margin-bottom: 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  line-height: 1.5;
 }
 
 /* BBH Hegarty has one weight, so the heading's 600 would show as a faked bold. */
-.title {
+.heroHeading {
   font-family: var(--logoFont);
   font-weight: normal;
 }
 
-.tagline {
+.subheading {
   margin-top: 1rem;
-  font-family: var(--headerFont);
-  font-weight: 600;
 }
 
-.copy {
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* The global li rule removes list markers; this list keeps its bullets, inside the section's
+   left edge. */
+.bullets {
+  padding-left: 1.5rem;
+}
+
+.bullets li {
+  list-style-type: disc;
+}
+
+/* "Contact me" is a link to the form's section, drawn like the global button. */
+.contactButton {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  color: white;
+  background-color: rgb(117, 99, 236);
+  text-decoration: none;
+}
+
+.cardGroup {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+}
+
+.card {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+}
+
+/* The build cards' titles are h3 and the yearly plans' h4 (under their own heading); both keep the
+   browser's h3 size, so every card title reads the same. */
+.cardTitle {
+  margin-bottom: 1rem;
+  font-size: 1.17em;
+}
+
+/* The price sits on its own line under the card's name. */
+.price {
+  display: block;
+}
+
+.quote figcaption {
+  color: grey;
+}
+
+.requiredNote {
+  margin-bottom: 1rem;
+  color: grey;
+}
+
+/* As wide as the form's fields. */
+.submitButton {
+  width: 100%;
   margin-top: 1rem;
-  line-height: 1.5;
+}
+
+.formError {
+  margin-top: 0.5rem;
+}
+
+/* The contact form's honeypot: kept in the page for bots to fill, but out of sight. Not
+   display: none, which some bots skip. */
+.honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The thanks note takes the form's place, boxed in the site's purple and set like a heading so
+   it can't be missed. */
+.sentNote {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 2px solid rgb(117, 99, 236);
+  border-radius: 5px;
+  font-family: var(--headerFont);
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 667px) {
+  .cardGroup {
+    flex-direction: column;
+  }
+
+  .contactButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* The global phone rule pads every form; the section already gives the side gutter. */
+  .contactForm {
+    padding: 0;
+  }
 }

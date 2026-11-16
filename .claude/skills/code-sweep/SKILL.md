@@ -19,7 +19,7 @@ Run it:
 
 - **after merges**, from the "Code sweep" reminder issue, which opens by activity (`docs/process.md` → Reminders), with the commit the reminder names;
 - **once a quarter, in full**: from the "Full code sweep" reminder, opened the first Monday of January, April, July and October (it says `/code-sweep full`);
-- **`diff` at the end of every piece of work**, as the Workflow Checklist's self-review, mandatory on every code update. Claude reads this file and follows its `diff` mode there, since it can't type the command itself.
+- **`diff` at the end of every piece of work**, as the Workflow Checklist's self-review: once the checks this repo can run are done, before any coding handoff goes out. Claude reads this file and follows its `diff` mode there, since it can't type the command itself.
 
 Don't run it to fix something, in the middle of other work, or on a branch with uncommitted work you mean to keep separate from the review.
 
@@ -60,7 +60,7 @@ Covered:
 
 Copies, checked only for being identical to the backend's (step 6), never reviewed line by line, since a change to them is made in the backend first: `.claude/hooks/`, `docs/process.md` and `docs/api.md`.
 
-A `diff` review covers only that branch's diff, plus anything the diff duplicates or makes dead elsewhere. It is mandatory on every code update (`CLAUDE.md` → Workflow Checklist).
+A `diff` review covers only that branch's diff, plus anything the diff duplicates or makes dead elsewhere. It runs once this repo's own checks are done, before any coding handoff (`CLAUDE.md` → Workflow Checklist); the risky-file walkthrough (Output) comes last, before commit.
 
 Left out: `docs/history.md` (a record as written, not rules in force), `node_modules/`, `.next/`, `package-lock.json`, `AGENTS.md` (written by `next dev`), `.claude/settings.local.json` (personal), `.env` (never read).
 
@@ -85,6 +85,8 @@ grep -rLE '^\s*(//|/\*)' src --include='*.test.js' --include='*.test.jsx'       
 ```
 
 Each step names what counts as a finding; anything else is not one.
+
+**Focused checks.** A focused check is one narrow question naming a failure that has happened, such as "does every new form field show its message under Submit?". It is added, through a PR, for a finding that recurred or escaped and that only judgment can catch (After, Tuning), beside the short `CLAUDE.md` rule it backs. Each sits under its step as **Focused checks**, with the area it applies to, and runs only when the files reviewed touch that area, so it costs nothing on a diff that doesn't. Every finding it makes says so in What's wrong ("focused check: …"), so the tracker shows which checks fire. There are none yet.
 
 Commands: quote globs (`--include='*.jsx'`), since the shell is zsh. zsh doesn't split an unquoted variable into words, so a list of files held in a variable reaches `grep` as one name that doesn't exist: pipe the list through `xargs` instead, as the commands below do. `grep` may be BSD grep or ugrep, so the patterns avoid `\b`. The guard hook reads a command whole, so a `grep` whose search text spells out a forbidden command (a push to `production`, a force push, a `.env` path) is refused like the command itself: search for a shorter, distinctive part of the phrase instead. Glob patterns in this file sit in fenced code blocks, since Prettier rewrites a `*` inside an inline code span.
 
@@ -240,8 +242,12 @@ Findings are a list, most important first. A finding's type is **bug** (behaviou
    - **Proposed fix** (none for a **decision**)
    - **Type:** bug, cleanup, doc or decision
    - For a **decision**: the question for Rich.
-2. **What was checked:** the mode, the commit range, the number of files reviewed in steps 1–5 and 8, each step's result in one line, and the test files only grepped (if any). A sweep with no findings still reports this.
-3. **The tracker rows**, for `full`, `<sha>` and `diff` alike, as two tab-separated code blocks for the Code Sweep Tracker sheet's two tabs. **Sweeps** (Repo, Date, Reviewed, Results), one row per review:
+2. **What was checked:** the mode, the commit range, the number of files reviewed in steps 1–5 and 8, each step's result in one line, which focused checks ran, and the test files only grepped (if any). A review with no findings says exactly "No findings: this is not a correctness sign-off", then this list: the proof is the tests, lint and the browser test, not the review.
+3. **Risky files** (`diff` mode): when the branch changes any of the files below, list each change to walk through with Rich, whatever the findings. The walkthrough is the last step before commit, once every cross-repo handoff is built and tested through the real frontend, so it covers the final code (items Rich already ok'd stand unless they change again). It happens in the session, one item at a time: the changed code; what it did before and does now, in plain words; what goes wrong if it's wrong; and which test covers it, or that none does. Rich's "ok" on each item is the sign-off, and nothing is committed until every item has one. The list is fixed:
+   - **Auth and session handling:** `src/proxy.js`, `src/app/_lib/contentSecurityPolicy.js`, `src/app/_lib/apiFetch.js`, `src/app/_components/auth/`, `src/app/_context/AuthContext.jsx`, `src/app/_layout/DashboardLayout.jsx`, `src/app/_layout/AdminLayout.jsx`, and the `dashboard/` and `admin/` `layout.js`.
+   - **API calls:** `src/app/_lib/apiFetch.js`, `src/app/_hooks/` and `src/app/_lib/uploadImages.js`.
+   - **Anything that renders client content:** `src/app/_lib/postFormatting.js`, `src/app/_components/formatting/`, and the post and gallery pages and previews.
+4. **The tracker rows**, for `full`, `<sha>` and `diff` alike (a `diff` review's are held back and given to Rich after the merge, before `/clear`, so every outcome is final), as two tab-separated code blocks for the Code Sweep Tracker sheet's two tabs. **Sweeps** (Repo, Date, Reviewed, Results), one row per review:
 
 ```
 frontend	<YYYY-MM-DD>	<range>	<N>: <type> <item> <file:line>; <type> <item> <file:line>; …
@@ -265,7 +271,11 @@ frontend	<YYYY-MM-DD>	<range>	<item>	<type>	<file:line>	<escaped>
   - In `diff` mode there is no fixes issue: the findings are fixed on the branch being reviewed, once Rich answers (Workflow Checklist).
 - Rich pastes the tracker rows into the Code Sweep Tracker sheet's Sweeps and Findings tabs and fills each finding's Outcome once it is decided. The end commit is where the next incremental sweep starts.
 - Rich closes the reminder issue once the findings are settled.
-- **Tuning, at each `full` sweep:** count the sheet's rows by checklist item and type. Any finding that keeps recurring (the same kind of finding in 2 or more reviews), and every escaped one, gets a proposed change through a PR, so it stops recurring. A check in CI (a lint rule in `eslint.config.mjs`, proven in `eslint.config.test.mjs`, or a test) comes first, since a check can't be skipped and costs no tokens. A line in `CLAUDE.md` (Code Style, Patterns or Anti-Patterns) or this file is for what only judgment can catch. A repeat that a written rule already covers needs a check or shorter wording, not more words. The aim is fewer findings per review over time.
+- **Tuning, at each `full` sweep:** count the sheet's rows by checklist item and type. Any finding that recurs (the same kind of finding in 2 or more reviews), and every escaped one, gets a proposed change through a PR, so it stops recurring:
+  - first, a check in CI where one can catch it (a lint rule in `eslint.config.mjs`, proven in `eslint.config.test.mjs`, or a test), since a check can't be skipped and costs no tokens;
+  - where only judgment can catch it, both a short rule in `CLAUDE.md` (Code Style, Patterns or Anti-Patterns) and a focused check under its step in this file (Steps → Focused checks). A repeat that a written rule already covers needs a check or shorter wording, not more words.
+
+  The tracker also shows which focused checks fire. A finding that escapes again means its check is sharpened or scripted. A check with no hits in 2 full sweeps, while diffs touched its area, is pruned; its rule stays. The aim is fewer findings per review over time.
 
 ## 10. Done when
 
@@ -274,5 +284,6 @@ frontend	<YYYY-MM-DD>	<range>	<item>	<type>	<file:line>	<escaped>
 - [ ] Steps 1–9 each run, with steps 6, 7 and 9 over the whole repo
 - [ ] Findings reported in the Output format, with a question for each decision
 - [ ] What was checked reported, even with no findings
-- [ ] The tracker rows printed
+- [ ] In `diff` mode, every risky file change walked through with Rich and given his ok, last before commit
+- [ ] The tracker rows printed (in `diff` mode, after the merge, before `/clear`)
 - [ ] Every finding decided, and the fixes issue drafted and, on Rich's yes, opened
