@@ -26,6 +26,9 @@
   transition:
     opacity 0.6s ease-out,
     transform 0.6s ease-out;
+  /* Room above the heading where a section link lands: read by scrollToSection, and by the
+     browser when a page arrives at /#… */
+  scroll-margin-top: 2rem;
 }
 
 /* RevealSection's places for a section off screen: below, it waits to fade up into place; above,
@@ -40,15 +43,13 @@
   transform: translateY(-2rem);
 }
 
-/* The logo font on the hero and on each section a navbar link opens (Pricing, About, Contact).
-   BBH Hegarty has one weight, so the heading's 600 would show as a faked bold. */
-.brandHeading {
-  font-family: var(--logoFont);
-  font-weight: normal;
-}
-
 .subheading {
   margin-top: 1rem;
+}
+
+/* A sub-heading set in the section headers' Syne Bold ("No sequel needed.", "The reviews are in."). */
+.boldSubheading {
+  font-weight: 700;
 }
 
 .points {
@@ -92,18 +93,28 @@
 
 /* The build cards' titles are h3 and the yearly plans' h4 (under their own heading); both keep the
    browser's h3 size, so every card title reads the same. */
+/* Bold, unlike other sub-headings, so each card's name stands out. */
 .cardTitle {
   margin-bottom: 1rem;
   font-size: 1.17em;
+  font-weight: 700;
 }
 
-/* The price sits on its own line under the card's name. */
+/* The price sits on its own line under the card's name, in the sub-heading's regular weight. */
 .price {
   display: block;
+  font-weight: 400;
 }
 
 .quote figcaption {
   color: grey;
+}
+
+/* Wider than the global form's 400px, to suit the larger text, but well short of the section's
+   width; full width at phone width. */
+.contactForm {
+  width: 100%;
+  max-width: 30rem;
 }
 
 .requiredNote {

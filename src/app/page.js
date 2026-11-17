@@ -42,13 +42,11 @@ export default function Home() {
     >
       <LandingUrl />
       <RevealSection className={styles.section}>
-        <h1 tabIndex={-1} className={styles.brandHeading}>
-          Now showing: your business.
-        </h1>
+        <h1 tabIndex={-1}>Now showing: your business.</h1>
         <p>
-          A website that presents what you do in your own voice and brings in
-          the customers you want. Designed and built for you, so you never have
-          to take on the tech yourself.
+          A website that brings in the customers you want and gives you back the
+          time you spend answering messages. Designed in your own voice and
+          built for you, so you never have to take on the tech yourself.
         </p>
         <ContactLink />
       </RevealSection>
@@ -60,7 +58,9 @@ export default function Home() {
           potential customers a month. I took over and rebuilt each site around
           what the business needed. For one, that number jumped to as many as 30
           a month. Another reached as many as 15 with a single landing page.
-          Here&apos;s what the right website can do for you:
+          Every client has come back for more work, and one found me through
+          another client&apos;s site. Here&apos;s what the right website can do
+          for you:
         </p>
         <ul className={styles.points}>
           <li>
@@ -81,9 +81,7 @@ export default function Home() {
       </RevealSection>
 
       <RevealSection id={SECTION_IDS.pricing} className={styles.section}>
-        <h2 tabIndex={-1} className={styles.brandHeading}>
-          Pricing made simple. No investigator required.
-        </h2>
+        <h2 tabIndex={-1}>Pricing made simple. No investigator required.</h2>
         <p>
           Every site is custom designed, and the possibilities are endless, from
           illustration to animations, all quoted with your build.
@@ -147,7 +145,9 @@ export default function Home() {
           </li>
         </ul>
         <ContactLink />
-        <h3 className={styles.subheading}>No sequel needed.</h3>
+        <h3 className={`${styles.subheading} ${styles.boldSubheading}`}>
+          No sequel needed.
+        </h3>
         <p>
           You&apos;re never locked in. Every site I build can be handed over if
           you choose to leave: keep it running on its yearly plan, move it to
@@ -157,9 +157,7 @@ export default function Home() {
       </RevealSection>
 
       <RevealSection id={SECTION_IDS.about} className={styles.section}>
-        <h2 tabIndex={-1} className={styles.brandHeading}>
-          From experience, I know what makes the cut.
-        </h2>
+        <h2 tabIndex={-1}>From experience, I know what makes the cut.</h2>
         <p>
           I spent twenty years on the owner&apos;s side of a small business:
         </p>
@@ -190,7 +188,9 @@ export default function Home() {
           tech, the engineering skills to build it.
         </p>
 
-        <h3 className={styles.subheading}>The reviews are in.</h3>
+        <h3 className={`${styles.subheading} ${styles.boldSubheading}`}>
+          The reviews are in.
+        </h3>
         <figure className={styles.quote}>
           <blockquote>
             <p>
@@ -222,9 +222,7 @@ export default function Home() {
       </RevealSection>
 
       <RevealSection id={SECTION_IDS.contact} className={styles.section}>
-        <h2 tabIndex={-1} className={styles.brandHeading}>
-          Let&apos;s put your story on the big screen.
-        </h2>
+        <h2 tabIndex={-1}>Let&apos;s put your story on the big screen.</h2>
         <p>
           Tell me about your business and what you want your site to do.
           I&apos;ll come back with a few options at different prices, and you

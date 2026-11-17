@@ -10,6 +10,7 @@
 /* The logo, without the link underline; it is still a link, named "3D Web Dev home". */
 .homeLink {
   font-family: var(--logoFont);
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -80,7 +81,7 @@
   /* 1rem above and below, so the link alone gives the row its height. */
   padding: 1rem 0.5rem;
   border-radius: 0px;
-  /* Montserrat SemiBold, the header font's weight, so the links stand out. */
+  /* Prompt SemiBold, so the links stand out. */
   font-weight: 600;
   color: black;
   background-color: white;

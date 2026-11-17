@@ -27,7 +27,7 @@
 .separator {
   width: 100%;
   padding: 0rem 1rem 0.5rem 1rem;
-  font-size: 18px;
+  font-size: 1.125rem;
   border-bottom: 1px solid lightgray;
 }
 
@@ -91,7 +91,7 @@
 .rowIcon {
   vertical-align: middle;
   margin-right: 0.5rem;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 /* An image's own photo in place of an icon, before its alt text: a small square, cropped to fill

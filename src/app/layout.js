@@ -1,7 +1,7 @@
 // Root layout: loads the fonts and wraps every page in AuthProvider and NavProvider (both start
 // empty and never fetch), the landing page's skip link, Navbar and Footer.
 
-import { BBH_Hegarty, Montserrat } from "next/font/google";
+import { Syne, Prompt } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./_context/AuthContext";
 import { NavProvider } from "./_context/NavContext";
@@ -11,18 +11,16 @@ import SkipLink from "./_components/landing/SkipLink";
 
 // Downloaded at build time and served from our own origin, so the CSP's font-src 'self' allows
 // them. globals.css names them --logoFont, --headerFont and --copyFont.
-const bbhHegarty = BBH_Hegarty({
-  weight: "400",
+// Syne is a variable font: one file holds every weight the headings and logo use.
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--fontBbhHegarty",
-  // Next.js has no metrics for this font to size a fallback by, and warns on every compile unless
-  // it is given its own fallback.
-  fallback: ["sans-serif"],
+  variable: "--fontSyne",
 });
-const montserrat = Montserrat({
-  weight: ["400", "600"],
+// Prompt Light for copy, and SemiBold so bold text uses a real face rather than a faked bold.
+const prompt = Prompt({
+  weight: ["300", "600"],
   subsets: ["latin"],
-  variable: "--fontMontserrat",
+  variable: "--fontPrompt",
 });
 
 export const metadata = {
@@ -32,7 +30,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${bbhHegarty.variable} ${montserrat.variable}`}>
+    <html lang="en" className={`${syne.variable} ${prompt.variable}`}>
       <body>
         <AuthProvider>
           <NavProvider>

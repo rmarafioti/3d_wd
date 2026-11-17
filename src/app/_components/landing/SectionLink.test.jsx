@@ -74,4 +74,16 @@ describe("SectionLink", () => {
     expect(scroll).toHaveBeenCalledWith(0, 1500);
     expect(frames.hasPendingFrame()).toBe(false);
   });
+
+  it("stops short of its section by the section's scroll margin, leaving room above the heading", async () => {
+    stubMatchMedia(true);
+    const scroll = vi.spyOn(window, "scrollTo");
+    const user = userEvent.setup();
+    renderWithSection();
+    document.getElementById("contact").style.scrollMarginTop = "40px";
+
+    await user.click(screen.getByRole("link", { name: "Contact me" }));
+
+    expect(scroll).toHaveBeenCalledWith(0, 1460);
+  });
 });
