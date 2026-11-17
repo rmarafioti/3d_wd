@@ -97,8 +97,12 @@ function scrollWindowTo(top) {
 export function scrollToSection(id) {
   const section = document.getElementById(id);
   if (!section) return;
+  // The section's scroll-margin-top (landing.module.css) leaves room above its heading, the same
+  // room the browser leaves on its own jump to /#….
+  const breathingRoom =
+    parseFloat(window.getComputedStyle(section).scrollMarginTop) || 0;
   // The URL stays "/" (no hash), so a refresh returns to the top of the page.
-  scrollWindowTo(pageTop(section));
+  scrollWindowTo(Math.max(0, pageTop(section) - breathingRoom));
   section.querySelector("h2")?.focus({ preventScroll: true });
 }
 

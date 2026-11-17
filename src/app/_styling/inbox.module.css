@@ -171,7 +171,7 @@
   text-overflow: ellipsis;
 }
 
-/* Montserrat SemiBold while something in it is unread. */
+/* Prompt SemiBold while something in it is unread. */
 .unread {
   font-weight: 600;
 }
