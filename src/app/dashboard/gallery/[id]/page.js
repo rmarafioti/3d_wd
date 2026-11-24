@@ -173,7 +173,7 @@ export default function GalleryPage() {
         <dl>
           {/* The slug, so the site owner can say which gallery goes where on their website. */}
           <dt className={styles.key}>Gallery Code:</dt>
-          <dd className={styles.value}>{gallery.slug}</dd>
+          <dd>{gallery.slug}</dd>
           {/* Once its request form was sent: where the site owner asked for it to go. */}
           {gallery.requestedAt && (
             <>
@@ -187,11 +187,11 @@ export default function GalleryPage() {
                   />
                 )}
               </dt>
-              <dd className={styles.value} style={{ whiteSpace: "pre-line" }}>
+              <dd style={{ whiteSpace: "pre-line" }}>
                 {gallery.requestNote ?? "None"}
               </dd>
               {/* Just under the note it edits. */}
-              <dd className={styles.value}>
+              <dd>
                 <button
                   type="button"
                   disabled={deletePending}
@@ -204,12 +204,10 @@ export default function GalleryPage() {
             </>
           )}
           <dt className={styles.key}>Title:</dt>
-          <dd className={styles.value}>{gallery.title ?? "None"}</dd>
+          <dd>{gallery.title ?? "None"}</dd>
           <dt className={styles.key}>Copy:</dt>
           {/* pre-line keeps the line breaks the site owner typed. */}
-          <dd className={styles.value} style={{ whiteSpace: "pre-line" }}>
-            {gallery.copy ?? "None"}
-          </dd>
+          <dd style={{ whiteSpace: "pre-line" }}>{gallery.copy ?? "None"}</dd>
         </dl>
 
         <div className={styles.imagesSection}>
@@ -242,14 +240,12 @@ export default function GalleryPage() {
                 </div>
                 <dl>
                   <dt className={styles.key}>Caption:</dt>
-                  <dd className={styles.value}>{image.caption ?? "None"}</dd>
+                  <dd>{image.caption ?? "None"}</dd>
                   {/* The image's alt already gives screen readers this text. */}
                   <dt className={styles.key} aria-hidden="true">
                     Alt Text:
                   </dt>
-                  <dd className={styles.value} aria-hidden="true">
-                    {image.altText}
-                  </dd>
+                  <dd aria-hidden="true">{image.altText}</dd>
                 </dl>
               </figure>
             ))}

@@ -12,6 +12,7 @@ import { usePosts } from "../../../_hooks/usePosts";
 import {
   deletePostMessage,
   POST_PUBLISH_DATE_NOTE,
+  SLUG_READ_ONLY_NOTE,
 } from "../../../_lib/postFields";
 import { statusTone } from "../../../_lib/pillTones";
 import PostForm, {
@@ -125,11 +126,16 @@ export default function PostPage() {
 
         <dl>
           <dt className={styles.key}>Post Date:</dt>
-          <dd className={styles.value}>{post.postDate ?? "None"}</dd>
+          <dd>{post.postDate ?? "None"}</dd>
           <dt className={styles.key}>Header:</dt>
-          <dd className={styles.value}>{post.header ?? "None"}</dd>
+          <dd>{post.header ?? "None"}</dd>
+          <dt className={styles.key}>
+            Web address:{" "}
+            <i className={styles.slugNote}>*{SLUG_READ_ONLY_NOTE}</i>
+          </dt>
+          <dd>{post.slug}</dd>
           <dt className={styles.key}>Sub Header:</dt>
-          <dd className={styles.value}>{post.subHeader ?? "None"}</dd>
+          <dd>{post.subHeader ?? "None"}</dd>
         </dl>
 
         <div className={styles.bodySection}>

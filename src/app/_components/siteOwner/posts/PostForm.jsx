@@ -10,7 +10,7 @@ import {
 } from "../../../_hooks/useFormTimeout";
 import PostStepDialog from "../contentForm/PostStepDialog";
 import PostPreview from "./PostPreview";
-import PostToolbar from "./PostToolbar";
+import PostToolbar, { shownFieldValue } from "./PostToolbar";
 import ParagraphField from "../../formatting/ParagraphField";
 import ImageField, {
   releaseObjectUrl,
@@ -40,6 +40,7 @@ import {
   POST_PUBLISH_DATE_NOTE,
 } from "../../../_lib/postFields";
 import { publishAtPayload, publishAtToDate } from "../../../_lib/publishAt";
+import { toPostSlug, toTypedSlug } from "../../../_lib/postSlug";
 
 import styles from "../../../_styling/postForm.module.css";
 import previewStyles from "../../../_styling/postPreview.module.css";
@@ -48,6 +49,7 @@ const EMPTY_POST = {
   postName: "",
   postDate: "",
   header: "",
+  slug: "",
   subHeader: "",
   publishDate: "",
   body: [],
@@ -68,8 +70,9 @@ const EMPTY_IMAGE = {
 
 // Form values for a Post loaded by usePost: nulls become "", so every input is controlled. Body
 // elements are flattened; paragraphs have no id, so they get a fresh key. Existing images keep
-// their id (and use it as their key), src and size. status and the stored publishAt are read,
-// never sent: Edit shows the publish date only on a draft, and accepts the stored time unchanged.
+// their id (and use it as their key), src and size. status, slug and the stored publishAt are read,
+// never sent: Edit shows the slug read only, the publish date only on a draft, and accepts the
+// stored time unchanged.
 export function postToFormValues(post) {
   return {
     status: post.status,
@@ -77,6 +80,7 @@ export function postToFormValues(post) {
     postName: post.postName,
     postDate: post.postDate ?? "",
     header: post.header ?? "",
+    slug: post.slug,
     subHeader: post.subHeader ?? "",
     publishDate: publishAtToDate(post.publishAt),
     body: post.body.map((element) => {
@@ -140,7 +144,8 @@ function toElementPayload(element) {
 }
 
 // Builds the request body from a body whose new images are already uploaded. The client-only
-// key is dropped, and id is only sent for images that already exist.
+// key is dropped, and id is only sent for images that already exist. The slug is Create's alone,
+// so it is added there.
 function toPayload(values) {
   return {
     postName: values.postName.trim(),
@@ -152,10 +157,19 @@ function toPayload(values) {
 }
 
 // One of the post's own fields (POST_FIELDS): its label and help text (FieldLabel, with a
-// character count right above the input when it has a limit), the input, and its message.
-function PostField({ field, value, onChange, onBlur, message }) {
+// character count right above the input when it has a limit), the input, and its message. The web
+// address is put in slug form as it is typed, so the field always shows what will be saved.
+function PostField({ field, value, placeholder, onChange, onBlur, message }) {
   const id = useId();
   const { label, type, max, note } = POST_FIELDS[field];
+  const isSlug = field === "slug";
+
+  // Leaving the web address trims the hyphen kept at its end for a next word.
+  function handleBlur() {
+    if (isSlug && value.endsWith("-")) onChange(value.replace(/-+$/, ""));
+    onBlur();
+  }
+
   return (
     <>
       <FieldLabel
@@ -172,8 +186,11 @@ function PostField({ field, value, onChange, onBlur, message }) {
         maxLength={max}
         aria-describedby={max ? `${id}-count` : undefined}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
+        placeholder={placeholder}
+        onChange={(e) =>
+          onChange(isSlug ? toTypedSlug(e.target.value) : e.target.value)
+        }
+        onBlur={handleBlur}
       />
       {message && <p className="fieldError">{message}</p>}
     </>
@@ -269,6 +286,13 @@ export default function PostForm({
   function messageFor(field, ownErrors = errors) {
     if (touched[field] && ownErrors[field]) return ownErrors[field];
     return fieldErrors[field];
+  }
+
+  // The web address holds only what the site owner types; while it is blank, the address the
+  // backend will make from the header shows as its placeholder.
+  function placeholderFor(field) {
+    if (field !== "slug") return undefined;
+    return toPostSlug(values.header) ?? undefined;
   }
 
   // Typing in a step: the values change, but nothing is "changed" until the review view.
@@ -434,7 +458,13 @@ export default function PostForm({
       const scheduling = publishAtPayload(status, values.publishDate);
       const post = await onSubmit(
         isCreate
-          ? { websiteId, ...payload, status, ...scheduling }
+          ? {
+              websiteId,
+              ...payload,
+              slug: toPostSlug(values.slug),
+              status,
+              ...scheduling,
+            }
           : { ...payload, ...scheduling },
       );
       onSuccess(post);
@@ -509,6 +539,7 @@ export default function PostForm({
             key={field}
             field={field}
             value={values[field]}
+            placeholder={placeholderFor(field)}
             onChange={(value) => setField(field, value)}
             onBlur={() => touch(field)}
             message={messageFor(field)}
@@ -554,6 +585,7 @@ export default function PostForm({
             />
           </div>
           <PostToolbar
+            isCreate={isCreate}
             values={values}
             fieldErrors={fieldErrors}
             onEditField={(field) => setEditing({ field, value: values[field] })}
@@ -623,7 +655,7 @@ export default function PostForm({
   function renderFieldDialog() {
     const { field, value } = editing;
     const ownErrors = validatePost({ ...values, [field]: value });
-    const verb = isBlank(values[field]) ? "Add" : "Edit";
+    const verb = isBlank(shownFieldValue(field, values)) ? "Add" : "Edit";
     return (
       <PostStepDialog
         title={`${verb} ${POST_FIELDS[field].name}`}
@@ -635,6 +667,7 @@ export default function PostForm({
         <PostField
           field={field}
           value={value}
+          placeholder={placeholderFor(field)}
           onChange={(next) => setEditing({ field, value: next })}
           onBlur={() => touch(field)}
           message={messageFor(field, ownErrors)}

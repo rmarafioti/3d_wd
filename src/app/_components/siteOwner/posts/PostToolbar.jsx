@@ -1,5 +1,5 @@
-// PostToolbar (site owner): the review view's list of the post's fields and body elements, each row
-// with a ⋮ menu; it holds no post state, calling back to PostForm.
+// PostToolbar (site owner): the review view's rows for the post's fields and body elements, each with
+// a ⋮ menu (none on a saved post's web address); it holds no post state, calling back to PostForm.
 
 "use client";
 
@@ -11,10 +11,12 @@ import ToolbarRow from "../contentForm/ToolbarRow";
 import { serverErrorsFor } from "../contentForm/ImageField";
 import { parseParagraph } from "../../../_lib/postFormatting";
 import { isBlank } from "../../../_lib/validation";
+import { toPostSlug } from "../../../_lib/postSlug";
 import {
   elementNames,
   OPTIONAL_FIELDS,
   POST_FIELDS,
+  SLUG_READ_ONLY_NOTE,
 } from "../../../_lib/postFields";
 
 import styles from "../../../_styling/postToolbar.module.css";
@@ -30,7 +32,17 @@ function plainText(segments) {
     .join("");
 }
 
+// What one of the post's own fields shows in its row ("" while empty). The web address reads as it
+// will be saved: the site owner's own, or the one the backend will make from the header.
+export function shownFieldValue(field, values) {
+  if (field === "slug") {
+    return toPostSlug(values.slug) ?? toPostSlug(values.header) ?? "";
+  }
+  return values[field].trim();
+}
+
 export default function PostToolbar({
+  isCreate,
   values,
   fieldErrors,
   onEditField,
@@ -100,12 +112,27 @@ export default function PostToolbar({
         </ToolbarRow>
         {OPTIONAL_FIELDS.map((field) => {
           const { label, name, empty } = POST_FIELDS[field];
-          const isEmpty = isBlank(values[field]);
+          // A saved post's web address never changes, so Edit shows it with no menu.
+          if (field === "slug" && !isCreate) {
+            return (
+              <ToolbarRow key={field} label={label}>
+                {values.slug}{" "}
+                <i className={styles.readOnlyNote}>*{SLUG_READ_ONLY_NOTE}</i>
+              </ToolbarRow>
+            );
+          }
+          const shown = shownFieldValue(field, values);
+          const isEmpty = shown === "";
+          // Delete empties what the site owner entered; a web address made from the header has
+          // nothing of theirs to delete.
+          const canDelete = !isBlank(values[field]);
           const items = isEmpty
             ? [{ label: "Add", onClick: () => onEditField(field) }]
             : [
                 { label: "Edit", onClick: () => onEditField(field) },
-                { label: "Delete", onClick: () => onDeleteField(field) },
+                ...(canDelete
+                  ? [{ label: "Delete", onClick: () => onDeleteField(field) }]
+                  : []),
               ];
           return (
             <ToolbarRow
@@ -116,7 +143,7 @@ export default function PostToolbar({
               items={items}
               error={fieldErrors[field]}
             >
-              {isEmpty ? empty : values[field].trim()}
+              {isEmpty ? empty : shown}
             </ToolbarRow>
           );
         })}

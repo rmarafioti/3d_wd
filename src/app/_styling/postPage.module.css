@@ -66,6 +66,13 @@ its height follows its stored proportions. */
   margin-bottom: 2rem;
 }
 
+/* "*This can't be edited." on the "Web address:" label's line, as a note rather than the label. */
+.slugNote {
+  color: grey;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
 .key {
   font-size: 1.25rem;
   font-weight: bold;

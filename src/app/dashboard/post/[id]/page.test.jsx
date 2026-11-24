@@ -22,6 +22,7 @@ const POST = {
   websiteId: "w1",
   websiteName: "Stevie The Dog",
   postName: "Walk day",
+  slug: "k3x9p2qa",
   header: null,
   subHeader: null,
   postDate: null,
@@ -82,6 +83,14 @@ describe("Post page", () => {
         /^None$/,
       );
     }
+  });
+
+  it("shows the web address with its read-only note", async () => {
+    await setup();
+
+    const label = screen.getByText("Web address:");
+    expect(label).toHaveTextContent("Web address: *This can't be edited.");
+    expect(label.nextElementSibling).toHaveTextContent(/^k3x9p2qa$/);
   });
 
   it("renders the body in order, keeping a paragraph's line breaks and showing each image with its alt text beneath it", async () => {
