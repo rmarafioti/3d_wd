@@ -1,5 +1,5 @@
 // ToolbarRow: one row of a review view's toolbar (PostToolbar, GalleryToolbar): what the row is,
-// its ⋮ menu and, under it, the backend's message for that part, if any.
+// its ⋮ menu (none for a read-only row) and, under it, the backend's message for that part, if any.
 
 "use client";
 
@@ -23,12 +23,14 @@ export default function ToolbarRow({
           {label && <b>{label}: </b>}
           {children}
         </span>
-        <ActionsMenu
-          label={menuLabel}
-          items={items}
-          className={styles.menuCell}
-          listClassName={styles.menuList}
-        />
+        {items && (
+          <ActionsMenu
+            label={menuLabel}
+            items={items}
+            className={styles.menuCell}
+            listClassName={styles.menuList}
+          />
+        )}
       </div>
       {error && <p className="fieldError">{error}</p>}
     </li>

@@ -32,6 +32,7 @@ const POST = {
   websiteId: "w1",
   websiteName: "Stevie The Dog",
   postName: "Walk day",
+  slug: "a-walk",
   header: "A walk",
   subHeader: null,
   postDate: "2026-10-07",
@@ -256,6 +257,7 @@ describe("PostForm (create) steps", () => {
       "Post Name: Walk day",
       "No date",
       "Header: A walk",
+      "Web address: a-walk",
       "No sub header",
       "We went for a walk.",
     ]);
@@ -361,6 +363,7 @@ describe("PostForm (create) review view", () => {
       websiteId: "w1",
       postName: "Walk day",
       header: null,
+      slug: null,
       subHeader: null,
       postDate: null,
       status: "draft",
@@ -421,7 +424,7 @@ describe("PostForm (create) review view", () => {
       screen.queryByRole("dialog", { name: "Add a paragraph" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Are you sure/)).not.toBeInTheDocument();
-    expect(toolbarRows()).toHaveLength(5);
+    expect(toolbarRows()).toHaveLength(6);
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -449,11 +452,11 @@ describe("PostForm (create) review view", () => {
       within(subHeaderDialog).getByLabelText("Sub Header"),
       "Sunny",
     );
-    expect(toolbarRows()[3]).toBe("No sub header");
+    expect(toolbarRows()[4]).toBe("No sub header");
 
     await user.click(button("Save", subHeaderDialog));
 
-    expect(toolbarRows()[3]).toBe("Sub Header: Sunny");
+    expect(toolbarRows()[4]).toBe("Sub Header: Sunny");
     expect(within(preview()).getByText("Sunny")).toBeInTheDocument();
   });
 
@@ -625,7 +628,7 @@ describe("PostForm toolbar moves and deletes", () => {
     await user.click(button("Move image 1 up"));
 
     // The image's row, still showing its open menu, now comes first.
-    const [imageRow, paragraphRow] = toolbarRows().slice(4);
+    const [imageRow, paragraphRow] = toolbarRows().slice(5);
     expect(imageRow).toMatch(/^Stevie/);
     expect(paragraphRow).toBe("We went for a walk.");
     const previewImage = within(preview()).getByRole("img", { name: "Stevie" });
@@ -644,6 +647,132 @@ describe("PostForm toolbar moves and deletes", () => {
     await addParagraph(user, "The end.");
 
     expect(await openMenu(user, "paragraph 1")).toContain("Delete");
+  });
+});
+
+describe("PostForm web address", () => {
+  // Walks to the details step, where the Web address sits after the Header.
+  async function toDetails(user) {
+    await user.type(screen.getByLabelText("Post Name"), "Walk day");
+    await user.click(button("Next"));
+  }
+
+  it("shows the header's address as its placeholder while it is blank, even once cleared", async () => {
+    const { user } = renderCreate();
+    await toDetails(user);
+    const field = screen.getByLabelText("Web address");
+
+    await user.type(screen.getByLabelText("Header"), "Why dbt Tests Matter!");
+    expect(field).toHaveValue("");
+    expect(field).toHaveAttribute("placeholder", "why-dbt-tests-matter");
+    await user.type(field, "mine");
+    expect(field).toHaveValue("mine");
+    await user.clear(field);
+
+    expect(field).toHaveValue("");
+    expect(field).toHaveAttribute("placeholder", "why-dbt-tests-matter");
+  });
+
+  it("puts a typed address in slug form as it is typed, and sends what the field shows", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await toDetails(user);
+
+    await user.type(screen.getByLabelText("Web address"), "My First Post");
+
+    expect(screen.getByLabelText("Web address")).toHaveValue("my-first-post");
+    await user.click(button("Next"));
+    await user.type(screen.getByLabelText("Paragraph"), "Hi");
+    await user.click(button("Insert"));
+    expect(toolbarRows()).toContain("Web address: my-first-post");
+    await user.click(button("Submit"));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      header: null,
+      slug: "my-first-post",
+    });
+  });
+
+  it("never shows characters a web address can't hold, and trims its last hyphen once left", async () => {
+    const { user } = renderCreate();
+    await toDetails(user);
+
+    await user.type(screen.getByLabelText("Web address"), "!!!");
+    expect(screen.getByLabelText("Web address")).toHaveValue("");
+    await user.type(screen.getByLabelText("Web address"), "Hello!!!");
+    expect(screen.getByLabelText("Web address")).toHaveValue("hello-");
+    await user.tab();
+
+    expect(screen.getByLabelText("Web address")).toHaveValue("hello");
+  });
+
+  it("offers Delete only on the site owner's own address, which then goes back to the header's", async () => {
+    const { user } = renderCreate();
+    await walkSteps(user, { header: "A walk" });
+    expect(await openMenu(user, "web address")).toEqual(["Edit"]);
+    await user.click(button("Edit", toolbar()));
+    const slugDialog = dialog("Edit web address");
+    await user.clear(within(slugDialog).getByLabelText("Web address"));
+    await user.type(within(slugDialog).getByLabelText("Web address"), "mine");
+    await user.click(button("Save", slugDialog));
+    expect(toolbarRows()[3]).toBe("Web address: mine");
+
+    await pickFromMenu(user, "web address", "Delete");
+
+    expect(toolbarRows()[3]).toBe("Web address: a-walk");
+  });
+
+  it("follows a header saved from the toolbar, and sends no address of its own for it", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderCreate({ onSubmit });
+    await walkSteps(user, { header: "A walk" });
+
+    await pickFromMenu(user, "header", "Edit");
+    const headerDialog = dialog("Edit header");
+    await user.clear(within(headerDialog).getByLabelText("Header"));
+    await user.type(within(headerDialog).getByLabelText("Header"), "Café day");
+    await user.click(button("Save", headerDialog));
+
+    expect(toolbarRows()[3]).toBe("Web address: cafe-day");
+    await user.click(button("Submit"));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      header: "Café day",
+      slug: null,
+    });
+  });
+
+  it("shows the backend's taken-address message under Submit", async () => {
+    const onSubmit = vi.fn().mockRejectedValue({
+      message: "A post with this web address already exists.",
+    });
+    const { user, onSuccess } = renderCreate({ onSubmit });
+    await walkSteps(user, { header: "A walk" });
+
+    await user.click(button("Submit"));
+
+    expect(
+      await screen.findByText("A post with this web address already exists."),
+    ).toBeInTheDocument();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it("is read only in Edit, unchanged by a new header and never sent", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(POST);
+    const { user } = renderEdit({ onSubmit });
+    expect(
+      screen.queryByRole("button", { name: "Actions for web address" }),
+    ).not.toBeInTheDocument();
+
+    await pickFromMenu(user, "header", "Edit");
+    const headerDialog = dialog("Edit header");
+    await user.type(within(headerDialog).getByLabelText("Header"), " home");
+    await user.click(button("Save", headerDialog));
+    await user.click(button("Submit"));
+
+    expect(toolbarRows()[3]).toBe("Web address: a-walk *This can't be edited.");
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("slug");
   });
 });
 
@@ -694,6 +823,7 @@ describe("PostForm (edit)", () => {
       "Post Name: Walk day",
       "Post Date: 2026-10-07",
       "Header: A walk",
+      "Web address: a-walk *This can't be edited.",
       "No sub header",
       "We went for a walk.",
       "Stevie",
@@ -787,7 +917,7 @@ describe("PostForm (edit)", () => {
     expect(rows[0]).toHaveTextContent(
       "Post name must be 100 characters or fewer.",
     );
-    expect(rows[5]).toHaveTextContent(
+    expect(rows[6]).toHaveTextContent(
       "Alt text must be 200 characters or fewer.",
     );
     expect(onSuccess).not.toHaveBeenCalled();

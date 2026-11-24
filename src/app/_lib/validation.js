@@ -4,6 +4,7 @@
 import { findLinks } from "./postFormatting";
 import { toPublishAt } from "./publishAt";
 import { POST_FIELDS } from "./postFields";
+import { toPostSlug } from "./postSlug";
 import { GALLERY_FIELDS, MAX_CAPTION } from "./galleryFields";
 
 // Deliberately loose (something@something.something); the backend has the final say.
@@ -169,7 +170,7 @@ export function validateNewThread({ subject, message }) {
 // by validateParagraph or validateImage before it is inserted). websiteId is only checked when
 // requireWebsite is set (Create); Edit has no Website field.
 export function validatePost(
-  { websiteId, postName, postDate, header, subHeader },
+  { websiteId, postName, postDate, header, slug, subHeader },
   { requireWebsite = false } = {},
 ) {
   const errors = {};
@@ -182,6 +183,11 @@ export function validatePost(
     errors.postDate = "Enter a valid date (YYYY-MM-DD).";
   if (isTooLong(header, POST_FIELDS.header.max))
     errors.header = tooLongMessage("Header", POST_FIELDS.header.max);
+  // Blank is allowed: the backend makes it from the header. Its length counts as typed.
+  if (isTooLong(slug, POST_FIELDS.slug.max))
+    errors.slug = tooLongMessage("Web address", POST_FIELDS.slug.max);
+  else if (!isBlank(slug) && !toPostSlug(slug))
+    errors.slug = "Web address needs at least one letter or digit.";
   if (isTooLong(subHeader, POST_FIELDS.subHeader.max))
     errors.subHeader = tooLongMessage("Sub header", POST_FIELDS.subHeader.max);
   return errors;

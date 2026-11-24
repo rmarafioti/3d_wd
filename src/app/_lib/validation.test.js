@@ -272,11 +272,13 @@ describe("validatePost", () => {
       validatePost({
         postName: "a".repeat(101),
         header: "a".repeat(151),
+        slug: "a".repeat(61),
         subHeader: "a".repeat(201),
       }),
     ).toEqual({
       postName: "Post name must be 100 characters or fewer.",
       header: "Header must be 150 characters or fewer.",
+      slug: "Web address must be 60 characters or fewer.",
       subHeader: "Sub header must be 200 characters or fewer.",
     });
   });
@@ -286,9 +288,18 @@ describe("validatePost", () => {
       validatePost({
         postName: "a".repeat(100),
         header: "a".repeat(150),
+        slug: "a".repeat(60),
         subHeader: "a".repeat(200),
       }),
     ).toEqual({});
+  });
+
+  it("allows a blank web address, and refuses one with no letter or digit", () => {
+    expect(validatePost({ ...VALID_POST, slug: " " })).toEqual({});
+    expect(validatePost({ ...VALID_POST, slug: "My First Post!" })).toEqual({});
+    expect(validatePost({ ...VALID_POST, slug: "!!!" })).toEqual({
+      slug: "Web address needs at least one letter or digit.",
+    });
   });
 
   it("checks postDate only when one is given", () => {

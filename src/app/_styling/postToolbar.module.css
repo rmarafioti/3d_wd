@@ -61,6 +61,11 @@
 }
 
 /* A row's backend message, and the body's, inset like the rows' content. */
+/* The note after a saved post's web address, on its row's line. */
+.readOnlyNote {
+  color: grey;
+}
+
 .row > :global(.fieldError),
 .toolbar > :global(.fieldError) {
   padding: 0rem 1rem;

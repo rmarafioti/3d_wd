@@ -1,5 +1,5 @@
-// postFields: the post's own fields as Create / Edit Post shows them, shared by PostForm and
-// PostToolbar so a field reads the same in its dialog and its toolbar row, and two shared texts.
+// postFields: the post's own fields, shared by PostForm and PostToolbar so a field reads the same in
+// its dialog and its toolbar row, and the texts the post form and post page share.
 
 // The publish date's note, the same in the post form and on the post page.
 export const POST_PUBLISH_DATE_NOTE =
@@ -28,6 +28,15 @@ export const POST_FIELDS = {
     max: 150,
     empty: "No header",
   },
+  // The post's slug, entered only on Create; Edit and the post page show it read only.
+  slug: {
+    label: "Web address",
+    name: "web address",
+    type: "text",
+    max: 60,
+    note: "Your post's web address is made from your header, or you can enter your own. With neither, it gets a short code, such as k3x9p2qa. Once saved, it can't be edited.",
+    empty: "No web address",
+  },
   subHeader: {
     label: "Sub Header",
     name: "sub header",
@@ -37,8 +46,11 @@ export const POST_FIELDS = {
   },
 };
 
+// The note beside a saved post's web address, in Edit Post and on the post page.
+export const SLUG_READ_ONLY_NOTE = "This can't be edited.";
+
 // The optional fields, in the order they show on the post.
-export const OPTIONAL_FIELDS = ["postDate", "header", "subHeader"];
+export const OPTIONAL_FIELDS = ["postDate", "header", "slug", "subHeader"];
 
 // Delete a Post's confirmation, the same on the post page and the dashboard's ⋮ menu.
 export function deletePostMessage(postName) {
