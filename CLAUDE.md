@@ -350,7 +350,7 @@ root
 
 \*underscore all folders that are excluded from routing. Every tested file has its `*.test.js(x)` next to it (see Unit Tests).
 
-## Current progress (as of 2026-11-24)
+## Current progress (as of 2026-11-26)
 
 - **Now:**
   - **Live since 2026-10-28:** the frontend at `https://3dwebdev.com` (Vercel Pro) and the API at `https://api.3dwebdev.com` (Render). Stevie The Dog is the first client website. Features 1 to 18, issue #71 (placement apart from status) and the landing page's contact form (issue #101) are live, the latest release `release-2026-11-24`.
@@ -379,11 +379,11 @@ root
 
 The last five merged pieces of work, newest first (how they are kept: Workflow Checklist → Step rhythm).
 
+- **2026-11-26** `feat/contact-ability` (issue #113, with backend issue #126): `docs/api.md` copies the backend's contract, which adds `POST /api/public/contact`, a client website's contact form sent through the CMS by its server with its API key in place of EmailJS. Docs only: the Client Portal shows nothing of it.
 - **2026-11-24** `docs/doc-sync` (backend reminder rmarafioti/3d_wd_backend#124): the Documentation Sync; `docs/api.md` copies the backend's contract, which now quotes nine validation messages the backend already returned; Current progress, the Web address and Inbox notes in `docs/flows.md`, and `docs/history.md`'s pointers to the backend's launch record are brought up to date. Docs only.
 - **2026-11-24** `feat/post-slugs` (issue #110, with backend issue #128): a post's Web address (its `slug`, a readable address on the client website) is entered in Create a Post's details step, showing the header's address as its placeholder while blank (sent as `null`, so the backend makes it and adds `-2` on a clash), and an address the site owner types is put in slug form as it is typed (`_lib/postSlug.js`, the backend's rule); Edit Post and the post page show it read only with "*This can't be edited." on its line, and `PATCH` never sends it; `docs/api.md` copies the backend's contract.
 - **2026-11-17** `chore/landing-copy-and-fonts` (issue #107, frontend only): the hero paragraph leads with the benefit and the Proof paragraph adds repeat work and a referral, word for word from the Pitch tab after a sales review; the whole app's fonts become Syne (Bold 700 for `h1`/`h2` and the logo, Regular 400 for `h3`–`h6`) and Prompt (Light 300 copy, SemiBold 600 bold), which retires the landing page's `brandHeading`; all text is larger, scaled in proportion from one base size on `html` (125%), with every `px` font size moved to `rem`; the pricing cards' names, "No sequel needed." and "The reviews are in." are bold, the contact form is up to 30rem wide, and a section link stops 2rem above its section (`scroll-margin-top`); Next.js 16.4.3 → 16.4.6, a security release.
 - **2026-11-16** `chore/landing-copy-and-motion` (no issue, frontend only): the hero line ("…and brings in the customers you want."), the third proof bullet ("Your site guides each customer from first impression to booking…") and the Pricing subheading ("No sequel needed.", replacing the hostage line) follow the master doc's Pitch tab, handed over by the backend session; the landing page gets motion Rich asked for: a slower eased scroll for its section links and Back to top, a slow fade-in on load (the sign-in page too), sections fading in and out as they pass the middle of the screen, all off with reduced motion, and a URL kept at "/" so a refresh returns to the top.
-- **2026-11-16** `chore/landing-copy-edits` (no issue, frontend only): the landing page copy follows the 3D-movie theme ("Now showing: your business.", "Pricing made simple. No investigator required.", "I won't hold you hostage.", "From experience, I know what makes the cut.", "The reviews are in.", "Let's put your story on the big screen."), the proof bullets reordered with a new third one, the About paragraph folds in the design and engineering training, and the Pricing, About and Contact headings take the hero's logo font; the new copy is handed to the backend session for the master doc's Pitch tab.
 
 ## Features
 
